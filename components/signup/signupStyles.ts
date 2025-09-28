@@ -136,4 +136,21 @@ export const signupStyles = StyleSheet.create({
         color: '#FFD54F',
         fontWeight: '600',
     },
+
+    // Test OTP Button
+    testOTPButton: {
+        backgroundColor: '#E0E0E0',
+        borderRadius: 58,
+        height: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
+        paddingHorizontal: 40,
+    },
+
+    testOTPButtonText: {
+        color: '#666666',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
 });

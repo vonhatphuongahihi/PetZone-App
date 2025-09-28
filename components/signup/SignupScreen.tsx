@@ -44,7 +44,13 @@ export default function SignupScreen() {
             });
 
             Alert.alert('Thành công', 'Đăng ký thành công!', [
-                { text: 'OK', onPress: () => router.replace('/login') }
+                {
+                    text: 'OK',
+                    onPress: () => router.replace({
+                        pathname: '/otp-verify',
+                        params: { username: data.username, email: data.email }
+                    })
+                }
             ]);
         } catch (error) {
             Alert.alert('Lỗi', error instanceof Error ? error.message : 'Đăng ký thất bại');
