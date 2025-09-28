@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { authService } from '../../services/authService';
 import { otpStyles } from './otpStyles';
 
 interface OTPVerificationScreenProps {
@@ -50,8 +51,7 @@ export default function OTPVerificationScreen({
         setIsLoading(true);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
+            await authService.verifyOtp(email, otpCode);
             Alert.alert('Thành công', 'Xác thực OTP thành công!', [
                 { text: 'OK', onPress: () => router.replace('/(tabs)') }
             ]);
@@ -64,6 +64,7 @@ export default function OTPVerificationScreen({
 
     const handleResendOTP = async () => {
         try {
+            await authService.sendOtp(email);
             Alert.alert('Thành công', 'Mã OTP mới đã được gửi đến email của bạn');
         } catch (error) {
             Alert.alert('Lỗi', 'Không thể gửi lại mã OTP');
