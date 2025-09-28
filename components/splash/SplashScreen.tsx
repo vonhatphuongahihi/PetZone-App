@@ -27,7 +27,7 @@ export default function SplashScreen() {
         taglineTranslateY.value = withDelay(400, withTiming(0, { duration: 600 }));
 
         const timer = setTimeout(() => {
-            router.replace('/(tabs)');
+            router.replace('/login');
         }, 3000);
 
         return () => clearTimeout(timer);
