@@ -14,14 +14,14 @@ export const splashStyles = StyleSheet.create({
     },
     bubbleLeft: {
         position: 'absolute',
-        top: 0,
+        top: -10,
         left: 0,
         width: 270,
         height: 216,
     },
     bubbleRight: {
         position: 'absolute',
-        top: 0,
+        top: -5,
         right: 0,
         width: 216,
         height: 180,
