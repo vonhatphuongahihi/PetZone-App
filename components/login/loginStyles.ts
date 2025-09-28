@@ -13,14 +13,14 @@ export const loginStyles = StyleSheet.create({
     },
     bubbleLeft: {
         position: 'absolute',
-        top: -10,
+        top: -35,
         left: 0,
         width: 270,
         height: 216,
     },
     bubbleRight: {
         position: 'absolute',
-        top: -5,
+        top: -30,
         right: 0,
         width: 216,
         height: 180,
@@ -112,6 +112,10 @@ export const loginStyles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 30,
         justifyContent: 'center',
+    },
+    loginButtonDisabled: {
+        backgroundColor: '#CCCCCC',
+        opacity: 0.6,
     },
     loginButtonText: {
         color: '#FFFFFF',

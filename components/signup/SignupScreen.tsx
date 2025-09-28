@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { authService } from '../../services/authService';
 import { signupStyles } from './signupStyles';
 
 interface SignupFormData {
@@ -30,12 +31,26 @@ export default function SignupScreen() {
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const password = watch('password');
 
-    const onSubmit = (data: SignupFormData) => {
-        Alert.alert('Thành công', 'Đăng ký thành công!', [
-            { text: 'OK', onPress: () => router.replace('/login') }
-        ]);
+    const onSubmit = async (data: SignupFormData) => {
+        setIsLoading(true);
+        try {
+            const response = await authService.register({
+                email: data.email,
+                username: data.username,
+                password: data.password,
+            });
+
+            Alert.alert('Thành công', 'Đăng ký thành công!', [
+                { text: 'OK', onPress: () => router.replace('/login') }
+            ]);
+        } catch (error) {
+            Alert.alert('Lỗi', error instanceof Error ? error.message : 'Đăng ký thất bại');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleLogin = () => {
@@ -237,8 +252,14 @@ export default function SignupScreen() {
                     )}
                 </View>
 
-                <TouchableOpacity style={signupStyles.signupButton} onPress={handleSubmit(onSubmit)}>
-                    <Text style={signupStyles.signupButtonText}>Đăng ký</Text>
+                <TouchableOpacity
+                    style={[signupStyles.signupButton, isLoading && signupStyles.signupButtonDisabled]}
+                    onPress={handleSubmit(onSubmit)}
+                    disabled={isLoading}
+                >
+                    <Text style={signupStyles.signupButtonText}>
+                        {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
+                    </Text>
                 </TouchableOpacity>
 
                 <View style={signupStyles.loginContainer}>
