@@ -56,8 +56,6 @@ process.on('SIGTERM', async () => {
 
 app.listen(PORT, () => {
     console.log(`🚀 PetZone API server đang chạy trên cổng ${PORT}`);
-    console.log(`📊 Môi trường: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Kiểm tra sức khỏe: http://localhost:${PORT}/health`);
 });
 
 export default app;

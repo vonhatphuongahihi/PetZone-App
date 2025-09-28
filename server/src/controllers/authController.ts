@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { prisma } from '../index';
+import { sendEmail } from '../utils/mailer';
 
 const JWT_SECRET = (process.env.JWT_SECRET ?? 'fallback-secret-key') as jwt.Secret;
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ?? '7d') as jwt.SignOptions['expiresIn'];
@@ -20,6 +21,45 @@ function verifyJwt(token: string) {
 }
 
 export const authController = {
+    sendOtp: async (req: Request, res: Response) => {
+        try {
+            const { email } = req.body;
+            if (!email) return res.status(400).json({ error: 'Thiếu email', message: 'Email là bắt buộc' });
+
+            const otp = Math.floor(1000 + Math.random() * 9000).toString();
+            const expiresAt = Date.now() + 5 * 60 * 1000;
+            (global as any).__otpStore = (global as any).__otpStore || new Map<string, { code: string; exp: number }>();
+            (global as any).__otpStore.set(email, { code: otp, exp: expiresAt });
+
+            const html = `<p>Mã OTP của bạn là: <b>${otp}</b></p><p>Mã có hiệu lực trong 5 phút.</p>`;
+            await sendEmail(email, 'PetZone - Mã xác thực OTP', html);
+            res.json({ message: 'Đã gửi OTP' });
+        } catch (error) {
+            console.error('Lỗi gửi OTP:', error);
+            res.status(500).json({ error: 'Gửi OTP thất bại' });
+        }
+    },
+
+    verifyOtp: async (req: Request, res: Response) => {
+        try {
+            const { email, otp } = req.body as { email: string; otp: string };
+            if (!email || !otp) return res.status(400).json({ error: 'Thiếu thông tin', message: 'Email và OTP là bắt buộc' });
+
+            const store: Map<string, { code: string; exp: number }> = (global as any).__otpStore || new Map();
+            const entry = store.get(email);
+            if (!entry) return res.status(400).json({ error: 'Không tìm thấy OTP', message: 'Vui lòng yêu cầu mã OTP mới' });
+            if (Date.now() > entry.exp) {
+                store.delete(email);
+                return res.status(400).json({ error: 'OTP hết hạn', message: 'Mã OTP đã hết hạn' });
+            }
+            if (entry.code !== otp) return res.status(400).json({ error: 'OTP không hợp lệ', message: 'Mã OTP không chính xác' });
+            store.delete(email);
+            res.json({ message: 'Xác thực OTP thành công' });
+        } catch (error) {
+            console.error('Lỗi xác thực OTP:', error);
+            res.status(500).json({ error: 'Xác thực OTP thất bại' });
+        }
+    },
     register: async (req: Request, res: Response) => {
         try {
             const { email, username, password } = req.body;
@@ -51,7 +91,7 @@ export const authController = {
 
             const token = signJwt({ userId: user.id, email: user.email, role: user.role });
 
-            res.status(201).json({ message: 'User registered successfully', user, token });
+            res.status(201).json({ message: 'Đăng ký người dùng thành công', user, token });
         } catch (error) {
             console.error('Registration error:', error);
             res.status(500).json({ error: 'Đăng ký thất bại', message: 'Đã xảy ra lỗi trong quá trình đăng ký' });
@@ -82,7 +122,7 @@ export const authController = {
             const token = signJwt({ userId: user.id, email: user.email, role: user.role });
             const { password: _, ...userData } = user;
 
-            res.json({ message: 'Login successful', user: userData, token });
+            res.json({ message: 'Đăng nhập thành công', user: userData, token });
         } catch (error) {
             console.error('Login error:', error);
             res.status(500).json({ error: 'Đăng nhập thất bại', message: 'Đã xảy ra lỗi trong quá trình đăng nhập' });
@@ -90,7 +130,7 @@ export const authController = {
     },
 
     logout: async (_req: Request, res: Response) => {
-        res.json({ message: 'Logout successful' });
+        res.json({ message: 'Đăng xuất thành công' });
     },
 
     getMe: async (req: Request, res: Response) => {

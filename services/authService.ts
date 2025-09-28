@@ -76,4 +76,30 @@ export const authService = {
 
         return response.json();
     },
+
+    sendOtp: async (email: string): Promise<{ message: string }> => {
+        const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Gửi OTP thất bại');
+        }
+        return response.json();
+    },
+
+    verifyOtp: async (email: string, otp: string): Promise<{ message: string }> => {
+        const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp }),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Xác thực OTP thất bại');
+        }
+        return response.json();
+    },
 };

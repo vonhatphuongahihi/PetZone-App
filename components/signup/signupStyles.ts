@@ -153,4 +153,44 @@ export const signupStyles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+
+    otpModalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.25)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    otpModalCard: {
+        width: '86%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        padding: 20,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        elevation: 6,
+    },
+    otpModalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 8,
+        color: '#333',
+    },
+    otpModalText: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+    },
+    otpModalEmail: {
+        fontSize: 14,
+        color: '#111',
+        marginTop: 8,
+        marginBottom: 16,
+        fontWeight: '600',
+    }
 });

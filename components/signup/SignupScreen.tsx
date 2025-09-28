@@ -32,26 +32,25 @@ export default function SignupScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [otpModalVisible, setOtpModalVisible] = useState(false);
     const password = watch('password');
 
     const onSubmit = async (data: SignupFormData) => {
         setIsLoading(true);
+        setOtpModalVisible(true);
         try {
-            const response = await authService.register({
+            await authService.register({
                 email: data.email,
                 username: data.username,
                 password: data.password,
             });
-
-            Alert.alert('Thành công', 'Đăng ký thành công!', [
-                {
-                    text: 'OK',
-                    onPress: () => router.replace({
-                        pathname: '/otp-verify',
-                        params: { username: data.username, email: data.email }
-                    })
-                }
-            ]);
+            authService.sendOtp(data.email).catch(() => { });
+            setTimeout(() => {
+                router.replace({
+                    pathname: '/otp-verify',
+                    params: { username: data.username, email: data.email }
+                });
+            }, 1200);
         } catch (error) {
             Alert.alert('Lỗi', error instanceof Error ? error.message : 'Đăng ký thất bại');
         } finally {
@@ -277,6 +276,17 @@ export default function SignupScreen() {
                     </Text>
                 </View>
             </ScrollView>
+
+            {otpModalVisible && (
+                <View style={signupStyles.otpModalOverlay}>
+                    <View style={signupStyles.otpModalCard}>
+                        <Text style={signupStyles.otpModalTitle}>Xác thực OTP</Text>
+                        <Text style={signupStyles.otpModalText}>Mã OTP đang được gửi tới email của bạn</Text>
+                        <Text style={signupStyles.otpModalEmail}>{watch('email') || 'email@example.com'}</Text>
+
+                    </View>
+                </View>
+            )}
         </SafeAreaView>
     );
 }
