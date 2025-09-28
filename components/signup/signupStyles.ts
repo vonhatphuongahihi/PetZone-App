@@ -31,7 +31,7 @@ export const signupStyles = StyleSheet.create({
     },
     dogFeet: {
         position: 'absolute',
-        top: 45,
+        top: 70,
         right: 20,
         width: 50,
         height: 50,
@@ -115,6 +115,10 @@ export const signupStyles = StyleSheet.create({
         marginBottom: 30,
         marginTop: 20,
         justifyContent: 'center',
+    },
+    signupButtonDisabled: {
+        backgroundColor: '#CCCCCC',
+        opacity: 0.6,
     },
     signupButtonText: {
         color: '#FFFFFF',

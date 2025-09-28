@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { authService } from '../../services/authService';
 import { loginStyles } from './loginStyles';
 
 interface LoginFormData {
@@ -23,12 +24,24 @@ export default function LoginScreen() {
         },
     });
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const onSubmit = (data: LoginFormData) => {
-        // TODO: Implement actual login logic
-        Alert.alert('Thành công', 'Đăng nhập thành công!', [
-            { text: 'OK', onPress: () => router.replace('/(tabs)') },
-        ]);
+    const onSubmit = async (data: LoginFormData) => {
+        setIsLoading(true);
+        try {
+            const response = await authService.login({
+                email: data.email,
+                password: data.password,
+            });
+
+            Alert.alert('Thành công', 'Đăng nhập thành công!', [
+                { text: 'OK', onPress: () => router.replace('/(tabs)') },
+            ]);
+        } catch (error) {
+            Alert.alert('Lỗi', error instanceof Error ? error.message : 'Đăng nhập thất bại');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleGoogleLogin = () => {
@@ -152,8 +165,14 @@ export default function LoginScreen() {
                     <Text style={loginStyles.forgotPassword}>Bạn quên mật khẩu?</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={loginStyles.loginButton} onPress={handleSubmit(onSubmit)}>
-                    <Text style={loginStyles.loginButtonText}>Đăng nhập</Text>
+                <TouchableOpacity
+                    style={[loginStyles.loginButton, isLoading && loginStyles.loginButtonDisabled]}
+                    onPress={handleSubmit(onSubmit)}
+                    disabled={isLoading}
+                >
+                    <Text style={loginStyles.loginButtonText}>
+                        {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                    </Text>
                 </TouchableOpacity>
 
                 <View style={loginStyles.dividerContainer}>
