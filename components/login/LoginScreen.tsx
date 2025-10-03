@@ -47,6 +47,7 @@ export default function LoginScreen() {
                     if (hasStore) {
                         // Seller has a store, go to seller dashboard
                         router.replace('/seller/dashboard');
+
                     } else {
                         // Seller doesn't have a store, redirect to create-store
                         router.replace('/create-store');
