@@ -4,6 +4,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { dashboardSellerStyles } from './dashboardSellerStyles';
+import { SellerBottomNavigation } from './SellerBottomNavigation';
 
 export default function DashboardSellerScreen() {
     const handleLogout = () => {
@@ -47,6 +48,8 @@ export default function DashboardSellerScreen() {
                     </TouchableOpacity>
                 </View>
             </View>
+
+            <SellerBottomNavigation />
         </SafeAreaView>
     );
 }

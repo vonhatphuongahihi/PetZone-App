@@ -46,7 +46,7 @@ export default function LoginScreen() {
                     const hasStore = await storeService.checkStoreExists(response.token);
                     if (hasStore) {
                         // Seller has a store, go to seller dashboard
-                        router.replace('/dashboard-seller');
+                        router.replace('/seller/dashboard');
                     } else {
                         // Seller doesn't have a store, redirect to create-store
                         router.replace('/create-store');
