@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { authService } from '../../services/authService';
 import { otpStyles } from './otpStyles';
@@ -52,9 +52,7 @@ export default function OTPVerificationScreen({
 
         try {
             await authService.verifyOtp(email, otpCode);
-            Alert.alert('Thành công', 'Xác thực OTP thành công!', [
-                { text: 'OK', onPress: () => router.replace('/(tabs)') }
-            ]);
+            router.replace('/login');
         } catch (error) {
             Alert.alert('Lỗi', 'Mã OTP không đúng hoặc đã hết hạn');
         } finally {

@@ -24,12 +24,17 @@ export const authController = {
     sendOtp: async (req: Request, res: Response) => {
         try {
             const { email } = req.body;
-            if (!email) return res.status(400).json({ error: 'Thiếu email', message: 'Email là bắt buộc' });
+
+            if (!email) {
+                return res.status(400).json({ error: 'Thiếu email', message: 'Email là bắt buộc' });
+            }
 
             const otp = Math.floor(1000 + Math.random() * 9000).toString();
             const expiresAt = Date.now() + 5 * 60 * 1000;
+
             (global as any).__otpStore = (global as any).__otpStore || new Map<string, { code: string; exp: number }>();
             (global as any).__otpStore.set(email, { code: otp, exp: expiresAt });
+
 
             const html = `<p>Mã OTP của bạn là: <b>${otp}</b></p><p>Mã có hiệu lực trong 5 phút.</p>`;
             await sendEmail(email, 'PetZone - Mã xác thực OTP', html);
@@ -43,16 +48,28 @@ export const authController = {
     verifyOtp: async (req: Request, res: Response) => {
         try {
             const { email, otp } = req.body as { email: string; otp: string };
-            if (!email || !otp) return res.status(400).json({ error: 'Thiếu thông tin', message: 'Email và OTP là bắt buộc' });
+
+            if (!email || !otp) {
+                return res.status(400).json({ error: 'Thiếu thông tin', message: 'Email và OTP là bắt buộc' });
+            }
 
             const store: Map<string, { code: string; exp: number }> = (global as any).__otpStore || new Map();
+
             const entry = store.get(email);
-            if (!entry) return res.status(400).json({ error: 'Không tìm thấy OTP', message: 'Vui lòng yêu cầu mã OTP mới' });
+
+            if (!entry) {
+                return res.status(400).json({ error: 'Không tìm thấy OTP', message: 'Vui lòng yêu cầu mã OTP mới' });
+            }
+
             if (Date.now() > entry.exp) {
                 store.delete(email);
                 return res.status(400).json({ error: 'OTP hết hạn', message: 'Mã OTP đã hết hạn' });
             }
-            if (entry.code !== otp) return res.status(400).json({ error: 'OTP không hợp lệ', message: 'Mã OTP không chính xác' });
+
+            if (entry.code !== otp) {
+                return res.status(400).json({ error: 'OTP không hợp lệ', message: 'Mã OTP không chính xác' });
+            }
+
             store.delete(email);
             res.json({ message: 'Xác thực OTP thành công' });
         } catch (error) {
@@ -62,7 +79,7 @@ export const authController = {
     },
     register: async (req: Request, res: Response) => {
         try {
-            const { email, username, password } = req.body;
+            const { email, username, password, role } = req.body;
 
             if (!email || !username || !password) {
                 return res.status(400).json({
@@ -70,6 +87,9 @@ export const authController = {
                     message: 'Email, username, và password là bắt buộc'
                 });
             }
+
+            const validRoles = ['USER', 'SELLER'];
+            const userRole = role && validRoles.includes(role) ? role : 'USER';
 
             const existingUser = await prisma.user.findFirst({
                 where: { OR: [{ email }, { username }] }
@@ -85,7 +105,7 @@ export const authController = {
             const hashedPassword = await bcrypt.hash(password, 12);
 
             const user = await prisma.user.create({
-                data: { email, username, password: hashedPassword },
+                data: { email, username, password: hashedPassword, role: userRole },
                 select: { id: true, email: true, username: true, role: true, createdAt: true }
             });
 

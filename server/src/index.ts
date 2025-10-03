@@ -30,8 +30,10 @@ app.get('/health', (req, res) => {
 });
 
 import authRoutes from './routes/auth';
+import storeRoutes from './routes/store';
 
 app.use('/api/auth', authRoutes);
+app.use('/api/store', storeRoutes);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error(err.stack);

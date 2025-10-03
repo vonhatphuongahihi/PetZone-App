@@ -5,6 +5,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authService } from '../../services/authService';
+import { storeService } from '../../services/storeService';
+import { tokenService } from '../../services/tokenService';
 import { loginStyles } from './loginStyles';
 
 interface LoginFormData {
@@ -34,9 +36,29 @@ export default function LoginScreen() {
                 password: data.password,
             });
 
-            Alert.alert('Thành công', 'Đăng nhập thành công!', [
-                { text: 'OK', onPress: () => router.replace('/(tabs)') },
-            ]);
+            // Save token and user data to storage
+            await tokenService.saveAuthData(response.token, response.user);
+
+            // Check user role and redirect accordingly
+            if (response.user.role === 'SELLER') {
+                // For sellers, check if they have a store
+                try {
+                    const hasStore = await storeService.checkStoreExists(response.token);
+                    if (hasStore) {
+                        // Seller has a store, go to seller dashboard
+                        router.replace('/dashboard-seller');
+                    } else {
+                        // Seller doesn't have a store, redirect to create-store
+                        router.replace('/create-store');
+                    }
+                } catch (storeError) {
+                    // If error checking store, redirect to create-store
+                    router.replace('/create-store');
+                }
+            } else {
+                // For regular users, go to main app
+                router.replace('/(tabs)');
+            }
         } catch (error) {
             Alert.alert('Lỗi', error instanceof Error ? error.message : 'Đăng nhập thất bại');
         } finally {
