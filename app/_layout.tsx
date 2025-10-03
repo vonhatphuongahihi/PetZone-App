@@ -15,10 +15,6 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
-export const unstable_settings = {
-  anchor: 'splash',
-};
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
@@ -54,6 +50,13 @@ export default function RootLayout() {
         <Stack.Screen name="editAddress" options={{ headerShown: false }} />
         <Stack.Screen name="addAddress" options={{ headerShown: false }} />
         <Stack.Screen name="helpCenter" options={{ headerShown: false }} />
+        <Stack.Screen name="profile" options={{ headerShown: false }} />
+        <Stack.Screen name="order-confirm" options={{ headerShown: false }} />
+        <Stack.Screen name="purchase-history" options={{ headerShown: false }} />
+        <Stack.Screen name="product-rating" options={{ headerShown: false }} />
+        <Stack.Screen name="delivery" options={{ headerShown: false }} />
+        <Stack.Screen name="terms-of-use" options={{ headerShown: false }} />
+        <Stack.Screen name="privacy-policies" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
 
