@@ -12,6 +12,7 @@ interface SignupFormData {
     email: string;
     password: string;
     confirmPassword: string;
+    isSeller: boolean;
 }
 
 export default function SignupScreen() {
@@ -26,6 +27,7 @@ export default function SignupScreen() {
             email: '',
             password: '',
             confirmPassword: '',
+            isSeller: false,
         },
     });
 
@@ -43,6 +45,7 @@ export default function SignupScreen() {
                 email: data.email,
                 username: data.username,
                 password: data.password,
+                role: data.isSeller ? 'SELLER' : 'USER',
             });
             authService.sendOtp(data.email).catch(() => { });
             setTimeout(() => {
@@ -255,6 +258,29 @@ export default function SignupScreen() {
                     {errors.confirmPassword && (
                         <Text style={signupStyles.errorText}>{errors.confirmPassword.message}</Text>
                     )}
+                </View>
+
+                <View style={signupStyles.checkboxContainer}>
+                    <Controller
+                        control={control}
+                        name="isSeller"
+                        render={({ field: { onChange, value } }) => (
+                            <TouchableOpacity
+                                style={signupStyles.checkboxWrapper}
+                                onPress={() => onChange(!value)}
+                            >
+                                <View style={[
+                                    signupStyles.checkbox,
+                                    value && signupStyles.checkboxChecked
+                                ]}>
+                                    {value && <Text style={signupStyles.checkboxText}>✓</Text>}
+                                </View>
+                                <Text style={signupStyles.checkboxLabel}>
+                                    Đăng ký với tư cách người bán
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    />
                 </View>
 
                 <TouchableOpacity

@@ -136,6 +136,40 @@ export const signupStyles = StyleSheet.create({
         color: '#FFD54F',
         fontWeight: '600',
     },
+    checkboxContainer: {
+        marginBottom: 20,
+        marginTop: 10,
+    },
+    checkboxWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderWidth: 2,
+        borderColor: '#484444',
+        borderRadius: 4,
+        marginRight: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFFFFF',
+    },
+    checkboxChecked: {
+        backgroundColor: '#FBBC05',
+        borderColor: '#FBBC05',
+    },
+    checkboxText: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    checkboxLabel: {
+        fontSize: 14,
+        color: '#424242',
+        flex: 1,
+    },
 
     // Test OTP Button
     testOTPButton: {

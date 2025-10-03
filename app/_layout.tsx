@@ -38,6 +38,8 @@ export default function RootLayout() {
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="signup" options={{ headerShown: false }} />
         <Stack.Screen name="otp-verify" options={{ headerShown: false }} />
+        <Stack.Screen name="create-store" options={{ headerShown: false }} />
+        <Stack.Screen name="dashboard-seller" options={{ headerShown: false }} />
         <Stack.Screen name="categories" options={{ headerShown: false }} />
         <Stack.Screen name="product-list" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
@@ -98,17 +100,17 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   devButton: {
-  backgroundColor: '#ff6b6b',
-  paddingVertical: 10,
-  paddingHorizontal: 14,
-  borderRadius: 999,
-  elevation: 6,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-  marginTop: 8, 
-},
+    backgroundColor: '#ff6b6b',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    marginTop: 8,
+  },
   devButtonText: {
     color: '#fff',
     fontWeight: '700',
