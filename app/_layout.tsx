@@ -33,13 +33,13 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack initialRouteName="splash">
         <Stack.Screen name="splash" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="signup" options={{ headerShown: false }} />
         <Stack.Screen name="otp-verify" options={{ headerShown: false }} />
         <Stack.Screen name="create-store" options={{ headerShown: false }} />
-        <Stack.Screen name="dashboard-seller" options={{ headerShown: false }} />
+        <Stack.Screen name="seller" options={{ headerShown: false }} />
         <Stack.Screen name="categories" options={{ headerShown: false }} />
         <Stack.Screen name="product-list" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />

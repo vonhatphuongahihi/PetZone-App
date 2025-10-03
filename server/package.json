@@ -28,7 +28,8 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
     "nodemailer": "^7.0.6",
-    "prisma": "^6.16.2"
+    "prisma": "^6.16.2",
+    "react-native-svg": "^15.13.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

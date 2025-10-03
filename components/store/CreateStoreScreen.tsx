@@ -74,7 +74,7 @@ export default function CreateStoreScreen() {
                     text: 'OK',
                     onPress: () => {
                         setTimeout(() => {
-                            router.replace('/dashboard-seller');
+                            router.replace('/seller/dashboard');
                         }, 3000);
                     }
                 }
