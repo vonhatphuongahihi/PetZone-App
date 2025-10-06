@@ -7,8 +7,8 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useRouter } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-const router = useRouter();
+import { StyleSheet } from 'react-native';
+
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -16,6 +16,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     PaytoneOne_400Regular: PaytoneOne_400Regular,
@@ -60,33 +61,13 @@ export default function RootLayout() {
         <Stack.Screen name="terms-of-use" options={{ headerShown: false }} />
         <Stack.Screen name="privacy-policies" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="seller/shop" options={{ headerShown: false}} />
+        <Stack.Screen name="seller/shopCategories" options={{ headerShown: false}} />
+        <Stack.Screen name="seller/shopProductList" options={{ headerShown: false}} />
+        <Stack.Screen name="seller/shopAddProduct" options={{ headerShown: false}} />
+        <Stack.Screen name="seller/shopAddCategories" options={{ headerShown: false}} />
+        
       </Stack>
-
-      {__DEV__ && (
-        <View style={styles.devWrapper}>
-          <TouchableOpacity
-            onPress={() => router.replace('/cart')} // replace để bỏ splash/login
-            style={styles.devButton}
-          >
-            <Text style={styles.devButtonText}>Go Cart</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.replace('/addAddress')}
-            style={styles.devButton}
-          >
-            <Text style={styles.devButtonText}>Go AddAddress</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.replace('/helpCenter')}
-            style={styles.devButton}
-          >
-            <Text style={styles.devButtonText}>Go HelpCenter</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       <StatusBar style="auto" />
     </ThemeProvider>
   );
