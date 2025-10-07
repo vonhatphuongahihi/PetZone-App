@@ -1,7 +1,6 @@
 import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    FlatList,
     Image,
     Text,
     TextInput,
@@ -66,28 +65,24 @@ export default function SearchBarWithPopup({ recentSearches, hotProducts }: Prop
                                 <Text style={[SearchBarWithPopupStyles.sectionTitle, { marginTop: 16 }]}>
                                     Sản phẩm hot
                                 </Text>
-                                <FlatList
-                                    data={hotProducts}
-                                    keyExtractor={(item) => item.id.toString()}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity style={SearchBarWithPopupStyles.productRow}>
-                                            <Image source={item.image} style={SearchBarWithPopupStyles.productImage} />
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={SearchBarWithPopupStyles.productName} numberOfLines={2}>
-                                                    {item.name}
+                                {hotProducts.map((item) => (
+                                    <TouchableOpacity key={item.id.toString()} style={SearchBarWithPopupStyles.productRow}>
+                                        <Image source={item.image} style={SearchBarWithPopupStyles.productImage} />
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={SearchBarWithPopupStyles.productName} numberOfLines={2}>
+                                                {item.name}
+                                            </Text>
+                                            <View style={SearchBarWithPopupStyles.priceRow}>
+                                                <Text style={SearchBarWithPopupStyles.productPrice}>
+                                                    {item.price.toLocaleString("vi-VN")}đ
                                                 </Text>
-                                                <View style={SearchBarWithPopupStyles.priceRow}>
-                                                    <Text style={SearchBarWithPopupStyles.productPrice}>
-                                                        {item.price.toLocaleString("vi-VN")}đ
-                                                    </Text>
-                                                    <Text style={SearchBarWithPopupStyles.oldPrice}>
-                                                        {item.oldPrice.toLocaleString("vi-VN")}đ
-                                                    </Text>
-                                                </View>
+                                                <Text style={SearchBarWithPopupStyles.oldPrice}>
+                                                    {item.oldPrice.toLocaleString("vi-VN")}đ
+                                                </Text>
                                             </View>
-                                        </TouchableOpacity>
-                                    )}
-                                />
+                                        </View>
+                                    </TouchableOpacity>
+                                ))}
                             </View>
                         </TouchableWithoutFeedback>
                     </View>
