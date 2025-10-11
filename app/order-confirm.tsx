@@ -1,3 +1,3 @@
-import OrderConfirmScreen from '@/components/order-confirm/OrderConfirmScreen';
+import OrderConfirmScreen from '@/components/user/order-confirm/OrderConfirmScreen';
 
 export default OrderConfirmScreen;

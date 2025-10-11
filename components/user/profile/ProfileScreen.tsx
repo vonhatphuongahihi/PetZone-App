@@ -27,7 +27,7 @@ export default function ProfileScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Image
-            source={require("../../assets/images/icon.png")} // sử dụng icon.png thay cho avatar
+            source={require("../../../assets/images/icon.png")} // sử dụng icon.png thay cho avatar
             style={styles.avatar}
           />
           <View style={{ flex: 1, marginLeft: 12 }}>
@@ -48,16 +48,16 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.row}>
-            <MenuItem 
-              icon="credit-card" 
-              label="Xác nhận" 
+            <MenuItem
+              icon="credit-card"
+              label="Xác nhận"
               onPress={() => router.push('/order-confirm')}
             />
-            <MenuItem icon="local-shipping" label="Giao hàng" 
-                onPress={() => router.push('/delivery')}    
+            <MenuItem icon="local-shipping" label="Giao hàng"
+              onPress={() => router.push('/delivery')}
             />
-            <MenuItem icon="star" label="Đánh giá" badge={1} 
-                onPress={() => router.push('/product-rating')}
+            <MenuItem icon="star" label="Đánh giá" badge={1}
+              onPress={() => router.push('/product-rating')}
             />
           </View>
         </View>
@@ -105,13 +105,13 @@ export default function ProfileScreen() {
           <View style={styles.modalContainer}>
             {/* Cat Image */}
             <Image
-              source={require("../../assets/images/icon.png")}
+              source={require("../../../assets/images/icon.png")}
               style={styles.modalCatImage}
             />
-            
+
             {/* Modal Text */}
             <Text style={styles.modalTitle}>Đăng xuất khỏi PetZone?</Text>
-            
+
             {/* Modal Buttons */}
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.cancelButton} onPress={cancelLogout}>

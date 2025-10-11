@@ -1,3 +1,3 @@
-import PurchaseHistoryScreen from '@/components/purchase-history/PurchaseHistoryScreen';
+import PurchaseHistoryScreen from '@/components/user/purchase-history/PurchaseHistoryScreen';
 
 export default PurchaseHistoryScreen;

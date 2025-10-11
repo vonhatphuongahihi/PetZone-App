@@ -5,15 +5,20 @@ const { width, height } = Dimensions.get('window');
 export const dashboardSellerStyles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: '#ffffff',
+        paddingTop: 0,
+    },
+    scrollView: {
+        flex: 1,
     },
 
-    // Header Section
-    header: {
-        backgroundColor: '#FFFFFF',
-        paddingTop: 20,
-        paddingBottom: 30,
-        paddingHorizontal: 20,
+    // Header Banner
+    headerBanner: {
+        backgroundColor: '#FFF8E1',
+        marginHorizontal: 16,
+        marginTop: 20,
+        borderRadius: 16,
+        padding: 20,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -24,16 +29,39 @@ export const dashboardSellerStyles = StyleSheet.create({
         elevation: 3,
     },
     headerContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
     },
-    iconContainer: {
-        width: 60,
+    welcomeText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#2C3E50',
+    },
+    storeNameText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#FBBC05',
+    },
+    helloImage: {
+        width: 80,
         height: 60,
-        backgroundColor: '#FFD54F',
-        borderRadius: 15,
+        borderRadius: 10,
+    },
+
+    // KPI Cards
+    kpiContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 20,
+        gap: 12,
+    },
+    kpiCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        padding: 16,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 15,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -43,94 +71,144 @@ export const dashboardSellerStyles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
     },
-    headerIcon: {
-        width: 35,
-        height: 35,
+    kpiLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
     },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#2C3E50',
-        marginBottom: 5,
-        fontFamily: 'PaytoneOne_400Regular',
+    kpiIcon: {
+        width: 48,
+        height: 48,
+        backgroundColor: '#FBBC05',
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 16,
     },
-    headerSubtitle: {
+    kpiInfo: {
+        flex: 1,
+    },
+    kpiTitle: {
         fontSize: 14,
         color: '#7F8C8D',
-        textAlign: 'center',
+        marginBottom: 4,
+    },
+    kpiValue: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#2C3E50',
+        marginBottom: 4,
+    },
+    kpiTrend: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    trendUp: {
+        fontSize: 12,
+        color: '#FBBC05',
+        marginRight: 4,
+    },
+    trendUpText: {
+        fontSize: 12,
+        color: '#FBBC05',
+        fontWeight: '500',
+    },
+    trendDown: {
+        fontSize: 12,
+        color: '#E74C3C',
+        marginRight: 4,
+    },
+    trendDownText: {
+        fontSize: 12,
+        color: '#E74C3C',
+        fontWeight: '500',
+    },
+    arrowIcon: {
+        fontSize: 20,
+        color: '#7F8C8D',
+        fontWeight: 'bold',
     },
 
-    content: {
-        flex: 1,
-        paddingHorizontal: 20,
-        paddingTop: 40,
-        paddingBottom: 80, // Space for bottom navigation
+    // Products Section
+    productsSection: {
+        backgroundColor: '#FFF8E1',
+        marginHorizontal: 16,
+        marginTop: 20,
+        borderRadius: 16,
+        padding: 20,
     },
-
-    emptyState: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 20,
+    productsTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#2C3E50',
+        marginBottom: 16,
+        textAlign: 'left',
     },
-    emptyIconContainer: {
-        width: 100,
-        height: 100,
-        backgroundColor: '#FFD54F',
-        borderRadius: 50,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 30,
+    productCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
-            height: 4,
+            height: 2,
         },
         shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 5,
+        shadowRadius: 4,
+        elevation: 3,
     },
-    emptyIcon: {
-        fontSize: 50,
+    productImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 8,
+        marginRight: 12,
+        borderWidth: 1,
+        borderColor: '#E1E8ED',
     },
-    emptyTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
+    productInfo: {
+        flex: 1,
+        justifyContent: 'space-between',
+        minHeight: 60,
+    },
+    productName: {
+        fontSize: 14,
+        fontWeight: '500',
         color: '#2C3E50',
-        marginBottom: 15,
-        textAlign: 'center',
+        marginBottom: 4,
     },
-    emptyDescription: {
-        fontSize: 16,
-        color: '#7F8C8D',
-        textAlign: 'center',
-        lineHeight: 24,
-        marginBottom: 40,
-    },
-
-    // Actions
-    actions: {
-        paddingBottom: 30,
-    },
-    logoutButton: {
-        backgroundColor: '#E74C3C',
-        borderRadius: 12,
-        paddingVertical: 16,
-        paddingHorizontal: 24,
+    ratingContainer: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#E74C3C',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
+        marginBottom: 4,
     },
-    logoutButtonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
+    productRating: {
+        fontSize: 12,
+        color: '#7F8C8D',
+        marginRight: 4,
+    },
+    productPrice: {
+        fontSize: 14,
         fontWeight: 'bold',
+        color: '#E74C3C',
+    },
+    productBottom: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    soldButton: {
+        backgroundColor: '#FDE8A5',
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        alignSelf: 'flex-start',
+    },
+    soldText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#2C3E50',
     },
 });

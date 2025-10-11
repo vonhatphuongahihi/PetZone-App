@@ -10,7 +10,7 @@ const messages = [
     name: "Nhất Phương",
     message: "Vòng cổ mèo có size M ko shop",
     time: "3:46 PM",
-    avatar: require("../../assets/images/shop.png"),
+    avatar: require("../../../assets/images/shop.png"),
     online: true,
   },
   {
@@ -18,7 +18,7 @@ const messages = [
     name: "Võ Nhất Phương",
     message: "Vòng cổ mèo có size M ko shop",
     time: "3:46 PM",
-    avatar: require("../../assets/images/shop.png"),
+    avatar: require("../../../assets/images/shop.png"),
     online: true,
   },
   {
@@ -26,18 +26,18 @@ const messages = [
     name: "Nhất Phương Võ",
     message: "Vòng cổ mèo có size M ko shop",
     time: "3:46 PM",
-    avatar: require("../../assets/images/shop.png"),
+    avatar: require("../../../assets/images/shop.png"),
     online: false,
   },
 ];
 
 export default function MessagesScreen() {
   const renderMessage = ({ item }: { item: typeof messages[0] }) => (
-    <TouchableOpacity 
-        style={messagesStyles.messageRow}
-        onPress={() => {
-            router.push(`/chat?chatId=${item.id}`);
-        }}
+    <TouchableOpacity
+      style={messagesStyles.messageRow}
+      onPress={() => {
+        router.push(`/chat?chatId=${item.id}`);
+      }}
     >
       {/* Avatar */}
       <View style={messagesStyles.avatarContainer}>

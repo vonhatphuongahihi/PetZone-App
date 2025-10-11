@@ -1,4 +1,4 @@
-import AddAddressScreen from "@/components/addAddress/addAddressScreen";
+import AddAddressScreen from "@/components/user/addAddress/addAddressScreen";
 
 export const options = {
   headerShown: false,

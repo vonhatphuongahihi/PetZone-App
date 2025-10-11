@@ -22,12 +22,12 @@ export default function ChatScreen() {
     const renderMessage = ({ item }: { item: typeof messages[0] }) => {
         const isMe = item.sender === "me";
         return (
-        <View style={[chatStyles.messageRow, isMe ? chatStyles.rightAlign : chatStyles.leftAlign]}>
-            <View style={[chatStyles.bubble, isMe ? chatStyles.myBubble : chatStyles.shopBubble]}>
-                <Text style={[chatStyles.messageText, isMe ? chatStyles.myText : chatStyles.shopText]}>{item.text}</Text>
+            <View style={[chatStyles.messageRow, isMe ? chatStyles.rightAlign : chatStyles.leftAlign]}>
+                <View style={[chatStyles.bubble, isMe ? chatStyles.myBubble : chatStyles.shopBubble]}>
+                    <Text style={[chatStyles.messageText, isMe ? chatStyles.myText : chatStyles.shopText]}>{item.text}</Text>
+                </View>
+                <Text style={chatStyles.time}>{item.time}</Text>
             </View>
-            <Text style={chatStyles.time}>{item.time}</Text>
-        </View>
         );
     };
 
@@ -42,7 +42,7 @@ export default function ChatScreen() {
                             <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" style={{ marginRight: 4 }} />
                         </TouchableOpacity>
                         <View>
-                            <Image source={require("../../assets/images/shop.png")} style={chatStyles.avatar} />
+                            <Image source={require("../../../assets/images/shop.png")} style={chatStyles.avatar} />
                             <View style={chatStyles.onlineDot} />
                         </View>
                         <View>

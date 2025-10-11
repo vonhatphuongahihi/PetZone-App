@@ -84,7 +84,7 @@ export default function CheckoutScreen() {
 
                     <View style={[styles.row, { marginTop: 10 }]}>
                         <Image
-                            source={require("../../assets/images/cat1.png")}
+                            source={require("../../../assets/images/cat1.png")}
                             style={styles.image}
                         />
                         <View style={{ flex: 1, marginLeft: 10 }}>

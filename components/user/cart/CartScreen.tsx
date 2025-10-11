@@ -27,7 +27,7 @@ const products: Product[] = [
     title: "Thuphuong.pet",
     subtitle: "Vòng chuông bấm xinh cho mèo",
     price: 125000,
-    image: require("../../assets/images/cat1.png"),
+    image: require("../../../assets/images/cat1.png"),
   },
   {
     id: "2",
@@ -35,7 +35,7 @@ const products: Product[] = [
     title: "Thuphuong.pet",
     subtitle: "Áo xinh cho chó",
     price: 135000,
-    image: require("../../assets/images/cat1.png"),
+    image: require("../../../assets/images/cat1.png"),
   },
   {
     id: "3",
@@ -43,7 +43,7 @@ const products: Product[] = [
     title: "Nhatphuong.pet",
     subtitle: "Chuồng thú cưng",
     price: 300000,
-    image: require("../../assets/images/cat1.png"),
+    image: require("../../../assets/images/cat1.png"),
   },
 ];
 
@@ -277,7 +277,7 @@ export default function CartScreen() {
               (sum, id) =>
                 sum +
                 (products.find((p) => p.id === id)?.price || 0) *
-                  quantities[id],
+                quantities[id],
               0
             )
             .toLocaleString()}đ

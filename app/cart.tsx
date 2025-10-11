@@ -1,3 +1,3 @@
-import CartScreen from "@/components/cart/CartScreen";
+import CartScreen from "@/components/user/cart/CartScreen";
 
 export default CartScreen;

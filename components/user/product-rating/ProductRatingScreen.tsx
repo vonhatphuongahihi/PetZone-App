@@ -2,13 +2,13 @@ import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Image,
-    SafeAreaView,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { styles } from './productRatingStyles';
 
@@ -20,8 +20,8 @@ const reviewsData = [
     rating: 5,
     comment: 'Phân loại: Cát vệ sinh trà xanh',
     images: [
-      require('../../assets/images/icon.png'),
-      require('../../assets/images/icon.png'),
+      require('../../../assets/images/icon.png'),
+      require('../../../assets/images/icon.png'),
     ],
   },
   {
@@ -31,8 +31,8 @@ const reviewsData = [
     rating: 5,
     comment: 'Phân loại: Cát vệ sinh trà xanh',
     images: [
-      require('../../assets/images/icon.png'),
-      require('../../assets/images/icon.png'),
+      require('../../../assets/images/icon.png'),
+      require('../../../assets/images/icon.png'),
     ],
   },
 ];
@@ -77,7 +77,7 @@ export default function ProductRatingScreen() {
         {/* Product Info */}
         <View style={styles.productSection}>
           <Image
-            source={require('../../assets/images/icon.png')}
+            source={require('../../../assets/images/icon.png')}
             style={styles.productImage}
           />
           <View style={styles.productInfo}>
@@ -124,12 +124,12 @@ export default function ProductRatingScreen() {
         {/* Reviews History */}
         <View style={styles.reviewsHistory}>
           <Text style={styles.historyTitle}>Lịch sử đánh giá</Text>
-          
+
           {reviewsData.map((review) => (
             <View key={review.id} style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
                 <Image
-                  source={require('../../assets/images/icon.png')}
+                  source={require('../../../assets/images/icon.png')}
                   style={styles.reviewerAvatar}
                 />
                 <View style={styles.reviewerInfo}>
@@ -138,9 +138,9 @@ export default function ProductRatingScreen() {
                   {renderStars(review.rating, 14)}
                 </View>
               </View>
-              
+
               <Text style={styles.reviewComment}>{review.comment}</Text>
-              
+
               {/* Review Images */}
               <View style={styles.reviewImages}>
                 <Text style={styles.reviewImagesTitle}>Sản phẩm nhật chất lượng</Text>

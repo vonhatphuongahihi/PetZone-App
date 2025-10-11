@@ -2,12 +2,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
 import {
-    Image,
-    SafeAreaView,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { styles } from './privacyPoliciesStyles';
 
@@ -15,22 +15,22 @@ const privacyItems = [
   {
     id: 1,
     title: 'Mục đích thu thập thông tin',
-    icon: require('../../assets/images/icon.png'),
+    icon: require('../../../assets/images/icon.png'),
   },
   {
     id: 2,
     title: 'Phạm vi sử dụng thông tin',
-    icon: require('../../assets/images/icon.png'),
+    icon: require('../../../assets/images/icon.png'),
   },
   {
     id: 3,
     title: 'Quản lý và lưu trữ thông tin',
-    icon: require('../../assets/images/icon.png'),
+    icon: require('../../../assets/images/icon.png'),
   },
   {
     id: 4,
     title: 'Cam kết bảo mật thông tin',
-    icon: require('../../assets/images/icon.png'),
+    icon: require('../../../assets/images/icon.png'),
   },
 ];
 
