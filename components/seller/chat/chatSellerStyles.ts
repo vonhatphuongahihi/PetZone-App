@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-export const chatStyles = StyleSheet.create({
+export const chatSellerStyles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#fff" },
     header: {
         flexDirection: "row",

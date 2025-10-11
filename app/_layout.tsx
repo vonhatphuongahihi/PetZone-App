@@ -6,10 +6,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { useRouter } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-const router = useRouter();
-
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 // Keep the splash screen visible while we fetch resources
@@ -43,7 +39,6 @@ export default function RootLayout() {
         <Stack.Screen name="categories" options={{ headerShown: false }} />
         <Stack.Screen name="product-list" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
-        <Stack.Screen name="messages" options={{ headerShown: false }} />
         <Stack.Screen name="search-results" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -62,57 +57,9 @@ export default function RootLayout() {
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
 
-      {__DEV__ && (
-        <View style={styles.devWrapper}>
-          <TouchableOpacity
-            onPress={() => router.replace('/cart')} // replace để bỏ splash/login
-            style={styles.devButton}
-          >
-            <Text style={styles.devButtonText}>Go Cart</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.replace('/addAddress')}
-            style={styles.devButton}
-          >
-            <Text style={styles.devButtonText}>Go AddAddress</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.replace('/helpCenter')}
-            style={styles.devButton}
-          >
-            <Text style={styles.devButtonText}>Go HelpCenter</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       <StatusBar style="auto" />
     </ThemeProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  devWrapper: {
-    position: 'absolute',
-    right: 16,
-    bottom: 24,
-    zIndex: 9999,
-  },
-  devButton: {
-    backgroundColor: '#ff6b6b',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    marginTop: 8,
-  },
-  devButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-});
+

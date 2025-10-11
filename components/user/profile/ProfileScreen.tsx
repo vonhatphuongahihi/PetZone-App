@@ -1,7 +1,8 @@
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Image, Modal, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "./profileStyles";
 
 export default function ProfileScreen() {

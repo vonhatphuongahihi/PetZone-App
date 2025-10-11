@@ -2,7 +2,7 @@ import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { FlatList, Image, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { chatStyles } from './chatStyles';
+import { chatSellerStyles } from "./chatSellerStyles";
 
 const messages = [
     { id: "1", text: "Shop ơi", time: "8:54 AM", sender: "me" },
@@ -17,37 +17,37 @@ const messages = [
     { id: "10", text: "Không có gì bạn nhé, chúc bạn một ngày tốt lành ạ!", time: "9:16 AM", sender: "shop" },
 ];
 
-export default function ChatScreen() {
+export default function ChatSellerScreen() {
     const router = useRouter();
     const renderMessage = ({ item }: { item: typeof messages[0] }) => {
         const isMe = item.sender === "me";
         return (
-            <View style={[chatStyles.messageRow, isMe ? chatStyles.rightAlign : chatStyles.leftAlign]}>
-                <View style={[chatStyles.bubble, isMe ? chatStyles.myBubble : chatStyles.shopBubble]}>
-                    <Text style={[chatStyles.messageText, isMe ? chatStyles.myText : chatStyles.shopText]}>{item.text}</Text>
-                </View>
-                <Text style={chatStyles.time}>{item.time}</Text>
+        <View style={[chatSellerStyles.messageRow, isMe ? chatSellerStyles.rightAlign : chatSellerStyles.leftAlign]}>
+            <View style={[chatSellerStyles.bubble, isMe ? chatSellerStyles.myBubble : chatSellerStyles.shopBubble]}>
+                <Text style={[chatSellerStyles.messageText, isMe ? chatSellerStyles.myText : chatSellerStyles.shopText]}>{item.text}</Text>
             </View>
+            <Text style={chatSellerStyles.time}>{item.time}</Text>
+        </View>
         );
     };
 
     return (
         <>
             <Stack.Screen options={{ headerShown: false }} />
-            <SafeAreaView style={chatStyles.container}>
+            <SafeAreaView style={chatSellerStyles.container}>
                 {/* Header */}
-                <View style={chatStyles.header}>
-                    <View style={chatStyles.headerLeft}>
+                <View style={chatSellerStyles.header}>
+                    <View style={chatSellerStyles.headerLeft}>
                         <TouchableOpacity onPress={() => router.back()}>
                             <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" style={{ marginRight: 4 }} />
                         </TouchableOpacity>
                         <View>
-                            <Image source={require("../../../assets/images/shop.png")} style={chatStyles.avatar} />
-                            <View style={chatStyles.onlineDot} />
+                            <Image source={require("../../../assets/images/shop.png")} style={chatSellerStyles.avatar} />
+                            <View style={chatSellerStyles.onlineDot} />
                         </View>
                         <View>
-                            <Text style={chatStyles.name}>Nhất Phương</Text>
-                            <Text style={chatStyles.status}>Đang hoạt động</Text>
+                            <Text style={chatSellerStyles.name}>Nhất Phương</Text>
+                            <Text style={chatSellerStyles.status}>Đang hoạt động</Text>
                         </View>
                     </View>
                     <TouchableOpacity>
@@ -60,7 +60,7 @@ export default function ChatScreen() {
                     data={messages}
                     keyExtractor={(item) => item.id}
                     renderItem={renderMessage}
-                    contentContainerStyle={chatStyles.messagesContainer}
+                    contentContainerStyle={chatSellerStyles.messagesContainer}
                 />
 
                 {/* Input */}
@@ -68,13 +68,13 @@ export default function ChatScreen() {
                     behavior={Platform.OS === "ios" ? "padding" : undefined}
                     keyboardVerticalOffset={80}
                 >
-                    <View style={chatStyles.inputRow}>
+                    <View style={chatSellerStyles.inputRow}>
                         <TextInput
                             placeholder="Nhập tin nhắn"
                             placeholderTextColor="#999"
-                            style={chatStyles.input}
+                            style={chatSellerStyles.input}
                         />
-                        <TouchableOpacity style={chatStyles.sendButton}>
+                        <TouchableOpacity style={chatSellerStyles.sendButton}>
                             <FontAwesome5 name="paper-plane" size={18} color="#fff" />
                         </TouchableOpacity>
                     </View>

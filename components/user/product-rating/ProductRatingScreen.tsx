@@ -3,13 +3,13 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './productRatingStyles';
 
 const reviewsData = [

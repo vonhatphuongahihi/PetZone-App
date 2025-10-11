@@ -3,12 +3,12 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
     FlatList,
-    Image,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
 // Mock data sản phẩm
@@ -71,60 +71,17 @@ export default function ProductListScreen() {
     const { categoryName } = useLocalSearchParams();
     const router = useRouter();
 
+    const handleProductPress = (product: typeof products[0]) => {
+        // Điều hướng đến trang chi tiết sản phẩm
+        // router.push(`/product/${product.id}`);
+        console.log('Product pressed:', product.name);
+    };
+
     const renderProduct = ({ item }: { item: typeof products[0] }) => (
-        <TouchableOpacity
-            style={productListStyles.card}
-        //   onPress={() => router.push(`/product/${item.id}`)}
-        >
-            {/* Badge giảm giá */}
-            <View style={productListStyles.discountBadge}>
-                <Text style={productListStyles.discountText}>{item.discount}</Text>
-            </View>
-
-            {/* Ảnh sản phẩm */}
-            <Image source={item.image} style={productListStyles.image} />
-
-            {/* Thông tin sản phẩm */}
-            <View style={productListStyles.info}>
-                {/* Shop */}
-                <View style={productListStyles.shopRow}>
-                    <Image
-                        source={item.shopImage}
-                        style={productListStyles.shopAvatar}
-                    />
-                    <View style={{ marginLeft: 6 }}>
-                        <Text style={productListStyles.shopName}>{item.shop}</Text>
-                        <Text style={productListStyles.sold}>{item.sold} đã bán</Text>
-                    </View>
-                </View>
-
-                {/* Danh mục + Rating */}
-                <View style={productListStyles.metaRow}>
-                    <Text style={productListStyles.categoryText}>{item.category}</Text>
-                    <View style={productListStyles.ratingRow}>
-                        <FontAwesome5 name="star" size={10} color="#FFD700" solid />
-                        <Text style={productListStyles.ratingText}>{item.rating.toFixed(1)}</Text>
-                    </View>
-                </View>
-
-                {/* Tên sản phẩm */}
-                <Text style={productListStyles.productName} numberOfLines={2}>
-                    {item.name}
-                </Text>
-
-                <Text style={productListStyles.tagline}>Hàng cực hot</Text>
-
-                {/* Giá */}
-                <View style={productListStyles.priceRow}>
-                    <Text style={productListStyles.price}>
-                        {item.price.toLocaleString("vi-VN")}đ
-                    </Text>
-                    <Text style={productListStyles.oldPrice}>
-                        {item.oldPrice.toLocaleString("vi-VN")}đ
-                    </Text>
-                </View>
-            </View>
-        </TouchableOpacity>
+        <ProductCard
+            product={item}
+            onPress={handleProductPress}
+        />
     );
 
     return (
