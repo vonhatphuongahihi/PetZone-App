@@ -36,6 +36,7 @@ export default function RootLayout() {
         <Stack.Screen name="otp-verify" options={{ headerShown: false }} />
         <Stack.Screen name="create-store" options={{ headerShown: false }} />
         <Stack.Screen name="seller" options={{ headerShown: false }} />
+        <Stack.Screen name="categories" options={{ headerShown: false }} />
         <Stack.Screen name="product-list" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
         <Stack.Screen name="search-results" options={{ headerShown: false }} />
@@ -60,3 +61,5 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+

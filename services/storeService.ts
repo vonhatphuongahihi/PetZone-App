@@ -1,5 +1,5 @@
 // Store Service
-const API_BASE_URL = 'http://10.0.113.97:3001/api';
+const API_BASE_URL = 'http://10.0.119.159:3001/api';
 
 export interface CreateStoreData {
     storeName: string;
@@ -94,13 +94,42 @@ export const storeService = {
 
     checkStoreExists: async (token: string): Promise<boolean> => {
         try {
-            await storeService.getMyStore(token);
-            return true;
-        } catch (error) {
-            if (error instanceof Error && error.message.includes('404')) {
-                return false;
+            console.log('Checking store existence with token:', token ? 'Token exists' : 'No token');
+            console.log('API URL:', `${API_BASE_URL}/store/my-store`);
+
+            const response = await fetch(`${API_BASE_URL}/store/my-store`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
+            if (response.status === 404) {
+                console.log('Store not found (404)');
+                return false; // Store not found
             }
-            throw error;
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                console.error('API Error:', errorData);
+                throw new Error(errorData.message || 'Lỗi khi kiểm tra cửa hàng');
+            }
+
+            const storeData = await response.json();
+            console.log('Store found:', storeData);
+            return true; // Store exists
+        } catch (error) {
+            // If it's a network error or other issue, assume store doesn't exist
+            console.error('Error checking store existence:', error);
+            console.error('Error type:', typeof error);
+            console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+
+            // For network errors, return false (assume no store)
+            return false;
         }
     }
 };

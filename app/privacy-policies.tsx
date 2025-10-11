@@ -1,3 +1,3 @@
-import PrivacyPoliciesScreen from '@/components/privacy-policies/PrivacyPoliciesScreen';
+import PrivacyPoliciesScreen from '@/components/user/privacy-policies/PrivacyPoliciesScreen';
 
 export default PrivacyPoliciesScreen;

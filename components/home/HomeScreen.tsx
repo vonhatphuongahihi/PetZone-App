@@ -3,16 +3,16 @@ import { router } from 'expo-router';
 import React, { useState } from "react";
 import { FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ProductCard } from "../product-card/ProductCard";
-import SearchBarWithPopup from "../search-bar-with-popup/SearchBarWithPopup";
+import { ProductCard } from "../user/product-card/ProductCard";
+import SearchBarWithPopup from "../user/search-bar-with-popup/SearchBarWithPopup";
 import { homeStyles } from './homeStyles';
 // Mock data
 const parentCategories = [
-  { id: "1", name: "Thức ăn", icon: require("../../assets/images/food-icon.png") },
-  { id: "2", name: "Đồ chơi", icon: require("../../assets/images/toy-icon.png") },
-  { id: "3", name: "Phụ kiện", icon: require("../../assets/images/accessory-icon.png") },
-  { id: "4", name: "Dụng cụ", icon: require("../../assets/images/tool-icon.png") },
-  { id: "5", name: "Quần áo", icon: require("../../assets/images/clothes-icon.png") },
+    { id: "1", name: "Thức ăn", icon: require("../../assets/images/food-icon.png") },
+    { id: "2", name: "Đồ chơi", icon: require("../../assets/images/toy-icon.png") },
+    { id: "3", name: "Phụ kiện", icon: require("../../assets/images/accessory-icon.png") },
+    { id: "4", name: "Dụng cụ", icon: require("../../assets/images/tool-icon.png") },
+    { id: "5", name: "Quần áo", icon: require("../../assets/images/clothes-icon.png") },
 ];
 
 // Mock data sản phẩm
@@ -120,7 +120,7 @@ const topStores = [
         isFollowed: true,
     },
     {
-        id: "s2", 
+        id: "s2",
         name: "Pet Paradise Shop",
         avatar: require("../../assets/images/shop.png"),
         followerCount: 20,
@@ -147,8 +147,8 @@ const topStores = [
 
 export default function HomeScreen() {
     // State để quản lý trạng thái follow của các store
-    const [storeFollowStates, setStoreFollowStates] = useState<{[key: string]: boolean}>(() => {
-        const initialStates: {[key: string]: boolean} = {};
+    const [storeFollowStates, setStoreFollowStates] = useState<{ [key: string]: boolean }>(() => {
+        const initialStates: { [key: string]: boolean } = {};
         topStores.forEach(store => {
             initialStates[store.id] = store.isFollowed;
         });
@@ -169,7 +169,7 @@ export default function HomeScreen() {
 
     const renderCategoryItem = ({ item }: { item: typeof parentCategories[0] }) => (
         <TouchableOpacity
-            style={homeStyles.categoryItem} 
+            style={homeStyles.categoryItem}
             onPress={() => {
                 router.push(`/product-list?categoryId=${item.id}&categoryName=${item.name}`);
             }}
@@ -183,8 +183,8 @@ export default function HomeScreen() {
 
     const renderProductItem = ({ item }: { item: any }) => (
         <View style={homeStyles.productWrapper}>
-            <ProductCard 
-                product={item} 
+            <ProductCard
+                product={item}
                 onPress={handleProductPress}
                 layout="horizontal"
             />
@@ -193,13 +193,13 @@ export default function HomeScreen() {
 
     const renderStoreItem = ({ item }: { item: typeof topStores[0] }) => {
         const isFollowed = storeFollowStates[item.id];
-        
+
         return (
             <TouchableOpacity style={homeStyles.storeItem}>
                 <Image source={item.avatar} style={homeStyles.storeAvatar} />
                 <View style={homeStyles.storeInfo}>
                     <Text style={homeStyles.storeName} numberOfLines={2}>{item.name}</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={[
                             homeStyles.followButton,
                             { backgroundColor: isFollowed ? '#E0E0E0' : '#FBBC05' }
@@ -232,12 +232,12 @@ export default function HomeScreen() {
                 {/* Header với Search Bar và Cart */}
                 <View style={homeStyles.header}>
                     <View style={homeStyles.searchBarContainer}>
-                        <SearchBarWithPopup 
+                        <SearchBarWithPopup
                             recentSearches={recentSearches}
                             hotProducts={hotSearchProducts}
                         />
                     </View>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={homeStyles.cartButton}
                         onPress={() => { router.push('/cart'); }}
                     >
@@ -249,7 +249,7 @@ export default function HomeScreen() {
                 <View style={homeStyles.heroBanner}>
                     <View style={homeStyles.heroContent}>
                         {/* Background Image */}
-                        <Image 
+                        <Image
                             source={require("../../assets/images/banner.png")}
                             style={homeStyles.heroBackgroundImage}
                         />
@@ -346,7 +346,7 @@ export default function HomeScreen() {
                             <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
                         </TouchableOpacity>
                     </View>
-                    
+
                     {/* Danh sách cửa hàng */}
                     <FlatList
                         data={topStores}

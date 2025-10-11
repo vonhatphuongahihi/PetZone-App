@@ -1,3 +1,3 @@
-import ProductListScreen from "@/components/product-list/ProductListScreen";
+import ProductListScreen from "@/components/user/product-list/ProductListScreen";
 
 export default ProductListScreen;
