@@ -1,3 +1,3 @@
-import CategoriesScreen from "@/components/categories/CategoriesScreen";
+import CategoriesScreen from "@/components/user/categories/CategoriesScreen";
 
 export default CategoriesScreen;

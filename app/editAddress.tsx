@@ -1,4 +1,4 @@
-import EditAddressScreen from "@/components/editAddress/editAddressScreen";
+import EditAddressScreen from "@/components/user/editAddress/editAddressScreen";
 
 export const options = {
   headerShown: false,

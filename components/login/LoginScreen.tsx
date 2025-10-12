@@ -43,21 +43,28 @@ export default function LoginScreen() {
             if (response.user.role === 'SELLER') {
                 // For sellers, check if they have a store
                 try {
+                    console.log('Checking if seller has store...');
                     const hasStore = await storeService.checkStoreExists(response.token);
+                    console.log('Store exists:', hasStore);
+
                     if (hasStore) {
                         // Seller has a store, go to seller dashboard
+                        console.log('Redirecting to seller dashboard');
                         router.replace('/seller/dashboard');
-
                     } else {
                         // Seller doesn't have a store, redirect to create-store
+                        console.log('Redirecting to create store');
                         router.replace('/create-store');
                     }
                 } catch (storeError) {
                     // If error checking store, redirect to create-store
+                    console.error('Error checking store:', storeError);
+                    console.log('Error occurred, redirecting to create store');
                     router.replace('/create-store');
                 }
             } else {
                 // For regular users, go to main app
+                console.log('Regular user, redirecting to main app');
                 router.replace('/(tabs)');
             }
         } catch (error) {

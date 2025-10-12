@@ -1,3 +1,3 @@
-import DeliveryScreen from '@/components/delivery/DeliveryScreen';
+import DeliveryScreen from '@/components/user/delivery/DeliveryScreen';
 
 export default DeliveryScreen;

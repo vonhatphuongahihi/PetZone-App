@@ -9,7 +9,7 @@ export const sellerBottomNavStyles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#E1E8ED',
         paddingTop: 8,
-        paddingBottom: 8,
+        paddingBottom: 34,
         paddingHorizontal: 16,
         shadowColor: '#000',
         shadowOffset: {

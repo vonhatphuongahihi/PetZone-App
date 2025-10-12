@@ -1,7 +1,7 @@
-import { DashboardIcon } from '@/assets/svg/DashboardIcon';
-import { OrderIcon } from '@/assets/svg/OrderIcon';
-import { ProductIcon } from '@/assets/svg/ProductIcon';
-import { ProfileIcon } from '@/assets/svg/ProfileIcon';
+import { DashboardIcon } from '@/assets/svg/seller/DashboardIcon';
+import { OrderIcon } from '@/assets/svg/seller/OrderIcon';
+import { ProductIcon } from '@/assets/svg/seller/ProductIcon';
+import { ProfileIcon } from '@/assets/svg/seller/ProfileIcon';
 import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -22,9 +22,9 @@ const navigationItems: NavigationItem[] = [
         icon: DashboardIcon,
     },
     {
-        id: 'products',
-        label: 'Sản phẩm',
-        route: '/seller/products',
+        id: 'store',
+        label: 'Cửa hàng',
+        route: '/seller/store',
         icon: ProductIcon,
     },
     {
