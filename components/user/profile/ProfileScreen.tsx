@@ -12,10 +12,18 @@ export default function ProfileScreen() {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
     setShowLogoutModal(false);
-    // Thực hiện đăng xuất tại đây
-    console.log("Đã đăng xuất");
+    // Xóa token khỏi localStorage hoặc AsyncStorage
+    try {
+      // Nếu dùng AsyncStorage
+      const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+      await AsyncStorage.removeItem('token');
+    } catch (e) {
+      // Nếu không có AsyncStorage, bỏ qua
+    }
+    // Chuyển về trang đăng nhập
+    router.replace('/login');
   };
 
   const cancelLogout = () => {
