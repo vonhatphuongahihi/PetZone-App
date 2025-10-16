@@ -8,7 +8,6 @@ export const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -88,6 +87,8 @@ export const styles = StyleSheet.create({
   discountInfo: {
     fontSize: 12,
     color: '#666',
+    textAlign: 'left',
+    marginTop: 4,
   },
   orderState: {
     flexDirection: 'row',
