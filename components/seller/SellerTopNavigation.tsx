@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { sellerTopNavStyles } from './sellerTopNavStyles';
@@ -30,7 +31,7 @@ export const SellerTopNavigation: React.FC = () => {
                         contentFit="contain"
                     />
                 </TouchableOpacity>
-                <TouchableOpacity style={sellerTopNavStyles.iconButton}>
+                <TouchableOpacity style={sellerTopNavStyles.iconButton} onPress={() => router.push('/seller/messages')}>
                     <Image
                         source={require('@/assets/images/seller-mess-icon.png')}
                         style={sellerTopNavStyles.iconImage}

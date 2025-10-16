@@ -8,7 +8,6 @@ export const messagesSellerStyles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
