@@ -58,6 +58,7 @@ export default function CreateStoreScreen() {
             router.replace('/login');
             return;
         }
+        console.log('CreateStore - submitting', { data, token: token ? 'present' : 'missing' });
 
         setIsLoading(true);
         try {
@@ -69,18 +70,22 @@ export default function CreateStoreScreen() {
                 address: data.address,
             }, token);
 
-            Alert.alert('Thành công', 'Cửa hàng đã được tạo thành công!', [
-                {
-                    text: 'OK',
-                    onPress: () => {
-                        setTimeout(() => {
-                            router.replace('/seller/dashboard');
-                        }, 3000);
-                    }
+            console.log('CreateStore - success response:', response);
+
+            Alert.alert('Thành công', 'Cửa hàng đã được tạo thành công!');
+
+            // Tự động chuyển trang tới dashboard seller sau khi tạo thành công
+            setTimeout(() => {
+                try {
+                    router.replace('/seller/dashboard');
+                } catch (navErr) {
+                    console.error('Navigation error after create store:', navErr);
                 }
-            ]);
+            }, 800);
         } catch (error) {
-            Alert.alert('Lỗi', error instanceof Error ? error.message : 'Không thể tạo cửa hàng. Vui lòng thử lại.');
+            console.error('CreateStore - error:', error);
+            const message = error instanceof Error ? error.message : 'Không thể tạo cửa hàng. Vui lòng thử lại.';
+            Alert.alert('Lỗi', message);
         } finally {
             setIsLoading(false);
         }

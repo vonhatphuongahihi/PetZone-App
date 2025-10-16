@@ -64,8 +64,11 @@ export default function MessagesSellerScreen() {
       <SafeAreaView style={messagesSellerStyles.container}>
         {/* Header */}
         <View style={messagesSellerStyles.header}>
+          <TouchableOpacity style={{ marginRight: 8 }} onPress={() => router.back()}>
+            <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" style={{ marginRight: 4 }} />
+          </TouchableOpacity>
           <Text style={messagesSellerStyles.headerTitle}>Nhắn tin</Text>
-          <TouchableOpacity>
+          <TouchableOpacity style={{ marginLeft: 'auto' }}>
             <FontAwesome5 name="search" size={18} color="#FBBC05" />
           </TouchableOpacity>
         </View>
