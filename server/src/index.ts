@@ -3,7 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
+import http from 'http';
 import morgan from 'morgan';
+import { setupSocket } from './socket/socket';
 
 dotenv.config();
 
@@ -14,8 +16,25 @@ const PORT = process.env.PORT || 3001;
 
 app.use(helmet());
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:8081',
-    credentials: true
+    origin: (origin, callback) => {
+        const allowed = [
+            process.env.FRONTEND_URL || 'http://localhost:8081',
+            'http://localhost:8082',
+            'http://localhost:19006',
+            'http://localhost:19000',
+            'http://127.0.0.1:8081',
+            'http://127.0.0.1:8082',
+        ];
+        // Allow no-origin (mobile apps, Postman)
+        if (!origin) return callback(null, true);
+        if (allowed.some((o) => origin.startsWith(o)) || /http:\/\/\d+\.\d+\.\d+\.\d+:(8081|8082|19006|19000)/.test(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
@@ -30,17 +49,25 @@ app.get('/health', (req, res) => {
 });
 
 import authRoutes from './routes/auth';
+import chatRoutes from './routes/chat';
 import storeRoutes from './routes/store';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/store', storeRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error(err.stack);
-    res.status(500).json({
-        error: 'Lỗi!',
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Lỗi hệ thống nội bộ'
-    });
+    // Log toàn bộ error an toàn
+    console.error('Global error handler:', err);
+    const status = typeof err?.status === 'number' ? err.status : 500;
+    const safeMessage = (() => {
+        if (process.env.NODE_ENV === 'development') {
+            if (err?.message) return err.message;
+            try { return typeof err === 'string' ? err : JSON.stringify(err); } catch { return 'Unknown error'; }
+        }
+        return 'Lỗi hệ thống nội bộ';
+    })();
+    res.status(status).json({ error: 'Lỗi!', message: safeMessage });
 });
 
 
@@ -56,8 +83,11 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 PetZone API server đang chạy trên cổng ${PORT}`);
+const httpServer = http.createServer(app);
+setupSocket(httpServer);
+
+httpServer.listen(PORT, () => {
+    console.log(`🚀 PetZone API + Socket đang chạy trên cổng ${PORT}`);
 });
 
 export default app;
