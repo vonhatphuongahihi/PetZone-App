@@ -49,8 +49,68 @@ model Store {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
 
+
+
+
   // Relations
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  products        Product[] 
   @@map("stores")
+}
+
+//Product Model
+  model Product {
+  id            Int              @id @default(autoincrement())
+  storeId       String           @map("store_id")          // sửa từ Int → String
+  categoryId    Int?             @map("category_id")
+  title         String
+  slug          String           @unique
+  description   String?
+  price         Decimal          @db.Decimal(12, 2)
+  oldPrice      Decimal?         @db.Decimal(12, 2)
+  status        String           @default("draft")
+  featured      Boolean          @default(false)
+  quantity      Int              @default(0)
+  avgRating     Decimal          @default(0.00) @db.Decimal(3, 2)
+  totalReviews  Int              @default(0)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  store         Store            @relation(fields: [storeId], references: [id])
+  category      Category?        @relation(fields: [categoryId], references: [id])
+  images        ProductImage[]
+
+  @@map("products")
+}
+
+//ProducImage Model
+model ProductImage {
+  id         Int      @id @default(autoincrement())
+  productId  Int      @map("product_id")
+  url        String
+  alt        String?
+  position   Int?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@map("product_images")
+}
+
+//Category Model
+model Category {
+  id          Int        @id @default(autoincrement())
+  name        String
+  slug        String     @unique
+  description String?
+  parentId    Int?       @map("parent_id")
+
+  parent      Category?  @relation("CategoryToParent", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToParent")
+  products    Product[]
+
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("categories")
 }

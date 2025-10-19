@@ -1,4 +1,4 @@
-import HelpCenterScreen from "@/components/helpCenter/helpCenterScreen";
+import HelpCenterScreen from "@/components/user/helpCenter/helpCenterScreen";
 
 export const options = {
   headerShown: false,

@@ -1,14 +1,10 @@
 import { PaytoneOne_400Regular, useFonts } from '@expo-google-fonts/paytone-one';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
-import { useRouter } from 'expo-router';
-import { StyleSheet } from 'react-native';
-
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -44,7 +40,6 @@ export default function RootLayout() {
         <Stack.Screen name="categories" options={{ headerShown: false }} />
         <Stack.Screen name="product-list" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
-        <Stack.Screen name="messages" options={{ headerShown: false }} />
         <Stack.Screen name="search-results" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -73,27 +68,4 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  devWrapper: {
-    position: 'absolute',
-    right: 16,
-    bottom: 24,
-    zIndex: 9999,
-  },
-  devButton: {
-    backgroundColor: '#ff6b6b',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    marginTop: 8,
-  },
-  devButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-});
+

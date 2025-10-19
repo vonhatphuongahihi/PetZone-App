@@ -1,4 +1,4 @@
-import PaymentScreen from "@/components/payment/PaymentScreen";
+import PaymentScreen from "@/components/user/payment/PaymentScreen";
 
 export const options = {
   headerShown: false,

@@ -30,6 +30,7 @@ interface Category {
     id: string;
     name: string;
     icon: ImageSourcePropType;
+    parentId?: string; 
 }
 
 const categories = [
@@ -193,7 +194,7 @@ export default function ShopScreen() {
                         <Text style={styles.addButtonText}>Sản phẩm</Text>
                     </TouchableOpacity>
 
-                    {/* ✅ Nút thêm danh mục - ĐÃ THÊM onPress */}
+                    {/*Nút thêm danh mục - ĐÃ THÊM onPress */}
                     <TouchableOpacity
                         style={styles.addButton}
                         onPress={() => router.push("/seller/shopAddCategories")}
