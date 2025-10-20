@@ -97,12 +97,12 @@ model ProductImage {
   @@map("product_images")
 }
 
-//Category Model
 model Category {
   id          Int        @id @default(autoincrement())
-  name        String
+  name        String     @unique
   slug        String     @unique
   description String?
+  image       String?    // <-- thêm field image
   parentId    Int?       @map("parent_id")
 
   parent      Category?  @relation("CategoryToParent", fields: [parentId], references: [id])
@@ -114,3 +114,4 @@ model Category {
 
   @@map("categories")
 }
+
