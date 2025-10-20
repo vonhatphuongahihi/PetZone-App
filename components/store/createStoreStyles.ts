@@ -175,4 +175,21 @@ export const createStoreStyles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
+    
+    previewButton: {
+        backgroundColor: '#6C63FF',
+        borderRadius: 12,
+        paddingVertical: 14,
+        paddingHorizontal: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 12,
+        borderWidth: 2,
+        borderColor: '#5A52E5',
+    },
+    previewButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
 });
