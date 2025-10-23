@@ -1,6 +1,6 @@
 import { PaytoneOne_400Regular, useFonts } from '@expo-google-fonts/paytone-one';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -12,6 +12,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     PaytoneOne_400Regular: PaytoneOne_400Regular,
@@ -55,8 +56,13 @@ export default function RootLayout() {
         <Stack.Screen name="terms-of-use" options={{ headerShown: false }} />
         <Stack.Screen name="privacy-policies" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="seller/shop" options={{ headerShown: false}} />
+        <Stack.Screen name="seller/shopCategories" options={{ headerShown: false}} />
+        <Stack.Screen name="seller/shopProductList" options={{ headerShown: false}} />
+        <Stack.Screen name="seller/shopAddProduct" options={{ headerShown: false}} />
+        <Stack.Screen name="seller/shopAddCategories" options={{ headerShown: false}} />
+        
       </Stack>
-
       <StatusBar style="auto" />
     </ThemeProvider>
   );
