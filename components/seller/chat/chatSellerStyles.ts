@@ -51,7 +51,7 @@ export const chatSellerStyles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        marginRight: 12,
+        marginHorizontal: 12,
         paddingHorizontal: 12,
         paddingVertical: 10,
         borderRadius: 20,
