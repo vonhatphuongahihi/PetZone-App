@@ -61,8 +61,9 @@ model Store {
 
 model Conversation {
   id         Int                         @id @default(autoincrement())
+  theme      String?                     @default("#0ED3AF")
   createdAt  DateTime                    @default(now()) @map("created_at")
-  updatedAt  DateTime?                   @map("updated_at")
+  updatedAt  DateTime?                   @default(now()) @map("updated_at")
   messages   Message[]
   participants ConversationParticipant[]
 
@@ -74,6 +75,7 @@ model Message {
   conversationId Int          @map("conversation_id")
   senderId       String       @map("sender_id")
   body           String?
+  imageUrl       String?      @map("image_url")
   readAt         DateTime?    @map("read_at")
   createdAt      DateTime     @default(now()) @map("created_at")
 

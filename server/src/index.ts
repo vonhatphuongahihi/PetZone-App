@@ -7,6 +7,10 @@ import http from 'http';
 import morgan from 'morgan';
 import { setupSocket } from './socket/socket';
 
+import authRoutes from './routes/auth';
+import chatRoutes from './routes/chat';
+import storeRoutes from './routes/store';
+
 dotenv.config();
 
 export const prisma = new PrismaClient();
@@ -47,10 +51,6 @@ app.get('/health', (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
-
-import authRoutes from './routes/auth';
-import chatRoutes from './routes/chat';
-import storeRoutes from './routes/store';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/store', storeRoutes);
