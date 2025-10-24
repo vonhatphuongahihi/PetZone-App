@@ -3,7 +3,6 @@ import { Response } from 'express';
 import multer from 'multer';
 import {
     findOrCreateOneToOneConversation,
-    findUserInConversations,
     listMessages,
     listUserConversations,
     markRead,
@@ -33,36 +32,6 @@ const upload = multer({
 });
 
 export const chatController = {
-    // Tìm user trong các conversations
-    searchUser: async (req: any, res: Response) => {
-        try {
-            const { q } = req.query;
-            
-            if (!q || typeof q !== 'string' || q.trim().length < 2) {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'Query phải có ít nhất 2 ký tự' 
-                });
-            }
-
-            const users = await findUserInConversations(req.user.id, q.trim());
-            
-            if (!users || users.length === 0) {
-                return res.status(404).json({ 
-                    error: 'NotFound', 
-                    message: 'Không tìm thấy user nào trong các cuộc trò chuyện' 
-                });
-            }
-
-            res.json(users);
-        } catch (error: any) {
-            console.error('Search user error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi server!', 
-                message: error?.message || 'Không thể tìm user' 
-            });
-        }
-    },
 
     // Tạo hoặc tìm conversation giữa 2 users
     createOrFindConversation: async (req: any, res: Response) => {
