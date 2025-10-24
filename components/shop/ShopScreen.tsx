@@ -72,27 +72,6 @@ export default function ShopScreen() {
         }
     }, []);
 
-    // Test API nhanh
-    const testAPI = useCallback(async () => {
-        try {
-            console.log("🧪 Testing API...");
-            const token = await tokenService.getToken();
-            if (token) {
-                const response = await fetch("http://192.168.1.147:3001/api/categories", {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-                const data = await response.json();
-                console.log("API Test Result:", data);
-            }
-        } catch (err) {
-            console.error("API Test Error:", err);
-        }
-    }, []);
-
     // Lần đầu load dữ liệu
     useEffect(() => {
         fetchData();
@@ -196,9 +175,6 @@ export default function ShopScreen() {
                     <Text style={styles.headerTitle}>Cửa hàng của tôi</Text>
 
                     <View style={styles.iconGroup}>
-                        <TouchableOpacity onPress={testAPI}>
-                            <Ionicons name="bug-outline" size={22} color="#fff" style={styles.icon} />
-                        </TouchableOpacity>
                         <Ionicons name="notifications-outline" size={22} color="#fff" style={styles.icon} />
                         <Ionicons name="chatbubble-ellipses-outline" size={22} color="#fff" style={styles.icon} />
                         <Ionicons name="search-outline" size={22} color="#fff" style={styles.icon} />
