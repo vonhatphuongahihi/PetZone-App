@@ -4,9 +4,6 @@ import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-// Tìm user trong các cuộc trò chuyện của người dùng hiện tại
-router.get('/users/search', authMiddleware as any, chatController.searchUser);
-
 // Tạo hoặc tìm conversation giữa 2 users
 router.post('/conversations', authMiddleware as any, chatController.createOrFindConversation);
 
