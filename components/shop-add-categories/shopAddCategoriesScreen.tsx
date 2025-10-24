@@ -13,12 +13,15 @@ import {
     View,
 } from "react-native";
 import { headerStyles, imagePickerStyles, styles, successModalStyles } from "./shopAddCategories";
+import { categoryService } from "../../services/categoryService";
+import { tokenService } from "../../services/tokenService";
 
 export default function AddCategoryScreen() {
   const [mainCategory, setMainCategory] = useState("");
   const [subCategory, setSubCategory] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -28,12 +31,46 @@ export default function AddCategoryScreen() {
     if (!result.canceled) setImage(result.assets[0].uri);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!mainCategory.trim() || !subCategory.trim() || !image) {
       Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ các trường bắt buộc");
       return;
     }
-    setSuccessModalVisible(true);
+
+    try {
+      setLoading(true);
+      const token = await tokenService.getToken();
+      if (!token) {
+        Alert.alert("Lỗi", "Không tìm thấy token đăng nhập");
+        return;
+      }
+
+      // Tạo FormData với ảnh
+      const formData = new FormData();
+      formData.append('parentName', mainCategory.trim());
+      formData.append('childName', subCategory.trim());
+      
+      // Tạo file object từ URI
+      const response = await fetch(image);
+      const blob = await response.blob();
+      const file = {
+        uri: image,
+        type: 'image/jpeg',
+        name: 'category-image.jpg',
+      } as any;
+      
+      formData.append('image', file);
+
+      const result = await categoryService.createCategory(formData, token);
+
+      console.log('✅ Category created successfully:', result);
+      setSuccessModalVisible(true);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      Alert.alert("Lỗi", error instanceof Error ? error.message : "Có lỗi xảy ra khi tạo danh mục");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -79,8 +116,14 @@ export default function AddCategoryScreen() {
         </TouchableOpacity>
 
         {/* Nút submit */}
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Thêm danh mục</Text>
+        <TouchableOpacity 
+          style={[styles.submitButton, loading && { opacity: 0.7 }]} 
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          <Text style={styles.submitButtonText}>
+            {loading ? "Đang thêm..." : "Thêm danh mục"}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -96,6 +139,10 @@ export default function AddCategoryScreen() {
               style={successModalStyles.button}
               onPress={() => {
                 setSuccessModalVisible(false);
+                // Reset form
+                setMainCategory("");
+                setSubCategory("");
+                setImage(null);
                 router.back();
               }}
             >

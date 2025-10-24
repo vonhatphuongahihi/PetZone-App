@@ -159,4 +159,3 @@ model ConversationParticipant {
   @@index([userId])
   @@map("conversation_participants")
 }
->>>>>>> 68f410882b648daadda1c02025407564107d620e

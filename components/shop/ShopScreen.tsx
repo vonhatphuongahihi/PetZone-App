@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     FlatList,
     Image,
@@ -9,6 +9,11 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { Category as ApiCategory, categoryService } from "../../services/categoryService";
+import { Product as ApiProduct, productService } from "../../services/productService";
+import { Store, storeService } from "../../services/storeService";
+import { tokenService } from "../../services/tokenService";
+import { SellerBottomNavigation } from "../seller/SellerBottomNavigation";
 import styles from "./shopStyle";
 
 interface Product {
@@ -30,108 +35,133 @@ interface Category {
     id: string;
     name: string;
     icon: ImageSourcePropType;
-    parentId?: string; 
+    parentId?: string;
 }
-
-const categories = [
-    { id: "1", name: "Thức ăn", icon: require("../../assets/images/food-icon.png") },
-    { id: "2", name: "Đồ chơi", icon: require("../../assets/images/toy-icon.png") },
-    { id: "3", name: "Phụ kiện", icon: require("../../assets/images/accessory-icon.png") },
-    { id: "4", name: "Dụng cụ", icon: require("../../assets/images/tool-icon.png") },
-    { id: "5", name: "Quần áo", icon: require("../../assets/images/clothes-icon.png") },
-];
-
-const products: Product[] = [
-    {
-        id: "p1",
-        name: "Vòng Cổ Màu Vàng Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shopName: "phuong-shop",
-        shopImage: require("../../assets/images/shop.png"),
-        sold: 1000,
-        category: "Vòng cổ",
-        rating: 5,
-        image: require("../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-        stock: 12,
-    },
-    {
-        id: "p2",
-        name: "Vòng Cổ Màu Đỏ Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shopName: "phuong-shop",
-        shopImage: require("../../assets/images/shop.png"),
-        sold: 500,
-        category: "Vòng cổ",
-        rating: 4.5,
-        image: require("../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-        stock: 12,
-    },
-    {
-        id: "p3",
-        name: "Vòng Cổ Màu Xanh Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shopName: "phuong-shop",
-        shopImage: require("../../assets/images/shop.png"),
-        sold: 800,
-        category: "Vòng cổ",
-        rating: 4.8,
-        image: require("../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-        stock: 12,
-    },
-    {
-        id: "p4",
-        name: "Vòng Cổ Màu Hồng Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shopName: "phuong-shop",
-        shopImage: require("../../assets/images/shop.png"),
-        sold: 650,
-        category: "Vòng cổ",
-        rating: 4.9,
-        image: require("../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-        stock: 12,
-    },
-];
 
 export default function ShopScreen() {
     const [activeTab, setActiveTab] = useState<"Sản phẩm" | "Danh mục">("Sản phẩm");
+    const [store, setStore] = useState<Store | null>(null);
+    const [apiProducts, setApiProducts] = useState<ApiProduct[]>([]);
+    const [apiCategories, setApiCategories] = useState<ApiCategory[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [shouldRefresh, setShouldRefresh] = useState(false);
 
-    const renderItem = ({ item }: { item: Product }) => (
+    // Hàm fetch dữ liệu chính
+    const fetchData = useCallback(async () => {
+        try {
+            console.log("🔄 Fetching shop data...");
+            setLoading(true);
+            const token = await tokenService.getToken();
+            if (token) {
+                const storeResponse = await storeService.getMyStore(token);
+                setStore(storeResponse.store);
+                console.log("Store loaded:", storeResponse.store.storeName);
+
+                const productsResponse = await productService.getProductsByStore(storeResponse.store.id, token);
+                setApiProducts(productsResponse.data);
+                console.log("Products loaded:", productsResponse.data.length);
+
+                const categoriesResponse = await categoryService.getAllCategories(token);
+                setApiCategories(categoriesResponse.data);
+                console.log("Categories loaded:", categoriesResponse.data.length);
+            }
+        } catch (err) {
+            console.error("Error fetching data:", err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // Test API nhanh
+    const testAPI = useCallback(async () => {
+        try {
+            console.log("🧪 Testing API...");
+            const token = await tokenService.getToken();
+            if (token) {
+                const response = await fetch("http://192.168.1.147:3001/api/categories", {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+                const data = await response.json();
+                console.log("API Test Result:", data);
+            }
+        } catch (err) {
+            console.error("API Test Error:", err);
+        }
+    }, []);
+
+    // Lần đầu load dữ liệu
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    // Refresh khi quay lại màn hình
+    useFocusEffect(
+        useCallback(() => {
+            console.log("Shop screen focused, refreshing data...");
+            setShouldRefresh(true);
+        }, [])
+    );
+
+    // Khi flag shouldRefresh bật
+    useEffect(() => {
+        if (shouldRefresh) {
+            fetchData();
+            setShouldRefresh(false);
+        }
+    }, [shouldRefresh, fetchData]);
+
+    // Refresh định kỳ mỗi 30s
+    useEffect(() => {
+        const interval = setInterval(fetchData, 30000);
+        return () => clearInterval(interval);
+    }, [fetchData]);
+
+    const renderItem = ({ item }: { item: ApiProduct }) => (
         <View style={styles.card}>
             <View style={styles.imageWrapper}>
-                <Image source={item.image} style={styles.productImage} />
+                <Image
+                    source={
+                        item.images && item.images.length > 0
+                            ? { uri: item.images[0].url }
+                            : require("../../assets/images/cat.png")
+                    }
+                    style={styles.productImage}
+                />
                 <View style={styles.stockTag}>
-                    <Text style={styles.stockTagText}>Còn lại {item.stock}</Text>
+                    <Text style={styles.stockTagText}>Còn lại {item.quantity}</Text>
                 </View>
             </View>
 
             <Text style={styles.productName} numberOfLines={2}>
-                {item.name}
+                {item.title}
             </Text>
 
             <View style={styles.priceRow}>
-                <Text style={styles.productPrice}>{item.price.toLocaleString()}đ</Text>
+                <Text style={styles.productPrice}>{Number(item.price).toLocaleString()}đ</Text>
                 {item.oldPrice && (
-                    <Text style={styles.oldPrice}>{item.oldPrice.toLocaleString()}đ</Text>
+                    <>
+                        <Text style={styles.oldPrice}>
+                            {Number(item.oldPrice).toLocaleString()}đ
+                        </Text>
+                        <Text style={styles.discount}>
+                            -{Math.round((1 - Number(item.price) / Number(item.oldPrice)) * 100)}%
+                        </Text>
+                    </>
                 )}
-                {item.discount && <Text style={styles.discount}>{item.discount}</Text>}
             </View>
 
             <View style={styles.metaRow}>
-                <Text style={styles.soldLabel}>Đã bán {item.sold}</Text>
-                <Text style={styles.rating}>★ {item.rating}</Text>
+                <Text style={styles.soldLabel}>Đã bán {item.totalReviews}</Text>
+                <Text style={styles.rating}>★ {Number(item.avgRating).toFixed(1)}</Text>
             </View>
         </View>
     );
 
-    const renderCategoryItem = ({ item }: { item: Category }) => (
+    const renderCategoryItem = ({ item }: { item: ApiCategory }) => (
         <TouchableOpacity
             style={styles.categoryCard}
             onPress={() =>
@@ -141,17 +171,16 @@ export default function ShopScreen() {
                 })
             }
         >
-            <View
-                style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                }}
-            >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Image source={item.icon} style={styles.categoryIcon} />
-                    <Text style={styles.categoryName}>{item.name}</Text>
-                </View>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                    source={
+                        item.image
+                            ? { uri: item.image }
+                            : require("../../assets/images/food-icon.png")
+                    }
+                    style={styles.categoryIcon}
+                />
+                <Text style={styles.categoryName}>{item.name}</Text>
             </View>
         </TouchableOpacity>
     );
@@ -161,12 +190,15 @@ export default function ShopScreen() {
             {/* HEADER */}
             <View style={styles.header}>
                 <View style={styles.headerTop}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push("/seller/dashboard")}>
                         <Ionicons name="chevron-back-outline" size={24} color="#fff" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Cửa hàng của tôi</Text>
 
                     <View style={styles.iconGroup}>
+                        <TouchableOpacity onPress={testAPI}>
+                            <Ionicons name="bug-outline" size={22} color="#fff" style={styles.icon} />
+                        </TouchableOpacity>
                         <Ionicons name="notifications-outline" size={22} color="#fff" style={styles.icon} />
                         <Ionicons name="chatbubble-ellipses-outline" size={22} color="#fff" style={styles.icon} />
                         <Ionicons name="search-outline" size={22} color="#fff" style={styles.icon} />
@@ -174,18 +206,19 @@ export default function ShopScreen() {
                 </View>
 
                 <View style={styles.shopInfo}>
-                    <Image
-                        source={require("../../assets/images/cat.png")}
-                        style={styles.avatar}
-                    />
+                    <Image source={require("../../assets/images/cat.png")} style={styles.avatar} />
                     <View style={styles.shopTextContainer}>
-                        <Text style={styles.shopName}>phuong-shop</Text>
-                        <Text style={styles.subText}>★ 4.8 | 100 Người đã mua</Text>
+                        <Text style={styles.shopName}>
+                            {store?.storeName || "phuong-shop"}
+                        </Text>
+                        <Text style={styles.subText}>
+                            ★ {store?.rating ? Number(store.rating).toFixed(1) : "4.8"} |{" "}
+                            {store?.totalOrders || 100} Người đã mua
+                        </Text>
                     </View>
                 </View>
 
                 <View style={styles.buttonRow}>
-                    {/* Nút thêm sản phẩm */}
                     <TouchableOpacity
                         style={styles.addButton}
                         onPress={() => router.push("/seller/shopAddProduct")}
@@ -194,7 +227,6 @@ export default function ShopScreen() {
                         <Text style={styles.addButtonText}>Sản phẩm</Text>
                     </TouchableOpacity>
 
-                    {/*Nút thêm danh mục - ĐÃ THÊM onPress */}
                     <TouchableOpacity
                         style={styles.addButton}
                         onPress={() => router.push("/seller/shopAddCategories")}
@@ -211,10 +243,8 @@ export default function ShopScreen() {
                     style={[styles.tab, activeTab === "Sản phẩm" && styles.activeTab]}
                     onPress={() => setActiveTab("Sản phẩm")}
                 >
-                    <Text
-                        style={activeTab === "Sản phẩm" ? styles.activeTabText : styles.tabText}
-                    >
-                        Sản phẩm ({products.length})
+                    <Text style={activeTab === "Sản phẩm" ? styles.activeTabText : styles.tabText}>
+                        Sản phẩm ({apiProducts.length})
                     </Text>
                 </TouchableOpacity>
                 <View style={styles.tabDivider} />
@@ -222,21 +252,23 @@ export default function ShopScreen() {
                     style={[styles.tab, activeTab === "Danh mục" && styles.activeTab]}
                     onPress={() => setActiveTab("Danh mục")}
                 >
-                    <Text
-                        style={activeTab === "Danh mục" ? styles.activeTabText : styles.tabText}
-                    >
-                        Danh mục ({categories.length})
+                    <Text style={activeTab === "Danh mục" ? styles.activeTabText : styles.tabText}>
+                        Danh mục ({apiCategories.length})
                     </Text>
                 </TouchableOpacity>
             </View>
 
             {/* LIST */}
-            {activeTab === "Sản phẩm" ? (
+            {loading ? (
+                <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                    <Text>Đang tải dữ liệu...</Text>
+                </View>
+            ) : activeTab === "Sản phẩm" ? (
                 <FlatList
                     key="products"
-                    data={products}
+                    data={apiProducts}
                     renderItem={renderItem}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item) => item.id.toString()}
                     numColumns={2}
                     contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 10 }}
                     showsVerticalScrollIndicator={false}
@@ -244,13 +276,16 @@ export default function ShopScreen() {
             ) : (
                 <FlatList
                     key="items"
-                    data={categories}
+                    data={apiCategories}
                     renderItem={renderCategoryItem}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={{ padding: 16 }}
                     showsVerticalScrollIndicator={false}
                 />
             )}
+
+            {/* BOTTOM NAV */}
+            <SellerBottomNavigation />
         </View>
     );
 }

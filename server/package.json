@@ -34,9 +34,9 @@
     "nodemailer": "^7.0.6",
     "prisma": "^6.16.2",
     "react-native-svg": "^15.13.0",
-    "streamifier": "^0.1.1",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "streamifier": "^0.1.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

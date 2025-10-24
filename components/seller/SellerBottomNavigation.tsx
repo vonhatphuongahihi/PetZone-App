@@ -24,7 +24,7 @@ const navigationItems: NavigationItem[] = [
     {
         id: 'store',
         label: 'Cửa hàng',
-        route: '/seller/store',
+        route: '/seller/shop',
         icon: ProductIcon,
     },
     {
