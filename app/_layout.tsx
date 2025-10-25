@@ -1,17 +1,19 @@
 import { PaytoneOne_400Regular, useFonts } from '@expo-google-fonts/paytone-one';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getSocket } from '@/services/socket';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     PaytoneOne_400Regular: PaytoneOne_400Regular,
@@ -20,6 +22,26 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
+
+      // Initialize Socket.IO connection for real-time features
+      const initSocket = async () => {
+        try {
+          // Check if user is logged in before initializing socket
+          const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+          const token = await AsyncStorage.getItem('jwt_token');
+
+          if (token) {
+            await getSocket();
+            console.log('[App] Socket.IO initialized for logged-in user');
+          } else {
+            console.log('[App] No token found, skipping Socket.IO initialization');
+          }
+        } catch (error) {
+          console.log('[App] Socket.IO initialization failed:', error);
+        }
+      };
+
+      initSocket();
     }
   }, [fontsLoaded]);
 
@@ -55,8 +77,13 @@ export default function RootLayout() {
         <Stack.Screen name="terms-of-use" options={{ headerShown: false }} />
         <Stack.Screen name="privacy-policies" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
+        <Stack.Screen name="seller/shop" options={{ headerShown: false }} />
+        <Stack.Screen name="seller/shopCategories" options={{ headerShown: false }} />
+        <Stack.Screen name="seller/shopProductList" options={{ headerShown: false }} />
+        <Stack.Screen name="seller/shopAddProduct" options={{ headerShown: false }} />
+        <Stack.Screen name="seller/shopAddCategories" options={{ headerShown: false }} />
 
+      </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
   );

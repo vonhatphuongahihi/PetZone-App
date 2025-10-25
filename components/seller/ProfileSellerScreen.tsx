@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Image,
+    Modal,
     ScrollView,
     StyleSheet,
     Text,
@@ -15,7 +16,7 @@ import { SellerTopNavigation } from './SellerTopNavigation';
 
 export default function ProfileSellerScreen() {
     const router = useRouter();
-    
+
     const [storeInfo, setStoreInfo] = useState({
         storeName: 'PET SHOP',
         description: 'Cửa hàng chuyên cung cấp đồ dùng cho chó mèo như là đồ ăn thức uống, cát vệ sinh, đồ chơi cho thú cưng, áo quần đồ thời trang cho chó mèo, dây chuyền cổ... Phuong Shop cam kết mang lại chất lượng tốt.',
@@ -27,6 +28,7 @@ export default function ProfileSellerScreen() {
     const [isEditing, setIsEditing] = useState(false);
     const [avatarUri, setAvatarUri] = useState<string | null>(null);
     const [coverUri, setCoverUri] = useState<string | null>(null);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const handleImageUpload = () => {
         // Placeholder for image picker functionality
@@ -39,10 +41,36 @@ export default function ProfileSellerScreen() {
         console.log('Upload cover photo');
     };
 
+    const handleLogout = () => {
+        setShowLogoutModal(true);
+    };
+
+    const confirmLogout = async () => {
+        setShowLogoutModal(false);
+        try {
+            // Xóa token khỏi AsyncStorage
+            const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('jwt_token');
+
+            // Disconnect Socket.IO
+            const { disconnectSocket } = await import('../../services/socket');
+            disconnectSocket();
+        } catch (e) {
+            console.error('Error during logout:', e);
+        }
+        // Chuyển về trang đăng nhập
+        router.replace('/login');
+    };
+
+    const cancelLogout = () => {
+        setShowLogoutModal(false);
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <SellerTopNavigation />
-            
+
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Cover Photo Section */}
                 <View style={styles.coverContainer}>
@@ -54,26 +82,26 @@ export default function ProfileSellerScreen() {
                         }
                         style={styles.coverPhoto}
                     />
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.coverEditButton}
                         onPress={handleCoverUpload}
                     >
                         <Text style={styles.coverEditIcon}>📷</Text>
                         <Text style={styles.coverEditText}>Đổi ảnh bìa</Text>
                     </TouchableOpacity>
-                    
+
                     {/* Avatar overlapping cover photo */}
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatarWrapper}>
-                            <Image 
+                            <Image
                                 source={
-                                    avatarUri 
+                                    avatarUri
                                         ? { uri: avatarUri }
                                         : require('@/assets/images/icon.png')
                                 }
                                 style={styles.avatarImage}
                             />
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.cameraButton}
                                 onPress={handleImageUpload}
                             >
@@ -116,7 +144,7 @@ export default function ProfileSellerScreen() {
                         <TextInput
                             style={[styles.input, styles.textArea]}
                             value={storeInfo.description}
-                            onChangeText={(text) => setStoreInfo({...storeInfo, description: text})}
+                            onChangeText={(text) => setStoreInfo({ ...storeInfo, description: text })}
                             multiline
                             numberOfLines={6}
                             textAlignVertical="top"
@@ -130,7 +158,7 @@ export default function ProfileSellerScreen() {
                         <TextInput
                             style={styles.input}
                             value={storeInfo.phoneNumber}
-                            onChangeText={(text) => setStoreInfo({...storeInfo, phoneNumber: text})}
+                            onChangeText={(text) => setStoreInfo({ ...storeInfo, phoneNumber: text })}
                             keyboardType="phone-pad"
                             editable={isEditing}
                         />
@@ -155,7 +183,7 @@ export default function ProfileSellerScreen() {
                         <TextInput
                             style={[styles.input, styles.addressInput]}
                             value={storeInfo.address}
-                            onChangeText={(text) => setStoreInfo({...storeInfo, address: text})}
+                            onChangeText={(text) => setStoreInfo({ ...storeInfo, address: text })}
                             multiline
                             numberOfLines={3}
                             textAlignVertical="top"
@@ -191,13 +219,44 @@ export default function ProfileSellerScreen() {
                     </View>
 
                     {/* Logout Button */}
-                    <TouchableOpacity style={styles.logoutButton}>
+                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                         <Text style={styles.logoutButtonText}>Đăng xuất</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
-            
+
             <SellerBottomNavigation />
+
+            {/* Logout Confirmation Modal */}
+            <Modal
+                visible={showLogoutModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={cancelLogout}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        {/* Cat Image */}
+                        <Image
+                            source={require("../../assets/images/icon.png")}
+                            style={styles.modalCatImage}
+                        />
+
+                        {/* Modal Text */}
+                        <Text style={styles.modalTitle}>Đăng xuất khỏi PetZone?</Text>
+
+                        {/* Modal Buttons */}
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity style={styles.modalCancelButton} onPress={cancelLogout}>
+                                <Text style={styles.modalCancelButtonText}>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.modalConfirmButton} onPress={confirmLogout}>
+                                <Text style={styles.modalConfirmButtonText}>Đăng xuất</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -211,7 +270,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingBottom: 80,
     },
-    
+
     // Header Section
     headerSection: {
         paddingHorizontal: 20,
@@ -430,6 +489,60 @@ const styles = StyleSheet.create({
     },
     logoutButtonText: {
         color: '#E74C3C',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '80%',
+        maxWidth: 300,
+    },
+    modalCatImage: {
+        width: 80,
+        height: 80,
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 30,
+        textAlign: 'center',
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        gap: 15,
+    },
+    modalCancelButton: {
+        backgroundColor: '#f0f0f0',
+        paddingHorizontal: 25,
+        paddingVertical: 12,
+        borderRadius: 25,
+    },
+    modalCancelButtonText: {
+        color: '#666',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    modalConfirmButton: {
+        backgroundColor: '#FBBC05',
+        paddingHorizontal: 25,
+        paddingVertical: 12,
+        borderRadius: 25,
+    },
+    modalConfirmButtonText: {
+        color: '#fff',
         fontSize: 16,
         fontWeight: '600',
     },

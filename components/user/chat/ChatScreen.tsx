@@ -1,146 +1,184 @@
-import { API_BASE_URL } from '@/services/authService';
-import { getSocket } from '@/services/socket';
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Image, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useChatLogic } from '../../../hooks/useChatLogic';
+import { Message } from '../../../services/chatService';
 import { chatStyles } from './chatStyles';
+import ChatOptionsModal from './modals/ChatOptionsModal';
+import DeleteConfirmationModal from './modals/DeleteConfirmationModal';
+import ThemeSelectionModal from './modals/ThemeSelectionModal';
 
-type Msg = { id: number; conversationId: number; senderId: string; body: string; createdAt: string; readAt?: string | null; temp?: boolean };
+// Helper functions for time formatting and date checking
+const formatMessageTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+};
+
+const formatDateSeparator = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+};
+
+const isDifferentDate = (date1: string, date2: string): boolean => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return d1.getDate() !== d2.getDate() ||
+        d1.getMonth() !== d2.getMonth() ||
+        d1.getFullYear() !== d2.getFullYear();
+};
 
 export default function ChatScreen() {
     const router = useRouter();
     const { chatId } = useLocalSearchParams<{ chatId: string }>();
     const conversationId = Number(chatId);
-    const [items, setItems] = useState<Msg[]>([]);
-    const [text, setText] = useState('');
-    const listRef = useRef<FlatList<Msg>>(null);
-    const [isTyping, setIsTyping] = useState(false);
-    const [isPeerOnline, setIsPeerOnline] = useState<boolean | null>(null);
-    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [myUserId, setMyUserId] = useState<string | null>(null);
-    const [lastReadAt, setLastReadAt] = useState<string | null>(null);
-    const [peerName, setPeerName] = useState<string>('');
 
+    // Use custom hook for chat logic
+    const {
+        items,
+        text,
+        isTyping,
+        isPeerOnline,
+        myUserId,
+        peerName,
+        isLoadingMore,
+        chatTheme,
+        listRef,
+        lastMessageReadStatus,
+        send,
+        pickImage,
+        onChangeText,
+        loadMoreMessages,
+        updateTheme,
+        deleteConversation,
+    } = useChatLogic(conversationId);
+
+    // Modal states
+    const [showOptionsModal, setShowOptionsModal] = useState(false);
+    const [showThemeModal, setShowThemeModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [shouldShowRead, setShouldShowRead] = useState(false);
+
+    // Update shouldShowRead when lastMessageReadStatus changes
     useEffect(() => {
-        let mounted = true;
-        (async () => {
-            try {
-                const token = await AsyncStorage.getItem('jwt_token');
-                if (token) {
-                    const resMe = await fetch(`${API_BASE_URL}/auth/me`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (resMe.ok) {
-                        const me = await resMe.json();
-                        setMyUserId(me.user?.id || null);
-                    }
-                }
-            } catch { }
+        // Check if last message is mine and has been read
+        if (items.length > 0) {
+            const lastMessage = items[items.length - 1];
+            const isLastMine = myUserId ? lastMessage.senderId === myUserId : false;
+            const newShouldShowRead = isLastMine && lastMessageReadStatus;
+            setShouldShowRead(newShouldShowRead);
+        } else {
+            setShouldShowRead(false);
+        }
+    }, [items, lastMessageReadStatus, myUserId]);
 
-            const socket = await getSocket();
-            // rejoin khi reconnect
-            socket.on('connect', () => {
-                socket.emit('join_conversation', conversationId);
-                socket.emit('mark_read', conversationId);
-            });
-            socket.emit('join_conversation', conversationId);
-            socket.emit('mark_read', conversationId);
-            socket.on('message:new', (m: Msg) => {
-                if (m.conversationId !== conversationId || !mounted) return;
-                setItems(prev => {
-                    if (myUserId && m.senderId === myUserId) {
-                        const idx = [...prev].reverse().findIndex(x => x.temp && x.body === m.body);
-                        if (idx !== -1) {
-                            const realIdx = prev.length - 1 - idx;
-                            const next = prev.slice();
-                            next[realIdx] = { ...m, temp: false };
-                            return next;
-                        }
-                    }
-                    return [...prev, m];
-                });
-            });
-            socket.on('typing', () => setIsTyping(true));
-            socket.on('stop_typing', () => setIsTyping(false));
-            socket.on('presence:online', () => setIsPeerOnline(true));
-            socket.on('presence:offline', () => setIsPeerOnline(false));
-            socket.on('message:read', (payload: { conversationId: number; userId: string; readAt: string }) => {
-                if (payload.conversationId !== conversationId) return;
-                if (payload.userId !== myUserId) {
-                    setLastReadAt(payload.readAt);
-                }
-                setItems(prev => prev.map(m => ({ ...m, readAt: m.readAt ?? (payload.userId !== myUserId ? payload.readAt : m.readAt) })));
-            });
-
-            const token = await AsyncStorage.getItem('jwt_token');
-            // Load peer name from conversations
-            try {
-                const convs = await axios.get(`${API_BASE_URL}/chat/conversations`, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : undefined
-                });
-                const conv = Array.isArray(convs.data) ? convs.data.find((c: any) => c.id === conversationId) : null;
-                if (conv && myUserId) {
-                    const other = (conv.participants || []).find((p: any) => p.userId !== myUserId);
-                    const name = other?.user?.username || other?.user?.email || '';
-                    if (name) setPeerName(name);
-                }
-            } catch { }
-
-            const res = await axios.get(`${API_BASE_URL}/chat/messages/${conversationId}`, {
-                headers: token ? { Authorization: `Bearer ${token}` } : undefined
-            });
-            if (mounted) setItems(res.data.items);
-
-            return () => {
-                mounted = false;
-                socket.emit('leave_conversation', conversationId);
-                socket.off('message:new');
-                socket.off('connect');
-                socket.off('typing');
-                socket.off('stop_typing');
-                socket.off('message:read');
-                socket.off('presence:online');
-                socket.off('presence:offline');
-            };
-        })();
-    }, [conversationId]);
-
-    const send = async () => {
-        const body = text.trim();
-        if (!body) return;
-        const socket = await getSocket();
-        socket.emit('send_message', { conversationId, body });
-        setText('');
+    // Modal handlers
+    const handleOptionsClose = () => setShowOptionsModal(false);
+    const handleChangeTheme = () => {
+        setShowOptionsModal(false);
+        setShowThemeModal(true);
+    };
+    const handleDeleteChat = () => {
+        setShowOptionsModal(false);
+        setShowDeleteModal(true);
+    };
+    const handleThemeSelect = (theme: string) => {
+        updateTheme(theme);
+        setShowThemeModal(false);
+    };
+    const handleDeleteConfirm = () => {
+        deleteConversation();
+        setShowDeleteModal(false);
     };
 
-    const onChangeText = async (val: string) => {
-        setText(val);
-        const socket = await getSocket();
-        socket.emit('typing', conversationId);
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-        typingTimeoutRef.current = setTimeout(async () => {
-            const s = await getSocket();
-            s.emit('stop_typing', conversationId);
-        }, 800);
-    };
-
-    const renderMessage = ({ item }: { item: Msg }) => {
+    const renderMessage = ({ item, index }: { item: Message; index: number }) => {
         const isMe = myUserId ? item.senderId === myUserId : false;
         const isLastMine = isMe && items.length > 0 && items[items.length - 1]?.id === item.id;
-        const timeLabel = new Date(item.createdAt).toLocaleTimeString();
-        return (
-            <View style={[chatStyles.messageRow, isMe ? chatStyles.rightAlign : chatStyles.leftAlign]}>
-                <View style={[chatStyles.bubble, isMe ? chatStyles.myBubble : chatStyles.shopBubble]}>
-                    <Text style={[chatStyles.messageText, isMe ? chatStyles.myText : chatStyles.shopText]}>{item.body}</Text>
+
+        const timeLabel = formatMessageTime(item.createdAt);
+
+        // Check if we need to show date separator
+        const showDateSeparator = index === 0 ||
+            (index > 0 && isDifferentDate(item.createdAt, items[index - 1].createdAt));
+
+        if (item.imageUrl) {
+            // Render image message without bubble
+            return (
+                <View>
+                    {showDateSeparator && (
+                        <View style={chatStyles.dateSeparator}>
+                            <Text style={chatStyles.dateSeparatorText}>
+                                {formatDateSeparator(item.createdAt)}
+                            </Text>
+                        </View>
+                    )}
+                    <View style={[chatStyles.messageRow, isMe ? chatStyles.rightAlign : chatStyles.leftAlign]}>
+                        <View style={{ alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                            <Image
+                                source={{ uri: item.imageUrl }}
+                                style={{
+                                    width: 240,
+                                    height: 200,
+                                    borderRadius: 12,
+                                    marginBottom: 4,
+                                }}
+                                resizeMode="contain"
+                            />
+                            {item.body && item.body !== '[Ảnh]' ? (
+                                <View style={[
+                                    chatStyles.bubble,
+                                    isMe ? { ...chatStyles.myBubble, backgroundColor: chatTheme } : chatStyles.shopBubble,
+                                    { marginTop: 4 }
+                                ]}>
+                                    <Text style={[chatStyles.messageText, isMe ? chatStyles.myText : chatStyles.shopText]}>
+                                        {item.body}
+                                    </Text>
+                                </View>
+                            ) : null}
+                            <Text style={chatStyles.time}>
+                                {timeLabel}
+                                {isLastMine && shouldShowRead ? ' • Đã đọc' : ''}
+                            </Text>
+                        </View>
+                    </View>
                 </View>
-                <Text style={chatStyles.time}>
-                    {timeLabel}
-                    {isLastMine && lastReadAt ? ' • Đã đọc' : ''}
-                </Text>
+            );
+        }
+
+        // Render text message with bubble
+        return (
+            <View>
+                {showDateSeparator && (
+                    <View style={chatStyles.dateSeparator}>
+                        <Text style={chatStyles.dateSeparatorText}>
+                            {formatDateSeparator(item.createdAt)}
+                        </Text>
+                    </View>
+                )}
+                <View style={[chatStyles.messageRow, isMe ? chatStyles.rightAlign : chatStyles.leftAlign]}>
+                    <View style={[
+                        chatStyles.bubble,
+                        isMe ? { ...chatStyles.myBubble, backgroundColor: chatTheme } : chatStyles.shopBubble
+                    ]}>
+                        <Text style={[chatStyles.messageText, isMe ? chatStyles.myText : chatStyles.shopText]}>
+                            {item.body}
+                        </Text>
+                    </View>
+                    <Text style={chatStyles.time}>
+                        {timeLabel}
+                        {isLastMine && shouldShowRead ? ' • Đã đọc' : ''}
+                    </Text>
+                </View>
             </View>
         );
     };
@@ -148,6 +186,28 @@ export default function ChatScreen() {
     return (
         <>
             <Stack.Screen options={{ headerShown: false }} />
+
+            {/* Modals */}
+            <ChatOptionsModal
+                visible={showOptionsModal}
+                onClose={handleOptionsClose}
+                onChangeTheme={handleChangeTheme}
+                onDeleteChat={handleDeleteChat}
+            />
+
+            <ThemeSelectionModal
+                visible={showThemeModal}
+                onClose={() => setShowThemeModal(false)}
+                currentTheme={chatTheme}
+                onSelectTheme={handleThemeSelect}
+            />
+
+            <DeleteConfirmationModal
+                visible={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDeleteConfirm}
+            />
+
             <SafeAreaView style={chatStyles.container}>
                 <View style={chatStyles.header}>
                     <View style={chatStyles.headerLeft}>
@@ -160,10 +220,10 @@ export default function ChatScreen() {
                         </View>
                         <View>
                             <Text style={chatStyles.name}>{peerName}</Text>
-                            <Text style={chatStyles.status}>{isTyping ? 'Đang nhập…' : (isPeerOnline ? 'Đang hoạt động' : 'Ngoại tuyến')}</Text>
+                            <Text style={chatStyles.status}>{isPeerOnline ? 'Đang hoạt động' : 'Ngoại tuyến'}</Text>
                         </View>
                     </View>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => setShowOptionsModal(true)}>
                         <Feather name="more-vertical" color="#FBBC05" size={24} />
                     </TouchableOpacity>
                 </View>
@@ -171,9 +231,29 @@ export default function ChatScreen() {
                 <FlatList
                     ref={listRef}
                     data={items}
-                    keyExtractor={(item) => String(item.id)}
+                    keyExtractor={(item) => `msg-${item.id}`}
                     renderItem={renderMessage}
                     contentContainerStyle={chatStyles.messagesContainer}
+                    extraData={isTyping}
+                    inverted={false}
+                    onEndReached={loadMoreMessages}
+                    onEndReachedThreshold={0.1}
+                    ListHeaderComponent={
+                        isLoadingMore ? (
+                            <View style={{ padding: 16, alignItems: 'center' }}>
+                                <Text style={{ color: '#666', fontSize: 14 }}>Đang tải tin nhắn cũ...</Text>
+                            </View>
+                        ) : null
+                    }
+                    ListFooterComponent={() => (
+                        isTyping ? (
+                            <View style={{ paddingHorizontal: 8, paddingVertical: 8 }}>
+                                <Text style={{ color: '#666', fontStyle: 'italic', fontSize: 14 }}>
+                                    {peerName || 'Người dùng'} đang nhập...
+                                </Text>
+                            </View>
+                        ) : <View style={{ height: 8 }} />
+                    )}
                 />
 
                 <KeyboardAvoidingView
@@ -181,6 +261,9 @@ export default function ChatScreen() {
                     keyboardVerticalOffset={80}
                 >
                     <View style={chatStyles.inputRow}>
+                        <TouchableOpacity onPress={pickImage}>
+                            <FontAwesome6 name="image" solid color={chatTheme} size={24} />
+                        </TouchableOpacity>
                         <TextInput
                             placeholder="Nhập tin nhắn"
                             placeholderTextColor="#999"
@@ -190,7 +273,7 @@ export default function ChatScreen() {
                             onSubmitEditing={send}
                             returnKeyType="send"
                         />
-                        <TouchableOpacity style={chatStyles.sendButton} onPress={send}>
+                        <TouchableOpacity style={[chatStyles.sendButton, { backgroundColor: chatTheme }]} onPress={send}>
                             <FontAwesome5 name="paper-plane" size={18} color="#fff" />
                         </TouchableOpacity>
                     </View>

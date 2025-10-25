@@ -49,11 +49,15 @@ app.get('/health', (req, res) => {
 });
 
 import authRoutes from './routes/auth';
+import categoryRoutes from './routes/category';
 import chatRoutes from './routes/chat';
+import productRoutes from './routes/product';
 import storeRoutes from './routes/store';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/store', storeRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use('/api/chat', chatRoutes);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -84,7 +88,10 @@ process.on('SIGTERM', async () => {
 });
 
 const httpServer = http.createServer(app);
-setupSocket(httpServer);
+const io = setupSocket(httpServer);
+
+// Export socket instance để controller có thể access
+export const getSocketInstance = () => io;
 
 httpServer.listen(PORT, () => {
     console.log(`🚀 PetZone API + Socket đang chạy trên cổng ${PORT}`);
