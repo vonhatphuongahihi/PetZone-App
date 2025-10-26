@@ -82,9 +82,21 @@ export default function ProfileScreen() {
             <Text style={styles.cardTitle}>Hồ sơ</Text>
           </View>
           <View style={styles.row}>
-            <MenuItem icon="person" label="Tài khoản" />
-            <MenuItem icon="shopping-cart" label="Giỏ hàng" />
-            <MenuItem icon="location-on" label="Địa chỉ" />
+            <MenuItem 
+              icon="person" 
+              label="Tài khoản" 
+              onPress={() => router.push('/user-info')} 
+            />
+            <MenuItem 
+              icon="shopping-cart" 
+              label="Giỏ hàng"
+              onPress={() => router.push('/cart')} 
+            />
+            <MenuItem 
+              icon="location-on" 
+              label="Địa chỉ"
+              onPress={() => router.push('/addAddress')} 
+            />
           </View>
         </View>
 

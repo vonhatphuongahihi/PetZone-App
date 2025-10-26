@@ -1,5 +1,5 @@
 // Store Service
-const API_BASE_URL = 'http://10.0.113.150:3001/api';
+const API_BASE_URL = 'http://10.0.180.200:3001/api';
 
 export interface CreateStoreData {
     storeName: string;

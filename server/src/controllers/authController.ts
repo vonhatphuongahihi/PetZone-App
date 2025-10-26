@@ -168,7 +168,7 @@ export const authController = {
 
             const user = await prisma.user.findUnique({
                 where: { id: userId },
-                select: { id: true, email: true, username: true, role: true, createdAt: true, updatedAt: true }
+                select: { id: true, email: true, username: true, role: true, isActive: true, createdAt: true, updatedAt: true }
             });
 
             if (!user) {
@@ -180,5 +180,62 @@ export const authController = {
             console.error('Get me error:', error);
             res.status(401).json({ error: 'Token không hợp lệ', message: 'Token xác thực không hợp lệ hoặc đã hết hạn' });
         }
-    }
+    },
+
+    updateProfile: async (req: Request, res: Response) => {
+        try {
+            const token = req.headers.authorization?.replace('Bearer ', '');
+            if (!token) {
+                return res.status(401).json({ error: 'Không có token', message: 'Token xác thực là bắt buộc' });
+            }
+
+            const decoded = verifyJwt(token);
+            const userId = (decoded as any).userId;
+            if (!userId) {
+                return res.status(401).json({ error: 'Token không hợp lệ', message: 'Token xác thực không hợp lệ' });
+            }
+
+            const { username } = req.body;
+
+            if (!username || username.trim() === '') {
+                return res.status(400).json({ error: 'Thiếu thông tin', message: 'Tên người dùng là bắt buộc' });
+            }
+
+            // Check if username already exists for other users
+            const existingUser = await prisma.user.findFirst({
+                where: {
+                    username: username.trim(),
+                    id: { not: userId }
+                }
+            });
+
+            if (existingUser) {
+                return res.status(409).json({ error: 'Username đã tồn tại', message: 'Tên người dùng này đã được sử dụng' });
+            }
+
+            const updatedUser = await prisma.user.update({
+                where: { id: userId },
+                data: { username: username.trim() },
+                select: { 
+                    id: true, 
+                    email: true, 
+                    username: true, 
+                    role: true, 
+                    isActive: true,
+                    createdAt: true, 
+                    updatedAt: true 
+                }
+            });
+
+            res.json({ 
+                message: 'Cập nhật thông tin thành công', 
+                user: updatedUser 
+            });
+        } catch (error) {
+            console.error('Update profile error:', error);
+            res.status(500).json({ error: 'Cập nhật thất bại', message: 'Đã xảy ra lỗi trong quá trình cập nhật thông tin' });
+        }
+    },
+
+
 };
