@@ -39,6 +39,15 @@ export default function LoginScreen() {
             // Save token and user data to storage
             await tokenService.saveAuthData(response.token, response.user);
 
+            // Reconnect Socket.IO with new token for real-time features
+            try {
+                const { disconnectSocket, getSocket } = await import('../../services/socket');
+                disconnectSocket(); // Disconnect old connection if any
+                await getSocket(); // Create new connection with new token
+            } catch (socketError) {
+                console.log('[LoginScreen] Socket.IO reconnection failed:', socketError);
+            }
+
             // Check user role and redirect accordingly
             if (response.user.role === 'SELLER') {
                 // For sellers, check if they have a store

@@ -36,7 +36,6 @@ const privacyItems = [
 
 export default function PrivacyPoliciesScreen() {
   const handleItemPress = (title: string) => {
-    // Điều hướng đến trang chi tiết của từng mục
     console.log(`Navigating to: ${title}`);
   };
 

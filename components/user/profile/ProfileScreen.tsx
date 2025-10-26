@@ -19,8 +19,13 @@ export default function ProfileScreen() {
       // Nếu dùng AsyncStorage
       const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
       await AsyncStorage.removeItem('token');
+      await AsyncStorage.removeItem('jwt_token'); // Xóa cả jwt_token
+
+      // Disconnect Socket.IO
+      const { disconnectSocket } = await import('../../../services/socket');
+      disconnectSocket();
     } catch (e) {
-      // Nếu không có AsyncStorage, bỏ qua
+      console.error('Error during logout:', e);
     }
     // Chuyển về trang đăng nhập
     router.replace('/login');
