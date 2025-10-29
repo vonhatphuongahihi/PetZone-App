@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { chatService, Conversation } from "../../../services/chatService";
+import { getOnlineUsers } from "../../../services/onlineUsersService";
 import { tokenService } from "../../../services/tokenService";
 import { messagesStyles } from './messagesStyles';
 
@@ -15,15 +16,175 @@ export default function MessagesScreen() {
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
+  const [typingUsers, setTypingUsers] = useState<Record<number, string[]>>({});
 
   useEffect(() => {
     getCurrentUserId();
+    loadOnlineUsers();
+
+    // Listen for real-time online/offline events
+    const handleUserOnline = (event: any) => {
+      const { userId } = event.detail;
+      setOnlineUsers(prev => {
+        const newSet = new Set([...prev, userId]);
+        return newSet;
+      });
+    };
+
+    const handleUserOffline = (event: any) => {
+      const { userId } = event.detail;
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    };
+
+    // Listen for new messages to update conversations list
+    const handleNewMessage = (event: any) => {
+      const { message } = event.detail;
+
+      // Update conversations list to show unread message
+      setConversations(prev => {
+        const updated = prev.map(conv => {
+          if (conv.id === message.conversationId) {
+            // Update conversation with new message and timestamp
+            const updatedConv = {
+              ...conv,
+              updatedAt: message.createdAt,
+              messages: [...(conv.messages || []), message]
+            };
+            return updatedConv;
+          }
+          return conv;
+        });
+
+        // Sort by updatedAt to show latest conversations first
+        const sorted = updated.sort((a, b) =>
+          new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+        );
+
+        return sorted;
+      });
+
+      // Also update filtered conversations if search is active
+      if (isSearchVisible && searchQuery) {
+        setFilteredConversations(prev => {
+          const updated = prev.map(conv => {
+            if (conv.id === message.conversationId) {
+              return {
+                ...conv,
+                updatedAt: message.createdAt,
+                messages: [...(conv.messages || []), message]
+              };
+            }
+            return conv;
+          });
+
+          return updated.sort((a, b) =>
+            new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+          );
+        });
+      }
+    };
+
+    // Listen for unread conversation notifications
+    const handleUnreadNotification = (event: any) => {
+      const { conversationId, message, senderId, senderName, timestamp } = event.detail;
+      // Only update if this is not from current user
+      if (senderId === currentUserId) {
+        return;
+      }
+
+      // Update conversations list first
+      setConversations(prev => {
+        const updated = prev.map(conv => {
+          if (conv.id === conversationId) {
+            const updatedConv = {
+              ...conv,
+              updatedAt: timestamp,
+              messages: [...(conv.messages || []), message]
+            };
+            return updatedConv;
+          }
+          return conv;
+        });
+
+        // Sort by updatedAt to show latest conversations first
+        return updated.sort((a, b) =>
+          new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+        );
+      });
+
+    };
+
+    // Listen for typing events
+    const handleTyping = (event: any) => {
+      const { conversationId, userId } = event.detail;
+
+      if (userId === currentUserId) return;
+
+      setTypingUsers(prev => {
+        const currentTyping = prev[conversationId] || [];
+        if (!currentTyping.includes(userId)) {
+          return {
+            ...prev,
+            [conversationId]: [...currentTyping, userId]
+          };
+        }
+        return prev;
+      });
+    };
+
+    const handleStopTyping = (event: any) => {
+      const { conversationId, userId } = event.detail;
+
+      if (userId === currentUserId) return; // Ignore self typing
+
+      setTypingUsers(prev => {
+        const currentTyping = prev[conversationId] || [];
+        return {
+          ...prev,
+          [conversationId]: currentTyping.filter(id => id !== userId)
+        };
+      });
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('user_online', handleUserOnline);
+      window.addEventListener('user_offline', handleUserOffline);
+      window.addEventListener('conversation:unread', handleUnreadNotification);
+      window.addEventListener('conversation:typing', handleTyping);
+      window.addEventListener('conversation:stop_typing', handleStopTyping);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('user_online', handleUserOnline);
+        window.removeEventListener('user_offline', handleUserOffline);
+        window.removeEventListener('conversation:unread', handleUnreadNotification);
+        window.removeEventListener('conversation:typing', handleTyping);
+        window.removeEventListener('conversation:stop_typing', handleStopTyping);
+      }
+    };
   }, []);
+
+  const loadOnlineUsers = async () => {
+    try {
+      const onlineUserIds = await getOnlineUsers(true);
+      setOnlineUsers(new Set(onlineUserIds));
+    } catch (error) {
+      console.error('[MessagesScreen] Error loading online users:', error);
+    }
+  };
 
   // Refresh conversations whenever screen comes into focus
   useFocusEffect(
     useCallback(() => {
       loadConversations();
+      loadOnlineUsers();
     }, [])
   );
 
@@ -67,7 +228,7 @@ export default function MessagesScreen() {
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    
+
     if (query.trim() === '') {
       setFilteredConversations(conversations);
       return;
@@ -76,7 +237,7 @@ export default function MessagesScreen() {
     // Tìm kiếm theo tên user
     const filtered = conversations.filter((conversation) => {
       const otherUser = getOtherUser(conversation);
-      
+
       return (
         otherUser.username.toLowerCase().includes(query.toLowerCase())
       );
@@ -107,7 +268,9 @@ export default function MessagesScreen() {
 
   const getLastMessage = useCallback((conversation: Conversation) => {
     if (conversation.messages && conversation.messages.length > 0) {
-      return conversation.messages[0].body || 'Tin nhắn';
+      // Get the last message (most recent)
+      const lastMsg = conversation.messages[conversation.messages.length - 1];
+      return lastMsg.body || 'Tin nhắn';
     }
     return 'Chưa có tin nhắn';
   }, []);
@@ -120,7 +283,7 @@ export default function MessagesScreen() {
       // Filter logic inline để tránh dependency issues
       const filtered = conversations.filter((conversation) => {
         const otherUser = getOtherUser(conversation);
-        
+
         return (
           otherUser.username.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -141,57 +304,57 @@ export default function MessagesScreen() {
     if (diffInMinutes < 1) {
       return 'Vừa xong';
     }
-    
+
     // Nếu trong vòng 1 giờ
     if (diffInMinutes < 60) {
       return `${diffInMinutes} phút`;
     }
-    
+
     // Nếu trong ngày hôm nay
     if (diffInHours < 24 && date.getDate() === now.getDate()) {
-      return date.toLocaleTimeString('vi-VN', { 
-        hour: '2-digit', 
+      return date.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
         minute: '2-digit',
-        hour12: false 
+        hour12: false
       });
     }
-    
+
     // Nếu hôm qua
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-    if (date.getDate() === yesterday.getDate() && 
-        date.getMonth() === yesterday.getMonth() && 
-        date.getFullYear() === yesterday.getFullYear()) {
+    if (date.getDate() === yesterday.getDate() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getFullYear() === yesterday.getFullYear()) {
       return 'Hôm qua';
     }
-    
+
     // Nếu trong tuần này (1-7 ngày trước)
     if (diffInDays < 7) {
       return date.toLocaleDateString('vi-VN', { weekday: 'short' }); // Thứ 2, Thứ 3...
     }
-    
+
     // Nếu trong năm nay
     if (date.getFullYear() === now.getFullYear()) {
-      return date.toLocaleDateString('vi-VN', { 
-        day: '2-digit', 
-        month: '2-digit' 
+      return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit'
       }); // 15/10
     }
-    
+
     // Nếu khác năm
-    return date.toLocaleDateString('vi-VN', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: '2-digit' 
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
     }); // 15/10/23
   };
 
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
-    
+
     const regex = new RegExp(`(${query})`, 'gi');
     const parts = text.split(regex);
-    
+
     return parts.map((part, index) => {
       if (part.toLowerCase() === query.toLowerCase()) {
         return (
@@ -208,6 +371,33 @@ export default function MessagesScreen() {
     const otherUser = getOtherUser(item);
     const lastMessage = getLastMessage(item);
     const time = item.updatedAt ? formatRelativeTime(item.updatedAt) : '';
+    const isOtherUserOnline = onlineUsers.has(otherUser.id);
+
+    // Check if there are unread messages
+    const unreadCount = unreadCounts[item.id] || 0;
+
+    // Check if the last message is from someone else (not current user)
+    const lastMessageObj = item.messages && item.messages.length > 0 ? item.messages[item.messages.length - 1] : null;
+    const isLastMessageFromOther = lastMessageObj && String(lastMessageObj.senderId) !== String(currentUserId);
+
+    const hasUnreadMessages = item.participants?.some((participant: any) => {
+      // If this is the current user's participant record
+      if (participant.userId === currentUserId) {
+        // Only show unread if last message is from someone else AND lastReadAt is older than updatedAt
+        if (isLastMessageFromOther && participant.lastReadAt && item.updatedAt) {
+          return new Date(participant.lastReadAt) < new Date(item.updatedAt);
+        }
+        // If no lastReadAt but conversation has updatedAt and last message is from other, consider it unread
+        return isLastMessageFromOther && !participant.lastReadAt && item.updatedAt;
+      }
+      return false;
+    }) || false;
+
+    // Check if someone is typing in this conversation
+    const conversationTypingUsers = typingUsers[item.id] || [];
+    const isTyping = conversationTypingUsers.length > 0;
+    const typingText = isTyping ? `${otherUser.username} đang nhập...` : lastMessage;
+
     // const avatarSource = otherUser.avatarUrl ? { uri: otherUser.avatarUrl } : require("../../../assets/images/shop.png");
 
     return (
@@ -219,20 +409,43 @@ export default function MessagesScreen() {
       >
         {/* Avatar */}
         <View style={messagesStyles.avatarContainer}>
-          <Image 
-            source={require("../../../assets/images/shop.png")} 
-            style={messagesStyles.avatar} 
+          <Image
+            source={require("../../../assets/images/shop.png")}
+            style={messagesStyles.avatar}
           />
-          {otherUser.isActive && <View style={messagesStyles.onlineDot} />}
+          {/* Hiển thị nút xanh khi user thực sự online */}
+          {isOtherUserOnline && <View style={messagesStyles.onlineDot} />}
         </View>
 
         {/* Nội dung tin nhắn */}
         <View style={messagesStyles.messageContent}>
-          <Text style={messagesStyles.name}>
-            {isSearchVisible && searchQuery ? highlightText(otherUser.username, searchQuery) : otherUser.username}
-          </Text>
-          <Text style={messagesStyles.text} numberOfLines={1}>
-            {lastMessage}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[messagesStyles.name, hasUnreadMessages && { fontWeight: 'bold' }]}>
+              {isSearchVisible && searchQuery ? highlightText(otherUser.username, searchQuery) : otherUser.username}
+            </Text>
+            {hasUnreadMessages && (
+              <View style={{
+                backgroundColor: '#FF3B30',
+                borderRadius: 10,
+                minWidth: 20,
+                height: 20,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginLeft: 8,
+                paddingHorizontal: 6
+              }}>
+                <Text style={{
+                  color: 'white',
+                  fontSize: 12,
+                  fontWeight: 'bold'
+                }}>
+                  {unreadCount > 99 ? '99+' : unreadCount || '1'}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text style={[messagesStyles.text, hasUnreadMessages && { fontWeight: 'bold' }, isTyping && { fontStyle: 'italic', color: '#666' }]} numberOfLines={1}>
+            {typingText}
           </Text>
         </View>
 
@@ -280,7 +493,7 @@ export default function MessagesScreen() {
             onChangeText={handleSearchChange}
             autoFocus={true}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={messagesStyles.cancelButton}
             onPress={handleCancelSearch}
           >

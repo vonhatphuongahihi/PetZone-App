@@ -42,6 +42,19 @@ export const chatSellerStyles = StyleSheet.create({
     myText: { color: "#fff" },
     shopText: { color: "#000" },
     time: { fontSize: 11, color: "#999", marginTop: 4 },
+    dateSeparator: {
+        alignItems: 'center',
+        marginVertical: 16,
+    },
+    dateSeparatorText: {
+        fontSize: 12,
+        color: '#666',
+        backgroundColor: '#F0F0F0',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        fontWeight: '500',
+    },
 
     inputRow: {
         flexDirection: "row",

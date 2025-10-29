@@ -13,7 +13,7 @@ export function useChatLogic(conversationId: number) {
     const [text, setText] = useState('');
     const listRef = useRef<FlatList<Message>>(null);
     const [isTyping, setIsTyping] = useState(false);
-    const [isPeerOnline, setIsPeerOnline] = useState<boolean | null>(null);
+    const [isPeerOnline, setIsPeerOnline] = useState<boolean>(false);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [myUserId, setMyUserId] = useState<string | null>(null);
     const myUserIdRef = useRef<string | null>(null);
@@ -45,56 +45,54 @@ export function useChatLogic(conversationId: number) {
             } catch { }
 
             const socket = await getSocket();
-            
+
             // Prevent multiple joins for the same conversation
             const joinConversation = () => {
                 if (hasJoinedRef.current) return;
                 hasJoinedRef.current = true;
-                console.log('Joining conversation for the first time:', conversationId);
-                // Reset presence state when joining conversation
-                setIsPeerOnline(false);
                 socket.emit('join_conversation', conversationId);
-                
+
                 // Auto mark as read when joining conversation
                 setTimeout(() => {
                     socket.emit('mark_read', conversationId);
                 }, 1000); // Delay to ensure conversation is fully loaded
             };
-            
+
             // Join conversation immediately if socket is already connected
             if (socket.connected) {
                 joinConversation();
             }
-            
+
             // Socket event handlers
             socket.on('connect', () => {
                 console.log('Socket connected');
                 joinConversation();
             });
-            
+
             socket.on('message:new', (m: Message) => {
-                if (m.conversationId !== conversationId || !mounted) return;
+                if (m.conversationId !== conversationId || !mounted) {
+                    return;
+                }
                 setItems(prev => {
                     const exists = prev.some(x => x.id === m.id);
                     if (!exists) {
                         setTimeout(() => {
                             listRef.current?.scrollToEnd({ animated: true });
                         }, 100);
-                        
-                        // Auto mark as read if message is from peer (not from current user)
+
                         if (String(m.senderId) !== String(myUserIdRef.current)) {
                             setTimeout(async () => {
                                 const socket = await getSocket();
                                 socket.emit('mark_read', conversationId);
-                            }, 500); // Small delay to ensure user sees the message
+                            }, 500);
                         }
-                        
+
                         return [...prev, m];
                     }
                     return prev;
                 });
             });
-            
+
             socket.on('typing', (data: { userId: string }) => {
                 if (data.userId !== String(myUserIdRef.current)) {
                     setIsTyping(true);
@@ -103,43 +101,40 @@ export function useChatLogic(conversationId: number) {
                     }, 100);
                 }
             });
-            
+
             socket.on('stop_typing', (data: { userId: string }) => {
                 if (data.userId !== String(myUserIdRef.current)) {
                     setIsTyping(false);
                 }
             });
-            
-            socket.on('presence:online', (data: { userId: number }) => {
-                if (String(data.userId) !== myUserIdRef.current) {
+
+            // Listen for global online/offline events to update status
+            const handleUserOnline = (event: any) => {
+                const { userId } = event.detail;
+                if (userId !== myUserIdRef.current) {
                     setIsPeerOnline(true);
                 }
-            });
-            socket.on('presence:offline', (data: { userId: number }) => {
-                if (String(data.userId) !== myUserIdRef.current) {
+            };
+
+            const handleUserOffline = (event: any) => {
+                const { userId } = event.detail;
+                if (userId !== myUserIdRef.current) {
                     setIsPeerOnline(false);
                 }
-            });
-            
-            // Listen for peer joining/leaving the conversation
-            socket.on('peer_joined_conversation', (data: { userId: number }) => {
-                if (String(data.userId) !== myUserIdRef.current) {
-                    setIsPeerOnline(true);
-                }
-            });
-            socket.on('peer_left_conversation', (data: { userId: number }) => {
-                if (String(data.userId) !== myUserIdRef.current) {
-                    setIsPeerOnline(false);
-                }
-            });
-            
-        socket.on('message:read', (data) => {
-            if (!myUserIdRef.current) return;
-            
-            if (data.userId !== myUserIdRef.current) {
-                setLastMessageReadStatus(true);
+            };
+
+            if (typeof window !== 'undefined') {
+                window.addEventListener('user_online', handleUserOnline);
+                window.addEventListener('user_offline', handleUserOffline);
             }
-        });            socket.on('theme:updated', (payload: { conversationId: number; theme: string }) => {
+
+            socket.on('message:read', (data) => {
+                if (!myUserIdRef.current) return;
+
+                if (data.userId !== myUserIdRef.current) {
+                    setLastMessageReadStatus(true);
+                }
+            }); socket.on('theme:updated', (payload: { conversationId: number; theme: string }) => {
                 if (payload.conversationId !== conversationId) return;
                 setChatTheme(payload.theme);
             });
@@ -162,7 +157,6 @@ export function useChatLogic(conversationId: number) {
             return () => {
                 mounted = false;
                 hasJoinedRef.current = false; // Reset join flag
-                setIsPeerOnline(false); // Reset presence state when leaving
                 socket.emit('leave_conversation', conversationId);
                 socket.off('message:new');
                 socket.off('connect');
@@ -170,10 +164,12 @@ export function useChatLogic(conversationId: number) {
                 socket.off('stop_typing');
                 socket.off('message:read');
                 socket.off('theme:updated');
-                socket.off('presence:online');
-                socket.off('presence:offline');
-                socket.off('peer_joined_conversation');
-                socket.off('peer_left_conversation');
+
+                // Remove global online/offline listeners
+                if (typeof window !== 'undefined') {
+                    window.removeEventListener('user_online', handleUserOnline);
+                    window.removeEventListener('user_offline', handleUserOffline);
+                }
             };
         })();
     }, [conversationId]);
@@ -193,43 +189,66 @@ export function useChatLogic(conversationId: number) {
         }, [conversationId])
     );
 
-    // Load conversation data
+    // Load conversation data and check peer online status
     useEffect(() => {
         if (!myUserId || !conversationId) return;
-        
+
         const loadConversationData = async () => {
             try {
                 const token = await AsyncStorage.getItem('jwt_token');
                 const conv = await chatService.getConversationDetail(conversationId, token || '');
-                
+
                 if (conv.theme) {
                     setChatTheme(conv.theme);
                 }
-                
+
                 const other = (conv.participants || []).find((p: any) => p.userId !== myUserId);
                 const name = other?.user?.username || other?.user?.email || '';
                 if (name) setPeerName(name);
+
+                // Check if peer is online from API
+                if (other?.userId) {
+                    try {
+                        const token = await AsyncStorage.getItem('jwt_token');
+                        if (token) {
+                            const response = await fetch(`${API_BASE_URL}/chat/online-users`, {
+                                headers: { Authorization: `Bearer ${token}` }
+                            });
+                            if (response.ok) {
+                                const data = await response.json();
+                                const onlineUsers = data.onlineUsers || [];
+                                const isOnline = onlineUsers.includes(other.userId);
+                                setIsPeerOnline(isOnline);
+                                console.log('🔌 [useChatLogic] Initial peer online status:', isOnline, 'for user:', other.userId);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('🔌 [useChatLogic] Error checking initial online status:', error);
+                        // Fallback: assume online if we can't check
+                        setIsPeerOnline(true);
+                    }
+                }
             } catch (error) {
                 console.error('Load conversation data error:', error);
             }
         };
-        
+
         loadConversationData();
     }, [myUserId, conversationId]);
 
     const loadMoreMessages = async () => {
         if (isLoadingMore || !hasMoreMessages || items.length === 0) return;
-        
+
         setIsLoadingMore(true);
         try {
             const token = await AsyncStorage.getItem('jwt_token');
             const oldestMessage = items[0];
             const messages = await chatService.getMessages(
-                conversationId, 
-                token || '', 
+                conversationId,
+                token || '',
                 oldestMessage.id
             );
-            
+
             if (messages.items && messages.items.length > 0) {
                 setItems(prev => [...messages.items, ...prev]);
                 setHasMoreMessages(messages.nextCursor !== null);
@@ -246,7 +265,7 @@ export function useChatLogic(conversationId: number) {
     const send = async () => {
         const body = text.trim();
         if (!body || !myUserId) return;
-        
+
         setText('');
         // Reset read status when sending new message
         setLastMessageReadStatus(false);
@@ -257,7 +276,7 @@ export function useChatLogic(conversationId: number) {
     const pickImage = async () => {
         try {
             const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            
+
             if (!permissionResult.granted) {
                 Alert.alert('Quyền truy cập', 'Cần quyền truy cập thư viện ảnh để gửi ảnh.');
                 return;
@@ -285,12 +304,12 @@ export function useChatLogic(conversationId: number) {
             if (!token || !myUserId) return;
 
             const data = await chatService.uploadImageAndSendMessage(imageUri, conversationId, token);
-            
+
             const socket = await getSocket();
-            socket.emit('send_message', { 
-                conversationId, 
-                body: '[Ảnh]', 
-                imageUrl: data.imageUrl 
+            socket.emit('send_message', {
+                conversationId,
+                body: '[Ảnh]',
+                imageUrl: data.imageUrl
             });
         } catch (error) {
             console.error('Upload image error:', error);
@@ -313,7 +332,7 @@ export function useChatLogic(conversationId: number) {
         try {
             const token = await AsyncStorage.getItem('jwt_token');
             await chatService.updateConversationTheme(conversationId, theme, token || '');
-            
+
             setChatTheme(theme);
 
             const socket = await getSocket();
@@ -361,7 +380,7 @@ export function useChatLogic(conversationId: number) {
         chatTheme,
         listRef,
         lastMessageReadStatus,
-        
+
         // Actions
         send,
         pickImage,

@@ -1,5 +1,5 @@
 // Chat Service for Frontend
-const API_BASE_URL = 'http://10.11.2.22:3001/api';
+const API_BASE_URL = 'http://10.0.180.200:3001/api';
 
 export interface User {
     id: string;

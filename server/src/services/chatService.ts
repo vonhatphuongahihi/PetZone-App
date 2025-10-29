@@ -15,7 +15,7 @@ export async function findOrCreateOneToOneConversation(userAId: string, userBId:
                 }
             }
         },
-        include: { 
+        include: {
             participants: true,
             _count: {
                 select: { participants: true }
@@ -32,11 +32,11 @@ export async function findOrCreateOneToOneConversation(userAId: string, userBId:
     }
 
     // Tạo conversation mới nếu chưa có
-    const conv = await db.conversation.create({ 
+    const conv = await db.conversation.create({
         data: {},
         include: { participants: true }
     });
-    
+
     await db.conversationParticipant.createMany({
         data: [
             { conversationId: conv.id, userId: userAId },

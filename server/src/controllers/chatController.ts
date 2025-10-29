@@ -19,7 +19,7 @@ cloudinary.config({
 // Multer config for memory storage (không lưu file local)
 const storage = multer.memoryStorage();
 
-const upload = multer({ 
+const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
@@ -37,19 +37,19 @@ export const chatController = {
     createOrFindConversation: async (req: any, res: Response) => {
         try {
             const { otherUserId } = req.body;
-            
+
             if (!otherUserId) {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'otherUserId là bắt buộc' 
+                return res.status(400).json({
+                    error: 'BadRequest',
+                    message: 'otherUserId là bắt buộc'
                 });
             }
 
             // Không thể tạo conversation với chính mình
             if (otherUserId === req.user.id) {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'Không thể tạo conversation với chính mình' 
+                return res.status(400).json({
+                    error: 'BadRequest',
+                    message: 'Không thể tạo conversation với chính mình'
                 });
             }
 
@@ -60,9 +60,9 @@ export const chatController = {
             });
 
             if (!otherUser) {
-                return res.status(404).json({ 
-                    error: 'NotFound', 
-                    message: 'User không tồn tại' 
+                return res.status(404).json({
+                    error: 'NotFound',
+                    message: 'User không tồn tại'
                 });
             }
 
@@ -70,9 +70,9 @@ export const chatController = {
             res.status(200).json(conversation);
         } catch (error: any) {
             console.error('Create conversation error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi server!', 
-                message: error?.message || 'Không thể tạo conversation' 
+            res.status(500).json({
+                error: 'Lỗi server!',
+                message: error?.message || 'Không thể tạo conversation'
             });
         }
     },
@@ -84,9 +84,9 @@ export const chatController = {
             res.json(data);
         } catch (error: any) {
             console.error('Get user conversations error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi server!', 
-                message: error?.message || 'Không thể lấy danh sách conversation' 
+            res.status(500).json({
+                error: 'Lỗi server!',
+                message: error?.message || 'Không thể lấy danh sách conversation'
             });
         }
     },
@@ -96,9 +96,9 @@ export const chatController = {
         try {
             const conversationId = Number(req.params.conversationId);
             if (isNaN(conversationId)) {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'conversationId không hợp lệ' 
+                return res.status(400).json({
+                    error: 'BadRequest',
+                    message: 'conversationId không hợp lệ'
                 });
             }
 
@@ -110,8 +110,8 @@ export const chatController = {
                     theme: true,
                     createdAt: true,
                     updatedAt: true,
-                    participants: { 
-                        include: { 
+                    participants: {
+                        include: {
                             user: {
                                 select: {
                                     id: true,
@@ -121,8 +121,8 @@ export const chatController = {
                             }
                         }
                     },
-                    messages: { 
-                        orderBy: { id: 'desc' }, 
+                    messages: {
+                        orderBy: { id: 'desc' },
                         take: 1,
                         include: {
                             sender: {
@@ -137,27 +137,27 @@ export const chatController = {
             });
 
             if (!conversation) {
-                return res.status(404).json({ 
-                    error: 'NotFound', 
-                    message: 'Conversation không tồn tại' 
+                return res.status(404).json({
+                    error: 'NotFound',
+                    message: 'Conversation không tồn tại'
                 });
             }
 
             // Kiểm tra user có quyền truy cập conversation này không
             const isParticipant = conversation.participants.some((p: any) => p.userId === req.user.id);
             if (!isParticipant) {
-                return res.status(403).json({ 
-                    error: 'Forbidden', 
-                    message: 'Bạn không có quyền truy cập conversation này' 
+                return res.status(403).json({
+                    error: 'Forbidden',
+                    message: 'Bạn không có quyền truy cập conversation này'
                 });
             }
 
             res.json(conversation);
         } catch (error: any) {
             console.error('Get conversation error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi server!', 
-                message: error?.message || 'Không thể lấy thông tin conversation' 
+            res.status(500).json({
+                error: 'Lỗi server!',
+                message: error?.message || 'Không thể lấy thông tin conversation'
             });
         }
     },
@@ -167,22 +167,22 @@ export const chatController = {
         try {
             const conversationId = Number(req.params.conversationId);
             if (isNaN(conversationId)) {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'conversationId không hợp lệ' 
+                return res.status(400).json({
+                    error: 'BadRequest',
+                    message: 'conversationId không hợp lệ'
                 });
             }
 
             const cursorId = req.query.cursorId ? Number(req.query.cursorId) : undefined;
             const limit = req.query.limit ? Number(req.query.limit) : 20;
-            
+
             const data = await listMessages(conversationId, cursorId, limit);
             res.json(data);
         } catch (error: any) {
             console.error('Get messages error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi server!', 
-                message: error?.message || 'Không thể lấy tin nhắn' 
+            res.status(500).json({
+                error: 'Lỗi server!',
+                message: error?.message || 'Không thể lấy tin nhắn'
             });
         }
     },
@@ -192,9 +192,9 @@ export const chatController = {
         try {
             const conversationId = Number(req.params.conversationId);
             if (isNaN(conversationId)) {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'conversationId không hợp lệ' 
+                return res.status(400).json({
+                    error: 'BadRequest',
+                    message: 'conversationId không hợp lệ'
                 });
             }
 
@@ -202,9 +202,9 @@ export const chatController = {
             res.status(200).json({ message: 'Đã đánh dấu đọc' });
         } catch (error: any) {
             console.error('Mark read error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi server!', 
-                message: error?.message || 'Không thể đánh dấu đã đọc' 
+            res.status(500).json({
+                error: 'Lỗi server!',
+                message: error?.message || 'Không thể đánh dấu đã đọc'
             });
         }
     },
@@ -213,11 +213,11 @@ export const chatController = {
     createMessage: async (req: any, res: Response) => {
         try {
             const { conversationId, body } = req.body || {};
-            
+
             if (!conversationId || !body || !String(body).trim()) {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'conversationId và body là bắt buộc' 
+                return res.status(400).json({
+                    error: 'BadRequest',
+                    message: 'conversationId và body là bắt buộc'
                 });
             }
 
@@ -225,9 +225,9 @@ export const chatController = {
             res.status(201).json(saved);
         } catch (error: any) {
             console.error('Create message error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi!', 
-                message: error?.message || 'Không thể tạo message' 
+            res.status(500).json({
+                error: 'Lỗi!',
+                message: error?.message || 'Không thể tạo message'
             });
         }
     },
@@ -238,17 +238,17 @@ export const chatController = {
         async (req: any, res: Response) => {
             try {
                 if (!req.file) {
-                    return res.status(400).json({ 
-                        error: 'BadRequest', 
-                        message: 'Không có file ảnh được upload' 
+                    return res.status(400).json({
+                        error: 'BadRequest',
+                        message: 'Không có file ảnh được upload'
                     });
                 }
 
                 const { conversationId } = req.body;
                 if (!conversationId) {
-                    return res.status(400).json({ 
-                        error: 'BadRequest', 
-                        message: 'conversationId là bắt buộc' 
+                    return res.status(400).json({
+                        error: 'BadRequest',
+                        message: 'conversationId là bắt buộc'
                     });
                 }
 
@@ -271,16 +271,16 @@ export const chatController = {
 
                 const cloudinaryResult = uploadResult as any;
                 const imageUrl = cloudinaryResult.secure_url;
-                
-                res.status(200).json({ 
+
+                res.status(200).json({
                     imageUrl,
-                    publicId: cloudinaryResult.public_id 
+                    publicId: cloudinaryResult.public_id
                 });
             } catch (error: any) {
                 console.error('Upload image error:', error);
-                res.status(500).json({ 
-                    error: 'Lỗi server!', 
-                    message: error?.message || 'Không thể upload ảnh' 
+                res.status(500).json({
+                    error: 'Lỗi server!',
+                    message: error?.message || 'Không thể upload ảnh'
                 });
             }
         }
@@ -293,24 +293,24 @@ export const chatController = {
             const { theme } = req.body;
 
             if (isNaN(conversationId)) {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'conversationId không hợp lệ' 
+                return res.status(400).json({
+                    error: 'BadRequest',
+                    message: 'conversationId không hợp lệ'
                 });
             }
 
             if (!theme || typeof theme !== 'string') {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'theme là bắt buộc và phải là string' 
+                return res.status(400).json({
+                    error: 'BadRequest',
+                    message: 'theme là bắt buộc và phải là string'
                 });
             }
 
             const { prisma } = await import('../db');
-            
+
             // Kiểm tra user có quyền update conversation này không
             const conversation = await (prisma as any).conversation.findFirst({
-                where: { 
+                where: {
                     id: conversationId,
                     participants: {
                         some: { userId: req.user.id }
@@ -319,9 +319,9 @@ export const chatController = {
             });
 
             if (!conversation) {
-                return res.status(404).json({ 
-                    error: 'NotFound', 
-                    message: 'Conversation không tồn tại hoặc bạn không có quyền cập nhật' 
+                return res.status(404).json({
+                    error: 'NotFound',
+                    message: 'Conversation không tồn tại hoặc bạn không có quyền cập nhật'
                 });
             }
 
@@ -331,15 +331,15 @@ export const chatController = {
                 data: { theme }
             });
 
-            res.status(200).json({ 
+            res.status(200).json({
                 message: 'Đã cập nhật màu chat thành công',
                 theme
             });
         } catch (error: any) {
             console.error('Update theme error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi server!', 
-                message: error?.message || 'Không thể cập nhật theme' 
+            res.status(500).json({
+                error: 'Lỗi server!',
+                message: error?.message || 'Không thể cập nhật theme'
             });
         }
     },
@@ -349,17 +349,17 @@ export const chatController = {
         try {
             const conversationId = Number(req.params.conversationId);
             if (isNaN(conversationId)) {
-                return res.status(400).json({ 
-                    error: 'BadRequest', 
-                    message: 'conversationId không hợp lệ' 
+                return res.status(400).json({
+                    error: 'BadRequest',
+                    message: 'conversationId không hợp lệ'
                 });
             }
 
             const { prisma } = await import('../db');
-            
+
             // Kiểm tra user có quyền xóa conversation này không
             const conversation = await (prisma as any).conversation.findFirst({
-                where: { 
+                where: {
                     id: conversationId,
                     participants: {
                         some: { userId: req.user.id }
@@ -368,9 +368,9 @@ export const chatController = {
             });
 
             if (!conversation) {
-                return res.status(404).json({ 
-                    error: 'NotFound', 
-                    message: 'Conversation không tồn tại hoặc bạn không có quyền xóa' 
+                return res.status(404).json({
+                    error: 'NotFound',
+                    message: 'Conversation không tồn tại hoặc bạn không có quyền xóa'
                 });
             }
 
@@ -378,11 +378,11 @@ export const chatController = {
             await (prisma as any).message.deleteMany({
                 where: { conversationId }
             });
-            
+
             await (prisma as any).conversationParticipant.deleteMany({
                 where: { conversationId }
             });
-            
+
             await (prisma as any).conversation.delete({
                 where: { id: conversationId }
             });
@@ -390,9 +390,39 @@ export const chatController = {
             res.status(200).json({ message: 'Đã xóa đoạn chat thành công' });
         } catch (error: any) {
             console.error('Delete conversation error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi server!', 
-                message: error?.message || 'Không thể xóa conversation' 
+            res.status(500).json({
+                error: 'Lỗi server!',
+                message: error?.message || 'Không thể xóa conversation'
+            });
+        }
+    },
+
+    // Lấy danh sách users đang online
+    getOnlineUsers: async (req: any, res: Response) => {
+        try {
+
+            // Import socket instance từ index.ts
+            const { getSocketInstance } = await import('../index');
+            const io = getSocketInstance();
+
+            if (!io || !(io as any).getOnlineUsers) {
+                return res.status(503).json({
+                    error: 'ServiceUnavailable',
+                    message: 'Socket.IO service không khả dụng'
+                });
+            }
+
+            const onlineUserIds = (io as any).getOnlineUsers();
+
+            res.status(200).json({
+                onlineUsers: onlineUserIds,
+                count: onlineUserIds.length
+            });
+        } catch (error: any) {
+            console.error('🌐 [API] Get online users error:', error);
+            res.status(500).json({
+                error: 'Lỗi server!',
+                message: error?.message || 'Không thể lấy danh sách users online'
             });
         }
     }

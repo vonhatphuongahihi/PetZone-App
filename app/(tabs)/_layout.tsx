@@ -1,4 +1,6 @@
 import { Tabs } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CategoriesIcon } from '../../assets/svg/CategoriesIcon';
 import { HomeIcon } from '../../assets/svg/HomeIcon';
@@ -7,7 +9,33 @@ import { ProfileUserIcon } from '../../assets/svg/ProfileUserIcon';
 
 export default function TabLayout() {
     const insets = useSafeAreaInsets();
-    
+    const [unreadCount, setUnreadCount] = useState<number>(0);
+
+    useEffect(() => {
+        // Listen for unread conversation notifications
+        const handleUnreadNotification = (event: any) => {
+            const { conversationId } = event.detail;
+            setUnreadCount(prev => prev + 1);
+        };
+
+        const handleMarkAsRead = (event: any) => {
+            const { conversationId } = event.detail;
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        };
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('conversation:unread', handleUnreadNotification);
+            window.addEventListener('conversation:read', handleMarkAsRead);
+        }
+
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('conversation:unread', handleUnreadNotification);
+                window.removeEventListener('conversation:read', handleMarkAsRead);
+            }
+        };
+    }, []);
+
     return (
         <Tabs
             screenOptions={{
@@ -47,7 +75,35 @@ export default function TabLayout() {
                 name="messages"
                 options={{
                     title: 'Nhắn tin',
-                    tabBarIcon: ({ color }) => <MessagesIcon color={color} size={28} />,
+                    tabBarIcon: ({ color }) => (
+                        <View style={{ position: 'relative' }}>
+                            <MessagesIcon color={color} size={28} />
+                            {unreadCount > 0 && (
+                                <View style={{
+                                    position: 'absolute',
+                                    top: -2,
+                                    right: -2,
+                                    backgroundColor: '#FF3B30',
+                                    borderRadius: 10,
+                                    minWidth: 20,
+                                    height: 20,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    paddingHorizontal: 6,
+                                    borderWidth: 2,
+                                    borderColor: '#FFFFFF',
+                                }}>
+                                    <Text style={{
+                                        color: '#FFFFFF',
+                                        fontSize: 10,
+                                        fontWeight: 'bold',
+                                    }}>
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    ),
                 }}
             />
             <Tabs.Screen

@@ -1,5 +1,5 @@
 // Store Service
-const API_BASE_URL = 'http://10.11.2.22:3001/api';
+const API_BASE_URL = 'http://10.0.180.200:3001/api';
 
 export interface CreateStoreData {
     storeName: string;
@@ -94,8 +94,6 @@ export const storeService = {
 
     checkStoreExists: async (token: string): Promise<boolean> => {
         try {
-            console.log('Checking store existence with token:', token ? 'Token exists' : 'No token');
-            console.log('API URL:', `${API_BASE_URL}/store/my-store`);
 
             const response = await fetch(`${API_BASE_URL}/store/my-store`, {
                 method: 'GET',
@@ -105,12 +103,9 @@ export const storeService = {
                 },
             });
 
-            console.log('Response status:', response.status);
-            console.log('Response ok:', response.ok);
 
             if (response.status === 404) {
-                console.log('Store not found (404)');
-                return false; // Store not found
+                return false;
             }
 
             if (!response.ok) {
@@ -120,15 +115,12 @@ export const storeService = {
             }
 
             const storeData = await response.json();
-            console.log('Store found:', storeData);
-            return true; // Store exists
+            return true;
         } catch (error) {
-            // If it's a network error or other issue, assume store doesn't exist
             console.error('Error checking store existence:', error);
             console.error('Error type:', typeof error);
             console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
 
-            // For network errors, return false (assume no store)
             return false;
         }
     }

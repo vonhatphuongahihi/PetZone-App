@@ -11,11 +11,38 @@ import ChatOptionsModal from './modals/ChatOptionsModal';
 import DeleteConfirmationModal from './modals/DeleteConfirmationModal';
 import ThemeSelectionModal from './modals/ThemeSelectionModal';
 
+// Helper functions for time formatting and date checking
+const formatMessageTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+};
+
+const formatDateSeparator = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+};
+
+const isDifferentDate = (date1: string, date2: string): boolean => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return d1.getDate() !== d2.getDate() ||
+        d1.getMonth() !== d2.getMonth() ||
+        d1.getFullYear() !== d2.getFullYear();
+};
+
 export default function ChatSellerScreen() {
     const router = useRouter();
     const { chatId } = useLocalSearchParams<{ chatId: string }>();
     const conversationId = Number(chatId);
-    
+
     // Use custom hook for chat logic
     const {
         items,
@@ -74,62 +101,84 @@ export default function ChatSellerScreen() {
         setShowDeleteModal(false);
     };
 
-    const renderMessage = ({ item }: { item: Message }) => {
+    const renderMessage = ({ item, index }: { item: Message; index: number }) => {
         const isMe = myUserId ? item.senderId === myUserId : false;
         const isLastMine = isMe && items.length > 0 && items[items.length - 1]?.id === item.id;
 
-        const timeLabel = new Date(item.createdAt).toLocaleTimeString();
-        
+        const timeLabel = formatMessageTime(item.createdAt);
+
+        // Check if we need to show date separator
+        const showDateSeparator = index === 0 ||
+            (index > 0 && isDifferentDate(item.createdAt, items[index - 1].createdAt));
+
         if (item.imageUrl) {
             // Render image message without bubble
             return (
-                <View style={[chatSellerStyles.messageRow, isMe ? chatSellerStyles.rightAlign : chatSellerStyles.leftAlign]}>
-                    <View style={{ alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                        <Image 
-                            source={{ uri: item.imageUrl }} 
-                            style={{ 
-                                width: 240,
-                                height: 200,
-                                borderRadius: 12,
-                                marginBottom: 4,
-                            }}
-                            resizeMode="contain"
-                        />
-                        {item.body && item.body !== '[Ảnh]' ? (
-                            <View style={[
-                                chatSellerStyles.bubble, 
-                                isMe ? { ...chatSellerStyles.myBubble, backgroundColor: chatTheme } : chatSellerStyles.shopBubble,
-                                { marginTop: 4 }
-                            ]}>
-                                <Text style={[chatSellerStyles.messageText, isMe ? chatSellerStyles.myText : chatSellerStyles.shopText]}>
-                                    {item.body}
-                                </Text>
-                            </View>
-                        ) : null}
-                        <Text style={chatSellerStyles.time}>
-                            {timeLabel}
-                            {isLastMine && shouldShowRead ? ' • Đã đọc' : ''}
-                        </Text>
+                <View>
+                    {showDateSeparator && (
+                        <View style={chatSellerStyles.dateSeparator}>
+                            <Text style={chatSellerStyles.dateSeparatorText}>
+                                {formatDateSeparator(item.createdAt)}
+                            </Text>
+                        </View>
+                    )}
+                    <View style={[chatSellerStyles.messageRow, isMe ? chatSellerStyles.rightAlign : chatSellerStyles.leftAlign]}>
+                        <View style={{ alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                            <Image
+                                source={{ uri: item.imageUrl }}
+                                style={{
+                                    width: 240,
+                                    height: 200,
+                                    borderRadius: 12,
+                                    marginBottom: 4,
+                                }}
+                                resizeMode="contain"
+                            />
+                            {item.body && item.body !== '[Ảnh]' ? (
+                                <View style={[
+                                    chatSellerStyles.bubble,
+                                    isMe ? { ...chatSellerStyles.myBubble, backgroundColor: chatTheme } : chatSellerStyles.shopBubble,
+                                    { marginTop: 4 }
+                                ]}>
+                                    <Text style={[chatSellerStyles.messageText, isMe ? chatSellerStyles.myText : chatSellerStyles.shopText]}>
+                                        {item.body}
+                                    </Text>
+                                </View>
+                            ) : null}
+                            <Text style={chatSellerStyles.time}>
+                                {timeLabel}
+                                {isLastMine && shouldShowRead ? ' • Đã đọc' : ''}
+                            </Text>
+                        </View>
                     </View>
                 </View>
             );
         }
-        
+
         // Render text message with bubble
         return (
-            <View style={[chatSellerStyles.messageRow, isMe ? chatSellerStyles.rightAlign : chatSellerStyles.leftAlign]}>
-                <View style={[
-                    chatSellerStyles.bubble, 
-                    isMe ? { ...chatSellerStyles.myBubble, backgroundColor: chatTheme } : chatSellerStyles.shopBubble
-                ]}>
-                    <Text style={[chatSellerStyles.messageText, isMe ? chatSellerStyles.myText : chatSellerStyles.shopText]}>
-                        {item.body}
+            <View>
+                {showDateSeparator && (
+                    <View style={chatSellerStyles.dateSeparator}>
+                        <Text style={chatSellerStyles.dateSeparatorText}>
+                            {formatDateSeparator(item.createdAt)}
+                        </Text>
+                    </View>
+                )}
+                <View style={[chatSellerStyles.messageRow, isMe ? chatSellerStyles.rightAlign : chatSellerStyles.leftAlign]}>
+                    <View style={[
+                        chatSellerStyles.bubble,
+                        isMe ? { ...chatSellerStyles.myBubble, backgroundColor: chatTheme } : chatSellerStyles.shopBubble
+                    ]}>
+                        <Text style={[chatSellerStyles.messageText, isMe ? chatSellerStyles.myText : chatSellerStyles.shopText]}>
+                            {item.body}
+                        </Text>
+                    </View>
+                    <Text style={chatSellerStyles.time}>
+                        {timeLabel}
+                        {isLastMine && shouldShowRead ? ' • Đã đọc' : ''}
                     </Text>
                 </View>
-                <Text style={chatSellerStyles.time}>
-                    {timeLabel}
-                    {isLastMine && shouldShowRead ? ' • Đã đọc' : ''}
-                </Text>
             </View>
         );
     };
@@ -137,7 +186,7 @@ export default function ChatSellerScreen() {
     return (
         <>
             <Stack.Screen options={{ headerShown: false }} />
-            
+
             {/* Modals */}
             <ChatOptionsModal
                 visible={showOptionsModal}

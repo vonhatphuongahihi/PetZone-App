@@ -31,6 +31,9 @@ router.patch('/conversations/:conversationId/theme', authMiddleware as any, chat
 // Xóa conversation
 router.delete('/conversations/:conversationId', authMiddleware as any, chatController.deleteConversation);
 
+// Lấy danh sách users đang online
+router.get('/online-users', authMiddleware as any, chatController.getOnlineUsers);
+
 export default router;
 
 
