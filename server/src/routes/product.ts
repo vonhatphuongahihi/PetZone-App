@@ -6,8 +6,12 @@ import {
     updateProduct,
     uploadImages,
 } from "../controllers/productController";
+import { authMiddleware } from "../middleware/auth";
 
 const router = express.Router();
+
+// Áp dụng authentication middleware cho tất cả routes
+router.use(authMiddleware);
 
 router.post("/", uploadImages, createProduct);
 

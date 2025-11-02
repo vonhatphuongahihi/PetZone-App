@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../db';
+import { prisma } from '../index';
 
 declare global {
     namespace Express {

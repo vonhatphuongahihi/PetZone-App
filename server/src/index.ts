@@ -58,6 +58,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/uploads', express.static('uploads'));
 app.use('/api/chat', chatRoutes);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
