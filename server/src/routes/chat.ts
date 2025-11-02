@@ -1,36 +1,39 @@
-import { Response, Router } from 'express';
+import { Router } from 'express';
+import { chatController } from '../controllers/chatController';
 import { authMiddleware } from '../middleware/auth';
-import { listMessages, listUserConversations, saveMessage } from '../services/chatService';
 
 const router = Router();
 
-router.get('/conversations', authMiddleware as any, async (req: any, res: Response) => {
-    const data = await listUserConversations(req.user.id);
-    res.json(data);
-});
+// Tạo hoặc tìm conversation giữa 2 users
+router.post('/conversations', authMiddleware as any, chatController.createOrFindConversation);
 
-router.get('/messages/:conversationId', authMiddleware as any, async (req: any, res: Response) => {
-    const conversationId = Number(req.params.conversationId);
-    const cursorId = req.query.cursorId ? Number(req.query.cursorId) : undefined;
-    const limit = req.query.limit ? Number(req.query.limit) : 20;
-    const data = await listMessages(conversationId, cursorId, limit);
-    res.json(data);
-});
+// Lấy danh sách conversations của user
+router.get('/conversations', authMiddleware as any, chatController.getUserConversations);
+
+// Lấy thông tin chi tiết của conversation
+router.get('/conversations/:conversationId', authMiddleware as any, chatController.getConversationDetail);
+
+// Lấy tin nhắn trong conversation
+router.get('/messages/:conversationId', authMiddleware as any, chatController.getMessages);
+
+// Đánh dấu tin nhắn đã đọc
+router.patch('/conversations/:conversationId/read', authMiddleware as any, chatController.markAsRead);
+
+// Tạo tin nhắn mới (for testing via REST)
+router.post('/messages', authMiddleware as any, chatController.createMessage);
+
+// Upload image và tạo tin nhắn
+router.post('/upload-image', authMiddleware as any, chatController.uploadImage);
+
+// Cập nhật theme conversation
+router.patch('/conversations/:conversationId/theme', authMiddleware as any, chatController.updateConversationTheme);
+
+// Xóa conversation
+router.delete('/conversations/:conversationId', authMiddleware as any, chatController.deleteConversation);
+
+// Lấy danh sách users đang online
+router.get('/online-users', authMiddleware as any, chatController.getOnlineUsers);
 
 export default router;
-
-// Create message (for testing via REST)
-router.post('/messages', authMiddleware as any, async (req: any, res: Response) => {
-    try {
-        const { conversationId, body } = req.body || {};
-        if (!conversationId || !body || !String(body).trim()) {
-            return res.status(400).json({ error: 'BadRequest', message: 'conversationId và body là bắt buộc' });
-        }
-        const saved = await saveMessage(Number(conversationId), req.user.id, String(body).trim());
-        res.status(201).json(saved);
-    } catch (e: any) {
-        res.status(500).json({ error: 'Lỗi!', message: e?.message || 'Không thể tạo message' });
-    }
-});
 
 

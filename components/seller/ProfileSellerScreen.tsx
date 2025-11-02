@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
+    Alert,
     Image,
     ScrollView,
     StyleSheet,
@@ -10,92 +12,266 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { SellerProfile, sellerService } from '../../services/sellerService';
+import { tokenService } from '../../services/tokenService';
 import { SellerBottomNavigation } from './SellerBottomNavigation';
 import { SellerTopNavigation } from './SellerTopNavigation';
 
 export default function ProfileSellerScreen() {
     const router = useRouter();
     
-    const [storeInfo, setStoreInfo] = useState({
-        storeName: 'PET SHOP',
-        description: 'Cửa hàng chuyên cung cấp đồ dùng cho chó mèo như là đồ ăn thức uống, cát vệ sinh, đồ chơi cho thú cưng, áo quần đồ thời trang cho chó mèo, dây chuyền cổ... Phuong Shop cam kết mang lại chất lượng tốt.',
-        phoneNumber: '0123456789',
-        email: 'shop@example.com',
-        address: 'Khu phố 6, phường Linh Trung, thành phố Thủ Đức, TP. HCM'
+    const [profile, setProfile] = useState<SellerProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    
+    // Form data for editing
+    const [formData, setFormData] = useState({
+        storeName: '',
+        description: '',
+        phoneNumber: '',
+        address: '',
+        ownerName: ''
     });
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [avatarUri, setAvatarUri] = useState<string | null>(null);
-    const [coverUri, setCoverUri] = useState<string | null>(null);
+    // Load seller profile on component mount
+    useEffect(() => {
+        loadProfile();
+    }, []);
 
-    const handleImageUpload = () => {
-        // Placeholder for image picker functionality
-        // In a real app, you would use expo-image-picker or react-native-image-picker
-        console.log('Upload avatar image');
+    const loadProfile = async () => {
+        try {
+            setLoading(true);
+            const token = await tokenService.getToken();
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                router.replace('/login');
+                return;
+            }
+
+            console.log('Fetching profile with token:', token);
+            const response = await sellerService.getProfile(token);
+            console.log('Profile response:', JSON.stringify(response, null, 2));
+            
+            if (!response.profile) {
+                throw new Error('Profile data not found in response');
+            }
+            
+            setProfile(response.profile);
+            
+            // Set form data
+            setFormData({
+                storeName: response.profile.store.storeName,
+                description: response.profile.store.description || '',
+                phoneNumber: response.profile.store.phoneNumber || '',
+                address: response.profile.store.address || '',
+                ownerName: response.profile.user.username || ''
+            });
+
+        } catch (error: any) {
+            console.error('Load profile error:', error);
+            console.error('Error message:', error.message);
+            
+            // Handle specific error cases
+            if (error.message?.includes('404') || error.message?.includes('Store not found')) {
+                // User doesn't have a store yet
+                Alert.alert(
+                    'Chưa có cửa hàng',
+                    'Bạn chưa tạo cửa hàng. Vui lòng tạo cửa hàng trước.',
+                    [
+                        {
+                            text: 'Tạo cửa hàng',
+                            onPress: () => router.replace('/create-store')
+                        }
+                    ]
+                );
+            } else if (error.message?.includes('401') || error.message?.includes('Token')) {
+                // Token invalid or expired
+                Alert.alert(
+                    'Phiên đăng nhập hết hạn',
+                    'Vui lòng đăng nhập lại',
+                    [
+                        {
+                            text: 'Đăng nhập',
+                            onPress: async () => {
+                                await tokenService.clearAuthData();
+                                router.replace('/login');
+                            }
+                        }
+                    ]
+                );
+            } else if (error.message?.includes('kết nối') || error.message?.includes('network')) {
+                // Network error
+                Alert.alert(
+                    'Lỗi kết nối',
+                    'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.',
+                    [
+                        { text: 'Thử lại', onPress: loadProfile }
+                    ]
+                );
+            } else {
+                // General error
+                Alert.alert(
+                    'Lỗi',
+                    error.message || 'Không thể tải thông tin profile',
+                    [
+                        { text: 'Thử lại', onPress: loadProfile }
+                    ]
+                );
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleCoverUpload = () => {
-        // Placeholder for cover photo picker functionality
-        console.log('Upload cover photo');
+    const handleSave = async () => {
+        try {
+            setSaving(true);
+            const token = await tokenService.getToken();
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                return;
+            }
+
+            await sellerService.updateProfile(formData, token);
+            
+            // Reload profile to get updated data
+            await loadProfile();
+            setIsEditing(false);
+            
+            Alert.alert('Thành công', 'Cập nhật thông tin thành công!');
+        } catch (error: any) {
+            console.error('Save profile error:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể cập nhật thông tin');
+        } finally {
+            setSaving(false);
+        }
     };
+
+    const handleCancel = () => {
+        if (!profile) return;
+        
+        // Reset form data to original values
+        setFormData({
+            storeName: profile.store.storeName,
+            description: profile.store.description || '',
+            phoneNumber: profile.store.phoneNumber || '',
+            address: profile.store.address || '',
+            ownerName: profile.user.username || ''
+        });
+        setIsEditing(false);
+    };
+
+    const handleLogout = async () => {
+        Alert.alert(
+            'Đăng xuất',
+            'Bạn có chắc chắn muốn đăng xuất?',
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Đăng xuất',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await tokenService.clearAuthData();
+                        router.replace('/login');
+                    }
+                }
+            ]
+        );
+    };
+
+
+
+
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <SellerTopNavigation />
+                <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                    <ActivityIndicator size="large" color="#FFB400" />
+                    <Text style={{ marginTop: 10, color: '#666' }}>Đang tải thông tin...</Text>
+                </View>
+                <SellerBottomNavigation />
+            </SafeAreaView>
+        );
+    }
+
+    if (!profile) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <SellerTopNavigation />
+                <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text style={{ color: '#666', fontSize: 16 }}>Không thể tải thông tin profile</Text>
+                    <TouchableOpacity 
+                        style={styles.retryButton} 
+                        onPress={loadProfile}
+                    >
+                        <Text style={styles.retryButtonText}>Thử lại</Text>
+                    </TouchableOpacity>
+                </View>
+                <SellerBottomNavigation />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
             <SellerTopNavigation />
-            
+
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                {/* Cover Photo Section */}
-                <View style={styles.coverContainer}>
-                    <Image
-                        source={
-                            coverUri
-                                ? { uri: coverUri }
-                                : require('@/assets/images/banner.png')
-                        }
-                        style={styles.coverPhoto}
-                    />
-                    <TouchableOpacity 
-                        style={styles.coverEditButton}
-                        onPress={handleCoverUpload}
-                    >
-                        <Text style={styles.coverEditIcon}>📷</Text>
-                        <Text style={styles.coverEditText}>Đổi ảnh bìa</Text>
-                    </TouchableOpacity>
-                    
-                    {/* Avatar overlapping cover photo */}
-                    <View style={styles.avatarContainer}>
-                        <View style={styles.avatarWrapper}>
-                            <Image 
-                                source={
-                                    avatarUri 
-                                        ? { uri: avatarUri }
-                                        : require('@/assets/images/icon.png')
-                                }
-                                style={styles.avatarImage}
-                            />
-                            <TouchableOpacity 
-                                style={styles.cameraButton}
-                                onPress={handleImageUpload}
-                            >
-                                <Text style={styles.cameraIcon}>📷</Text>
-                            </TouchableOpacity>
-                        </View>
+                {/* Avatar Section */}
+                <View style={styles.avatarSection}>
+                    <View style={styles.avatarWrapper}>
+                        <Image
+                            source={
+                                profile.store.avatarUrl 
+                                    ? { uri: profile.store.avatarUrl }
+                                    : require('@/assets/images/icon.png')
+                            }
+                            style={styles.avatarImage}
+                        />
                     </View>
                 </View>
 
                 {/* Rating Section */}
                 <View style={styles.ratingSection}>
-                    <Text style={styles.shopName}>{storeInfo.storeName}</Text>
+                    <Text style={styles.shopName}>{profile.store.storeName}</Text>
                     <View style={styles.starsContainer}>
-                        <Text style={styles.star}>★</Text>
-                        <Text style={styles.star}>★</Text>
-                        <Text style={styles.star}>★</Text>
-                        <Text style={styles.star}>★</Text>
-                        <Text style={styles.star}>★</Text>
+                        {[...Array(5)].map((_, index) => (
+                            <Text 
+                                key={index} 
+                                style={[
+                                    styles.star, 
+                                    { color: index < Math.floor(Number(profile.store.rating)) ? '#FFB400' : '#E0E0E0' }
+                                ]}
+                            >
+                                ★
+                            </Text>
+                        ))}
+                        <Text style={styles.ratingText}> ({profile.store.rating}/5)</Text>
                     </View>
                     <TouchableOpacity onPress={() => router.push('/seller/rating')}>
-                        <Text style={styles.reviewButton}>Xem đánh giá shop</Text>
+                        <Text style={styles.reviewButton}>
+                            Xem đánh giá shop ({profile.store.totalReviews} đánh giá)
+                        </Text>
                     </TouchableOpacity>
+                </View>
+
+                {/* Stats Section */}
+                <View style={styles.statsSection}>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statNumber}>{profile.store.totalProducts}</Text>
+                        <Text style={styles.statLabel}>Sản phẩm</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statNumber}>{profile.store.totalOrders}</Text>
+                        <Text style={styles.statLabel}>Đơn hàng</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statNumber}>{profile.store.followersCount}</Text>
+                        <Text style={styles.statLabel}>Theo dõi</Text>
+                    </View>
                 </View>
 
                 {/* Header Section */}
@@ -108,19 +284,41 @@ export default function ProfileSellerScreen() {
 
                 {/* Form Section */}
                 <View style={styles.formSection}>
+                    {/* Owner Name */}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Tên quản trị viên *</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formData.ownerName}
+                            onChangeText={(text) => setFormData({...formData, ownerName: text})}
+                            editable={isEditing}
+                            placeholder="Tên của bạn"
+                        />
+                    </View>
 
+                    {/* Store Name */}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Tên cửa hàng *</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formData.storeName}
+                            onChangeText={(text) => setFormData({...formData, storeName: text})}
+                            editable={isEditing}
+                        />
+                    </View>
 
                     {/* Description */}
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Mô tả cửa hàng</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
-                            value={storeInfo.description}
-                            onChangeText={(text) => setStoreInfo({...storeInfo, description: text})}
+                            value={formData.description}
+                            onChangeText={(text) => setFormData({...formData, description: text})}
                             multiline
                             numberOfLines={6}
                             textAlignVertical="top"
                             editable={isEditing}
+                            placeholder="Mô tả về cửa hàng của bạn..."
                         />
                     </View>
 
@@ -129,8 +327,8 @@ export default function ProfileSellerScreen() {
                         <Text style={styles.label}>Số điện thoại *</Text>
                         <TextInput
                             style={styles.input}
-                            value={storeInfo.phoneNumber}
-                            onChangeText={(text) => setStoreInfo({...storeInfo, phoneNumber: text})}
+                            value={formData.phoneNumber}
+                            onChangeText={(text) => setFormData({...formData, phoneNumber: text})}
                             keyboardType="phone-pad"
                             editable={isEditing}
                         />
@@ -141,7 +339,7 @@ export default function ProfileSellerScreen() {
                         <Text style={styles.label}>Email *</Text>
                         <TextInput
                             style={[styles.input, styles.disabledInput]}
-                            value={storeInfo.email}
+                            value={profile.store.email || profile.user.email}
                             keyboardType="email-address"
                             autoCapitalize="none"
                             editable={false}
@@ -154,8 +352,8 @@ export default function ProfileSellerScreen() {
                         <Text style={styles.label}>Địa chỉ *</Text>
                         <TextInput
                             style={[styles.input, styles.addressInput]}
-                            value={storeInfo.address}
-                            onChangeText={(text) => setStoreInfo({...storeInfo, address: text})}
+                            value={formData.address}
+                            onChangeText={(text) => setFormData({...formData, address: text})}
                             multiline
                             numberOfLines={3}
                             textAlignVertical="top"
@@ -176,27 +374,33 @@ export default function ProfileSellerScreen() {
                             <>
                                 <TouchableOpacity
                                     style={styles.cancelButton}
-                                    onPress={() => setIsEditing(false)}
+                                    onPress={handleCancel}
+                                    disabled={saving}
                                 >
                                     <Text style={styles.cancelButtonText}>Hủy</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    style={styles.saveButton}
-                                    onPress={() => setIsEditing(false)}
+                                    style={[styles.saveButton, saving && styles.disabledButton]}
+                                    onPress={handleSave}
+                                    disabled={saving}
                                 >
-                                    <Text style={styles.saveButtonText}>Lưu thông tin</Text>
+                                    {saving ? (
+                                        <ActivityIndicator size="small" color="#FFF" />
+                                    ) : (
+                                        <Text style={styles.saveButtonText}>Lưu thông tin</Text>
+                                    )}
                                 </TouchableOpacity>
                             </>
                         )}
                     </View>
 
                     {/* Logout Button */}
-                    <TouchableOpacity style={styles.logoutButton}>
+                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                         <Text style={styles.logoutButtonText}>Đăng xuất</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
-            
+
             <SellerBottomNavigation />
         </SafeAreaView>
     );
@@ -211,74 +415,23 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingBottom: 80,
     },
-    
-    // Header Section
-    headerSection: {
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 16,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 8,
-    },
-    sectionSubtitle: {
-        fontSize: 14,
-        color: '#666',
-        lineHeight: 20,
-    },
 
-    // Cover Photo Section
-    coverContainer: {
-        position: 'relative',
-        marginBottom: 60, // Space for overlapping avatar
-    },
-    coverPhoto: {
-        width: '100%',
-        height: 120,
-        backgroundColor: '#E0E0E0',
-        resizeMode: 'cover',
-    },
-    coverEditButton: {
-        position: 'absolute',
-        bottom: 16,
-        right: 16,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 20,
-        flexDirection: 'row',
+    // Avatar Section
+    avatarSection: {
         alignItems: 'center',
-    },
-    coverEditIcon: {
-        fontSize: 14,
-        marginRight: 4,
-    },
-    coverEditText: {
-        color: '#FFF',
-        fontSize: 12,
-        fontWeight: '500',
-    },
-
-    // Avatar Section (overlapping cover photo)
-    avatarContainer: {
-        position: 'absolute',
-        bottom: -50, // Half of avatar height to overlap
-        left: '50%',
-        transform: [{ translateX: -50 }], // Center horizontally
-        alignItems: 'center',
+        paddingVertical: 30,
+        backgroundColor: '#FFF',
+        marginBottom: 20,
     },
     avatarWrapper: {
         position: 'relative',
     },
     avatarImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 120,
+        height: 120,
+        borderRadius: 60,
         borderWidth: 4,
-        borderColor: '#FFF',
+        borderColor: '#FFB400',
         backgroundColor: '#F0F0F0',
         shadowColor: '#000',
         shadowOffset: {
@@ -294,12 +447,12 @@ const styles = StyleSheet.create({
         bottom: 0,
         right: 0,
         backgroundColor: '#FFB400',
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 2,
+        borderWidth: 3,
         borderColor: '#FFF',
         shadowColor: '#000',
         shadowOffset: {
@@ -311,7 +464,25 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     cameraIcon: {
-        fontSize: 16,
+        fontSize: 18,
+    },
+
+    // Rating Section
+    headerSection: {
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 16,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 8,
+    },
+    sectionSubtitle: {
+        fontSize: 14,
+        color: '#666',
+        lineHeight: 20,
     },
 
     // Rating Section
@@ -433,11 +604,119 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
+
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '80%',
+        maxWidth: 300,
+    },
+    modalCatImage: {
+        width: 80,
+        height: 80,
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 30,
+        textAlign: 'center',
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        gap: 15,
+    },
+    modalCancelButton: {
+        backgroundColor: '#f0f0f0',
+        paddingHorizontal: 25,
+        paddingVertical: 12,
+        borderRadius: 25,
+    },
+    modalCancelButtonText: {
+        color: '#666',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    modalConfirmButton: {
+        backgroundColor: '#FBBC05',
+        paddingHorizontal: 25,
+        paddingVertical: 12,
+        borderRadius: 25,
+    },
+    modalConfirmButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
     shopName: {
         fontSize: 20,
         fontWeight: '700',
         color: '#333',
         textAlign: 'center',
         marginBottom: 8,
+    },
+    
+    // Additional styles
+    retryButton: {
+        backgroundColor: '#FFB400',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginTop: 10,
+    },
+    retryButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    ratingText: {
+        fontSize: 14,
+        color: '#666',
+        marginLeft: 5,
+    },
+    statsSection: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        backgroundColor: '#FFF',
+        marginHorizontal: 16,
+        marginTop: 10,
+        marginBottom: 20,
+        borderRadius: 12,
+        paddingVertical: 20,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    statItem: {
+        alignItems: 'center',
+    },
+    statNumber: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#2C3E50',
+        marginBottom: 4,
+    },
+    statLabel: {
+        fontSize: 12,
+        color: '#7F8C8D',
+        textAlign: 'center',
+    },
+    disabledButton: {
+        opacity: 0.7,
     },
 });

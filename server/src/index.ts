@@ -56,7 +56,7 @@ import storeRoutes from './routes/store';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/store', storeRoutes);
-app.use('/api/products', productRoutes); 
+app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/chat', chatRoutes);
@@ -89,7 +89,10 @@ process.on('SIGTERM', async () => {
 });
 
 const httpServer = http.createServer(app);
-setupSocket(httpServer);
+const io = setupSocket(httpServer);
+
+// Export socket instance để controller có thể access
+export const getSocketInstance = () => io;
 
 httpServer.listen(PORT, () => {
     console.log(`🚀 PetZone API + Socket đang chạy trên cổng ${PORT}`);

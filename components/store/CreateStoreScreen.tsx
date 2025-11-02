@@ -1,289 +1,303 @@
-import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { storeService } from '../../services/storeService';
 import { tokenService } from '../../services/tokenService';
-import { createStoreStyles } from './createStoreStyles';
-
-interface CreateStoreFormData {
-    storeName: string;
-    description: string;
-    phoneNumber: string;
-    email: string;
-    address: string;
-}
 
 export default function CreateStoreScreen() {
-    const {
-        control,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<CreateStoreFormData>({
-        defaultValues: {
-            storeName: '',
-            description: '',
-            phoneNumber: '',
-            email: '',
-            address: '',
-        },
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+    
+    const [formData, setFormData] = useState({
+        storeName: '',
+        description: '',
+        phoneNumber: '',
+        email: '',
+        address: ''
     });
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [token, setToken] = useState<string | null>(null);
-
-    useEffect(() => {
-        const getToken = async () => {
-            try {
-                const storedToken = await tokenService.getToken();
-                if (!storedToken) {
-                    router.replace('/login');
-                    return;
-                }
-                setToken(storedToken);
-            } catch (error) {
-                console.error('Error getting token:', error);
-                router.replace('/login');
-            }
-        };
-
-        getToken();
-    }, []);
-
-    const onSubmit = async (data: CreateStoreFormData) => {
-        if (!token) {
-            Alert.alert('Lỗi', 'Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
-            router.replace('/login');
+    const handleCreate = async () => {
+        // Validate
+        if (!formData.storeName.trim()) {
+            Alert.alert('Lỗi', 'Vui lòng nhập tên cửa hàng');
             return;
         }
-        console.log('CreateStore - submitting', { data, token: token ? 'present' : 'missing' });
+        if (!formData.phoneNumber.trim()) {
+            Alert.alert('Lỗi', 'Vui lòng nhập số điện thoại');
+            return;
+        }
+        if (!formData.email.trim()) {
+            Alert.alert('Lỗi', 'Vui lòng nhập email');
+            return;
+        }
+        if (!formData.address.trim()) {
+            Alert.alert('Lỗi', 'Vui lòng nhập địa chỉ');
+            return;
+        }
 
-        setIsLoading(true);
         try {
-            const response = await storeService.createStore({
-                storeName: data.storeName,
-                description: data.description,
-                phoneNumber: data.phoneNumber,
-                email: data.email,
-                address: data.address,
-            }, token);
+            setLoading(true);
+            const token = await tokenService.getToken();
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                router.replace('/login');
+                return;
+            }
 
-            console.log('CreateStore - success response:', response);
-
-            Alert.alert('Thành công', 'Cửa hàng đã được tạo thành công!');
-
-            // Tự động chuyển trang tới dashboard seller sau khi tạo thành công
-            setTimeout(() => {
-                try {
-                    router.replace('/seller/dashboard');
-                } catch (navErr) {
-                    console.error('Navigation error after create store:', navErr);
-                }
-            }, 800);
-        } catch (error) {
-            console.error('CreateStore - error:', error);
-            const message = error instanceof Error ? error.message : 'Không thể tạo cửa hàng. Vui lòng thử lại.';
-            Alert.alert('Lỗi', message);
+            await storeService.createStore(formData, token);
+            
+            Alert.alert(
+                'Thành công',
+                'Tạo cửa hàng thành công!',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => router.replace('/seller/dashboard')
+                    }
+                ]
+            );
+        } catch (error: any) {
+            console.error('Create store error:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể tạo cửa hàng');
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
+    const handleCancel = () => {
+        Alert.alert(
+            'Hủy tạo cửa hàng',
+            'Bạn có chắc chắn muốn hủy?',
+            [
+                { text: 'Không', style: 'cancel' },
+                {
+                    text: 'Có',
+                    onPress: async () => {
+                        await tokenService.clearAuthData();
+                        router.replace('/login');
+                    }
+                }
+            ]
+        );
+    };
+
     return (
-        <SafeAreaView style={createStoreStyles.container}>
-            <ScrollView
-                style={createStoreStyles.scrollView}
-                contentContainerStyle={createStoreStyles.scrollContent}
+        <SafeAreaView style={styles.container}>
+            <ScrollView 
+                style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <View style={createStoreStyles.headerSection}>
-                    <Image
-                        source={require('@/assets/images/dog-feet.png')}
-                        style={createStoreStyles.storeIcon}
-                        contentFit="contain"
-                    />
-                    <Text style={createStoreStyles.title}>
-                        <Text style={createStoreStyles.titleFirst}>Tạo Cửa </Text>
-                        <Text style={createStoreStyles.titleSecond}>Hàng Mới</Text>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.title}>Tạo Cửa Hàng</Text>
+                    <Text style={styles.subtitle}>
+                        Hãy cung cấp thông tin để tạo cửa hàng của bạn
                     </Text>
-                    <Text style={createStoreStyles.subtitle}>Điền thông tin để bắt đầu bán hàng</Text>
                 </View>
 
-                <View style={createStoreStyles.formCard}>
-                    <Text style={createStoreStyles.sectionTitle}>Thông Tin Cửa Hàng</Text>
-                    <Text style={createStoreStyles.sectionDescription}>
-                        Hãy cung cấp thông tin cơ bản về cửa hàng của bạn
-                    </Text>
-
-                    <View style={createStoreStyles.inputContainer}>
-                        <Text style={createStoreStyles.inputLabel}>Tên cửa hàng *</Text>
-                        <Controller
-                            control={control}
-                            name="storeName"
-                            rules={{
-                                required: "Tên cửa hàng là bắt buộc",
-                                minLength: {
-                                    value: 2,
-                                    message: "Tên cửa hàng phải có ít nhất 2 ký tự",
-                                },
-                            }}
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[
-                                        createStoreStyles.inputField,
-                                        errors.storeName && createStoreStyles.inputFieldError
-                                    ]}
-                                    placeholder="VD: Shop Thời Trang ABC"
-                                    placeholderTextColor="#999"
-                                    value={value}
-                                    onChangeText={onChange}
-                                    onBlur={onBlur}
-                                />
-                            )}
-                        />
-                        {errors.storeName && (
-                            <Text style={createStoreStyles.errorText}>{errors.storeName.message}</Text>
-                        )}
-                    </View>
-
-                    <View style={createStoreStyles.inputContainer}>
-                        <Text style={createStoreStyles.inputLabel}>Mô tả cửa hàng</Text>
-                        <Controller
-                            control={control}
-                            name="description"
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[
-                                        createStoreStyles.textAreaField,
-                                        errors.description && createStoreStyles.inputFieldError
-                                    ]}
-                                    placeholder="Mô tả ngắn gọn về cửa hàng của bạn..."
-                                    placeholderTextColor="#999"
-                                    value={value}
-                                    onChangeText={onChange}
-                                    onBlur={onBlur}
-                                    multiline
-                                    numberOfLines={4}
-                                    textAlignVertical="top"
-                                />
-                            )}
+                {/* Form */}
+                <View style={styles.formSection}>
+                    {/* Store Name */}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Tên cửa hàng *</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formData.storeName}
+                            onChangeText={(text) => setFormData({...formData, storeName: text})}
+                            placeholder="Nhập tên cửa hàng"
+                            placeholderTextColor="#999"
                         />
                     </View>
 
-                    <View style={createStoreStyles.inputContainer}>
-                        <Text style={createStoreStyles.inputLabel}>Số điện thoại *</Text>
-                        <Controller
-                            control={control}
-                            name="phoneNumber"
-                            rules={{
-                                required: "Số điện thoại là bắt buộc",
-                                pattern: {
-                                    value: /^[0-9]{10,11}$/,
-                                    message: "Số điện thoại không hợp lệ",
-                                },
-                            }}
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[
-                                        createStoreStyles.inputField,
-                                        errors.phoneNumber && createStoreStyles.inputFieldError
-                                    ]}
-                                    placeholder="0123456789"
-                                    placeholderTextColor="#999"
-                                    value={value}
-                                    onChangeText={onChange}
-                                    onBlur={onBlur}
-                                    keyboardType="phone-pad"
-                                />
-                            )}
+                    {/* Description */}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Mô tả cửa hàng</Text>
+                        <TextInput
+                            style={[styles.input, styles.textArea]}
+                            value={formData.description}
+                            onChangeText={(text) => setFormData({...formData, description: text})}
+                            multiline
+                            numberOfLines={4}
+                            textAlignVertical="top"
+                            placeholder="Mô tả về cửa hàng của bạn..."
+                            placeholderTextColor="#999"
                         />
-                        {errors.phoneNumber && (
-                            <Text style={createStoreStyles.errorText}>{errors.phoneNumber.message}</Text>
-                        )}
                     </View>
 
-                    <View style={createStoreStyles.inputContainer}>
-                        <Text style={createStoreStyles.inputLabel}>Email *</Text>
-                        <Controller
-                            control={control}
-                            name="email"
-                            rules={{
-                                required: "Email là bắt buộc",
-                                pattern: {
-                                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                    message: "Email không hợp lệ",
-                                },
-                            }}
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[
-                                        createStoreStyles.inputField,
-                                        errors.email && createStoreStyles.inputFieldError
-                                    ]}
-                                    placeholder="shop@example.com"
-                                    placeholderTextColor="#999"
-                                    value={value}
-                                    onChangeText={onChange}
-                                    onBlur={onBlur}
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                />
-                            )}
+                    {/* Phone Number */}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Số điện thoại *</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formData.phoneNumber}
+                            onChangeText={(text) => setFormData({...formData, phoneNumber: text})}
+                            keyboardType="phone-pad"
+                            placeholder="Nhập số điện thoại"
+                            placeholderTextColor="#999"
                         />
-                        {errors.email && (
-                            <Text style={createStoreStyles.errorText}>{errors.email.message}</Text>
-                        )}
                     </View>
 
-                    <View style={createStoreStyles.inputContainer}>
-                        <Text style={createStoreStyles.inputLabel}>Địa chỉ *</Text>
-                        <Controller
-                            control={control}
-                            name="address"
-                            rules={{
-                                required: "Địa chỉ là bắt buộc",
-                                minLength: {
-                                    value: 10,
-                                    message: "Địa chỉ phải có ít nhất 10 ký tự",
-                                },
-                            }}
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={[
-                                        createStoreStyles.textAreaField,
-                                        errors.address && createStoreStyles.inputFieldError
-                                    ]}
-                                    placeholder="Số nhà, đường, phường, quận, thành phố"
-                                    placeholderTextColor="#999"
-                                    value={value}
-                                    onChangeText={onChange}
-                                    onBlur={onBlur}
-                                />
-                            )}
+                    {/* Email */}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Email *</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formData.email}
+                            onChangeText={(text) => setFormData({...formData, email: text})}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            placeholder="Nhập email"
+                            placeholderTextColor="#999"
                         />
-                        {errors.address && (
-                            <Text style={createStoreStyles.errorText}>{errors.address.message}</Text>
-                        )}
                     </View>
 
+                    {/* Address */}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Địa chỉ *</Text>
+                        <TextInput
+                            style={[styles.input, styles.addressInput]}
+                            value={formData.address}
+                            onChangeText={(text) => setFormData({...formData, address: text})}
+                            multiline
+                            numberOfLines={3}
+                            textAlignVertical="top"
+                            placeholder="Nhập địa chỉ cửa hàng"
+                            placeholderTextColor="#999"
+                        />
+                    </View>
 
-                    <TouchableOpacity
-                        style={[
-                            createStoreStyles.submitButton,
-                            isLoading && createStoreStyles.submitButtonDisabled
-                        ]}
-                        onPress={handleSubmit(onSubmit)}
-                        disabled={isLoading}
-                    >
-                        <Text style={createStoreStyles.submitButtonText}>
-                            {isLoading ? 'Đang tạo...' : 'Tạo Cửa Hàng'}
-                        </Text>
-                    </TouchableOpacity>
+                    {/* Buttons */}
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity
+                            style={styles.cancelButton}
+                            onPress={handleCancel}
+                            disabled={loading}
+                        >
+                            <Text style={styles.cancelButtonText}>Hủy</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.createButton, loading && styles.disabledButton]}
+                            onPress={handleCreate}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <ActivityIndicator size="small" color="#FFF" />
+                            ) : (
+                                <Text style={styles.createButtonText}>Tạo cửa hàng</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#F8F9FA',
+    },
+    scrollView: {
+        flex: 1,
+    },
+    header: {
+        paddingHorizontal: 20,
+        paddingTop: 30,
+        paddingBottom: 20,
+        backgroundColor: '#FFF',
+        marginBottom: 20,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#666',
+        lineHeight: 20,
+    },
+    formSection: {
+        paddingHorizontal: 20,
+        paddingBottom: 30,
+    },
+    inputGroup: {
+        marginBottom: 20,
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 8,
+    },
+    input: {
+        backgroundColor: '#FFF',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 16,
+        color: '#333',
+        minHeight: 48,
+    },
+    textArea: {
+        minHeight: 100,
+        textAlignVertical: 'top',
+        paddingTop: 12,
+    },
+    addressInput: {
+        minHeight: 80,
+        textAlignVertical: 'top',
+        paddingTop: 12,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 30,
+        gap: 12,
+    },
+    cancelButton: {
+        flex: 1,
+        backgroundColor: '#FFF',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        borderRadius: 8,
+        paddingVertical: 14,
+        alignItems: 'center',
+    },
+    cancelButtonText: {
+        color: '#666',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    createButton: {
+        flex: 1,
+        backgroundColor: '#FFB400',
+        borderRadius: 8,
+        paddingVertical: 14,
+        alignItems: 'center',
+    },
+    createButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    disabledButton: {
+        opacity: 0.7,
+    },
+});

@@ -64,4 +64,45 @@ export const messagesStyles = StyleSheet.create({
     opacity: 0.6,
     marginLeft: 8,
   },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  searchInput: {
+    flex: 1,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    fontSize: 15,
+    borderWidth: 1.5,
+    borderColor: "#e0e0e0",
+  },
+  cancelButton: {
+    marginLeft: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  cancelButtonText: {
+    color: "#FBBC05",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+  },
+  highlightText: {
+    backgroundColor: "#FBBC05",
+    color: "#000",
+    fontWeight: "600",
+  },
 });

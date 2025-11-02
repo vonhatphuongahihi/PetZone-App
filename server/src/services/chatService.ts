@@ -4,37 +4,60 @@ import { prisma } from '../db';
 const db: any = prisma as any;
 
 export async function findOrCreateOneToOneConversation(userAId: string, userBId: string) {
-    // Tìm conversation có đủ 2 participants userA và userB
+    // Tìm conversation có đúng 2 participants: userA và userB
     const existing = await db.conversation.findFirst({
         where: {
             participants: {
-                some: { userId: userAId }
+                every: {
+                    userId: {
+                        in: [userAId, userBId]
+                    }
+                }
             }
         },
+        include: {
+            participants: true,
+            _count: {
+                select: { participants: true }
+            }
+        }
+    });
+
+    // Kiểm tra xem conversation có đúng 2 participants và đúng 2 users cần tìm không
+    if (existing && existing._count.participants === 2) {
+        const participantIds = existing.participants.map((p: any) => p.userId);
+        if (participantIds.includes(userAId) && participantIds.includes(userBId)) {
+            return existing;
+        }
+    }
+
+    // Tạo conversation mới nếu chưa có
+    const conv = await db.conversation.create({
+        data: {},
         include: { participants: true }
     });
 
-    if (existing) {
-        const hasBoth = existing.participants.some((p: any) => p.userId === userAId) && existing.participants.some((p: any) => p.userId === userBId);
-        if (hasBoth) return existing;
-    }
-
-    const conv = await db.conversation.create({ data: {} });
     await db.conversationParticipant.createMany({
         data: [
             { conversationId: conv.id, userId: userAId },
             { conversationId: conv.id, userId: userBId }
         ]
     });
-    return conv;
+
+    // Trả về conversation với participants
+    return await db.conversation.findUnique({
+        where: { id: conv.id },
+        include: { participants: true }
+    });
 }
 
-export async function saveMessage(conversationId: number, senderId: string, body: string) {
+export async function saveMessage(conversationId: number, senderId: string, body: string, imageUrl?: string) {
     const message = await db.message.create({
         data: {
             conversationId,
             senderId,
-            body
+            body,
+            imageUrl
         }
     });
     await db.conversation.update({
@@ -87,5 +110,3 @@ export async function markRead(conversationId: number, userId: string) {
         data: { readAt: new Date() }
     });
 }
-
-

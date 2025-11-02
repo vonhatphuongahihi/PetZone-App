@@ -1,0 +1,298 @@
+import { StyleSheet } from 'react-native';
+
+export const userInfoStyles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#F8F9FA',
+    },
+    
+    // Header
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E1E8ED',
+    },
+    backButton: {
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 20,
+        backgroundColor: '#F8F9FA',
+    },
+    headerTitle: {
+        flex: 1,
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#2C3E50',
+        textAlign: 'center',
+        marginRight: 40, // To center the title accounting for back button
+    },
+
+    scrollView: {
+        flex: 1,
+    },
+
+    // Avatar Section
+    avatarSection: {
+        backgroundColor: '#FFFFFF',
+        alignItems: 'center',
+        paddingVertical: 30,
+        marginBottom: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E1E8ED',
+    },
+    avatarWrapper: {
+        position: 'relative',
+        marginBottom: 16,
+    },
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#F0F0F0',
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    editAvatarButton: {
+        position: 'absolute',
+        bottom: -5,
+        right: -5,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#FFB400',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+        elevation: 4,
+    },
+    usernameText: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#2C3E50',
+        marginBottom: 4,
+    },
+    roleText: {
+        fontSize: 14,
+        color: '#7F8C8D',
+        backgroundColor: '#E8F4FD',
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
+        overflow: 'hidden',
+    },
+    memberSinceText: {
+        fontSize: 12,
+        color: '#95A5A6',
+        marginTop: 8,
+    },
+
+    // Form Section
+    formSection: {
+        backgroundColor: '#FFFFFF',
+        marginHorizontal: 16,
+        borderRadius: 12,
+        paddingHorizontal: 20,
+        paddingVertical: 20,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#2C3E50',
+        marginBottom: 4,
+    },
+    sectionSubtitle: {
+        fontSize: 14,
+        color: '#7F8C8D',
+        marginBottom: 20,
+    },
+
+    // Input Fields
+    inputGroup: {
+        marginBottom: 20,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#34495E',
+        marginBottom: 8,
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#E1E8ED',
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 16,
+        backgroundColor: '#FFFFFF',
+        color: '#2C3E50',
+    },
+    disabledInput: {
+        backgroundColor: '#F8F9FA',
+        borderColor: '#E1E8ED',
+        color: '#95A5A6',
+    },
+    inputFocused: {
+        borderColor: '#FFB400',
+        borderWidth: 2,
+    },
+
+    // Status Badge
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#D5EDDA',
+        borderColor: '#C3E6CB',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    statusBadgeInactive: {
+        backgroundColor: '#F8D7DA',
+        borderColor: '#F5C6CB',
+    },
+    statusText: {
+        fontSize: 14,
+        color: '#155724',
+        marginLeft: 8,
+    },
+    statusTextInactive: {
+        color: '#721C24',
+    },
+
+    // Buttons
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20,
+        marginBottom: 20,
+        gap: 12,
+    },
+    editButton: {
+        flex: 1,
+        backgroundColor: '#FFB400',
+        borderRadius: 8,
+        paddingVertical: 14,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    editButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    cancelButton: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#E1E8ED',
+        borderRadius: 8,
+        paddingVertical: 14,
+        alignItems: 'center',
+    },
+    cancelButtonText: {
+        color: '#7F8C8D',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    saveButton: {
+        flex: 1,
+        backgroundColor: '#27AE60',
+        borderRadius: 8,
+        paddingVertical: 14,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    saveButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    disabledButton: {
+        opacity: 0.6,
+    },
+
+    // Loading
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F8F9FA',
+    },
+    loadingText: {
+        marginTop: 10,
+        color: '#7F8C8D',
+        fontSize: 16,
+    },
+
+    // Error State
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F8F9FA',
+        paddingHorizontal: 20,
+    },
+    errorText: {
+        color: '#E74C3C',
+        fontSize: 16,
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    retryButton: {
+        backgroundColor: '#FFB400',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 8,
+    },
+    retryButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+});
