@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.1.147:3001/api';
+const API_BASE_URL = 'http://10.76.162.127:3001/api';
 
 export interface ProductImage {
     id: number;
@@ -93,7 +93,7 @@ export const productService = {
     },
 
     getProductsByStore: async (storeId: string, token: string): Promise<{ success: boolean; data: Product[] }> => {
-        const response = await fetch(`${API_BASE_URL}/product/store/${storeId}`, {
+        const response = await fetch(`${API_BASE_URL}/products/store/${storeId}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
