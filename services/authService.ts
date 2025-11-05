@@ -1,6 +1,6 @@
 // Thay đổi localhost thành IP của máy tính 
 // http://192.168.1.100:3001/api
-const API_BASE_URL = 'http://10.0.180.200:3001/api';
+export const API_BASE_URL = 'http://10.0.180.200:3001/api';
 
 export interface RegisterData {
     email: string;

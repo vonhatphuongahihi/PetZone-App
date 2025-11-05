@@ -6,6 +6,7 @@ import { CategoriesIcon } from '../../assets/svg/CategoriesIcon';
 import { HomeIcon } from '../../assets/svg/HomeIcon';
 import { MessagesIcon } from '../../assets/svg/MessagesIcon';
 import { ProfileUserIcon } from '../../assets/svg/ProfileUserIcon';
+import { SocketEventEmitter } from '../../services/socketEventEmitter';
 
 export default function TabLayout() {
     const insets = useSafeAreaInsets();
@@ -13,26 +14,20 @@ export default function TabLayout() {
 
     useEffect(() => {
         // Listen for unread conversation notifications
-        const handleUnreadNotification = (event: any) => {
-            const { conversationId } = event.detail;
+        const handleUnreadNotification = (data: { conversationId: number }) => {
             setUnreadCount(prev => prev + 1);
         };
 
-        const handleMarkAsRead = (event: any) => {
-            const { conversationId } = event.detail;
+        const handleMarkAsRead = (data: { conversationId: number }) => {
             setUnreadCount(prev => Math.max(0, prev - 1));
         };
 
-        if (typeof window !== 'undefined') {
-            window.addEventListener('conversation:unread', handleUnreadNotification);
-            window.addEventListener('conversation:read', handleMarkAsRead);
-        }
+        SocketEventEmitter.addListener('conversation:unread', handleUnreadNotification);
+        SocketEventEmitter.addListener('conversation:read', handleMarkAsRead);
 
         return () => {
-            if (typeof window !== 'undefined') {
-                window.removeEventListener('conversation:unread', handleUnreadNotification);
-                window.removeEventListener('conversation:read', handleMarkAsRead);
-            }
+            SocketEventEmitter.removeAllListeners('conversation:unread');
+            SocketEventEmitter.removeAllListeners('conversation:read');
         };
     }, []);
 
