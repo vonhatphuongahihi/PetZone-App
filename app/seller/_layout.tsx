@@ -7,6 +7,11 @@ export default function SellerLayout() {
             <Stack.Screen name="products" />
             <Stack.Screen name="orders" />
             <Stack.Screen name="profile" />
+            <Stack.Screen name="shop" />
+            <Stack.Screen name="shopAddCategories" />
+            <Stack.Screen name="shopAddProduct" />
+            <Stack.Screen name="shopCategories" />
+            <Stack.Screen name="shopProductList" />
         </Stack>
     );
 }

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
@@ -6,7 +7,6 @@ import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authService } from '../../services/authService';
 import { storeService } from '../../services/storeService';
-import { tokenService } from '../../services/tokenService';
 import { loginStyles } from './loginStyles';
 
 interface LoginFormData {
@@ -37,17 +37,12 @@ export default function LoginScreen() {
             });
 
             // Save token and user data to storage
-            await tokenService.saveAuthData(response.token, response.user);
-
-            // Reconnect Socket.IO with new token for real-time features
-            try {
-                const { disconnectSocket, getSocket } = await import('../../services/socket');
-                disconnectSocket(); // Disconnect old connection if any
-                await getSocket(); // Create new connection with new token
-            } catch (socketError) {
-                console.log('[LoginScreen] Socket.IO reconnection failed:', socketError);
-            }
-
+            await AsyncStorage.setItem("jwt_token", response.token);
+            await AsyncStorage.setItem("user_data", JSON.stringify(response.user));
+            console.log("TOKEN ĐÃ LƯU THÀNH CÔNG:", response.token);
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             // Check user role and redirect accordingly
             if (response.user.role === 'SELLER') {
                 // For sellers, check if they have a store

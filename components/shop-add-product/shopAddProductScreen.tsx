@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
   Image,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,28 +16,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { styles } from "./addProductStyle";
+import { styles } from "../../components/shop-add-product/addProductStyle";
 
-const categories = [
+interface Category {
+  id: number;
+  name: string;
+}
 
-  { id: "c1", name: "Hạt dinh dưỡng" },
-  { id: "c2", name: "Pate" },
-  { id: "c3", name: "Cỏ mèo" },
-  { id: "c4", name: "Bàn cào móng" },
-  { id: "c5", name: "Nhà cây" },
-  { id: "c6", name: "Vòng cổ" },
-  { id: "c7", name: "Dây dắt" },
-  { id: "c8", name: "Nệm, Ô, Thảm" },
-  { id: "c9", name: "Nhà vệ sinh" },
-  { id: "c10", name: "Áo" },
-  { id: "c11", name: "Mũ" },
-  { id: "c12", name: "Khăn" },
-];
-
+interface AddProductScreenProps {
+  storeId?: string;
+}
 
 export default function AddProductScreen() {
+  const { storeId, refresh } = useLocalSearchParams();
+  console.log("AddProductScreen rendered with storeId:", storeId, "refresh:", refresh);
   const [title, setTitle] = useState("");
-  const [categoryId, setCategoryId] = useState<string | undefined>();
+  const [categoryId, setCategoryId] = useState<number | undefined>();
   const [price, setPrice] = useState("");
   const [oldPrice, setOldPrice] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -43,20 +39,109 @@ export default function AddProductScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [successModalVisible, setSuccessModalVisible] = useState(false); // <-- Khai báo đúng vị trí
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isCheckingToken, setIsCheckingToken] = useState(true);
 
-  const handleFocus = (field: string) => setFocusedInput(field);
-  const handleBlur = () => setFocusedInput(null);
+  useEffect(() => {
+    checkTokenAndFetchCategories();
+  }, []);
+
+  const checkTokenAndFetchCategories = async () => {
+    setIsCheckingToken(true);
+    try {
+      const token = await AsyncStorage.getItem("jwt_token");
+      console.log("Checking token in AsyncStorage:", token ? "OK" : "null");
+      if (!token) {
+        console.log("No token found, redirecting to login");
+        Alert.alert("Lỗi", "Bạn chưa đăng nhập. Vui lòng đăng nhập lại.", [
+          {
+            text: "OK",
+            onPress: () => router.replace("/login" as any),
+          },
+          {
+            text: "Thử lại",
+            onPress: () => checkTokenAndFetchCategories(),
+          },
+        ]);
+        return;
+      }
+      await fetchCategories(token);
+    } catch (err) {
+      console.error("Error checking token:", err);
+      Alert.alert("Lỗi", "Không thể kiểm tra đăng nhập. Vui lòng thử lại.", [
+        {
+          text: "OK",
+          onPress: () => router.replace("/login" as any),
+        },
+        {
+          text: "Thử lại",
+          onPress: () => checkTokenAndFetchCategories(),
+        },
+      ]);
+    } finally {
+      setIsCheckingToken(false);
+    }
+  };
+
+  const fetchCategories = async (token: string, retryCount = 0) => {
+    if (isLoadingCategories) return;
+    setIsLoadingCategories(true);
+    try {
+      const BASE_URL = Platform.OS === "web" ? "http://localhost:3001" : "http://10.76.162.127:3001";
+      const url = `${BASE_URL}/api/categories/child-categories`;
+      console.log("BẮT ĐẦU LẤY DANH MỤC TỪ:", url);
+
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+      console.log("DATA NHẬN VỀ:", data);
+
+      if (data.success && Array.isArray(data.data)) {
+        const childCategories = data.data.map((cat: any) => ({
+          id: cat.id,
+          name: cat.name,
+        }));
+        setCategories(childCategories);
+        console.log("DANH MỤC CON TẢI XONG:", childCategories);
+      } else {
+        setCategories([]);
+      }
+    } catch (err: any) {
+      console.error("LỖI fetchCategories:", err.message);
+      if (retryCount < 2) {
+        setTimeout(() => fetchCategories(token, retryCount + 1), 1000);
+      } else {
+        Alert.alert("Lỗi", "Không thể tải danh mục.");
+      }
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
 
   const pickImages = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      quality: 0.7,
-    });
-    if (!result.canceled) {
-      const uris = result.assets.map((asset) => asset.uri);
-      setImages([...images, ...uris]);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 0.7,
+      });
+      if (!result.canceled) {
+        const uris = result.assets.map((asset) => asset.uri);
+        setImages([...images, ...uris]);
+        console.log("Selected images:", uris);
+      }
+    } catch (err) {
+      console.error("Error selecting images:", err);
+      Alert.alert("Lỗi", "Không thể chọn ảnh. Vui lòng thử lại.");
     }
   };
 
@@ -68,45 +153,112 @@ export default function AddProductScreen() {
 
   const handleBack = () => {
     if (title || price || quantity || description || images.length > 0) {
-      Alert.alert(
-        "Xác nhận",
-        "Bạn có muốn hủy thêm sản phẩm không?",
-        [
-          { text: "Hủy", style: "cancel" },
-          { text: "Đồng ý", style: "destructive", onPress: () => router.back() },
-        ]
-      );
+      Alert.alert("Xác nhận", "Bạn có muốn hủy thêm sản phẩm không?", [
+        { text: "Hủy", style: "cancel" },
+        { text: "Đồng ý", style: "destructive", onPress: () => router.back() },
+      ]);
     } else {
       router.back();
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title || !categoryId || !price || !quantity || !description || images.length === 0) {
-      alert("Vui lòng điền đầy đủ các trường bắt buộc");
+      Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ các trường bắt buộc.");
       return;
     }
 
-    const newProduct = {
-      title,
-      category_id: categoryId,
-      price: Number(price),
-      old_price: oldPrice ? Number(oldPrice) : undefined,
-      quantity: Number(quantity),
-      description,
-      images,
-    };
+    if (!storeId) {
+      Alert.alert("Lỗi", "Không tìm thấy ID cửa hàng. Vui lòng thử lại.");
+      return;
+    }
 
-    console.log("Product submitted:", newProduct);
-    setSuccessModalVisible(true); // Hiển thị modal thành công
+    const token = await AsyncStorage.getItem("jwt_token");
+    if (!token) {
+      Alert.alert("Lỗi", "Bạn chưa đăng nhập. Vui lòng đăng nhập lại.", [
+        { text: "OK", onPress: () => router.replace("/login" as any) },
+      ]);
+      return;
+    }
+
+    console.log("storeId đang gửi:", storeId);
+    const formData = new FormData();
+    formData.append("storeId", storeId as string);
+    formData.append("title", title);
+    formData.append("categoryId", categoryId.toString());
+    formData.append("price", price.toString());
+    formData.append("quantity", quantity.toString());
+    if (oldPrice) formData.append("oldPrice", oldPrice.toString());
+    formData.append("description", description);
+
+    for (let i = 0; i < images.length; i++) {
+      const uri = images[i];
+      if (Platform.OS === "web") {
+        try {
+          const response = await fetch(uri);
+          const blob = await response.blob();
+          const file = new File([blob], `image_${i}.jpg`, { type: blob.type || "image/jpeg" });
+          formData.append("images", file);
+        } catch (err) {
+          console.error("Lỗi xử lý ảnh web:", err);
+          Alert.alert("Lỗi", "Không thể xử lý ảnh trên web.");
+          return;
+        }
+      } else {
+        const filename = uri.split("/").pop() || `image_${i}.jpg`;
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image/jpeg";
+        formData.append("images", { uri, name: filename, type } as any);
+      }
+    }
+
+    try {
+      const BASE_URL = Platform.OS === "web" ? "http://localhost:3001" : "http://10.141.255.127:3001";
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const res = await fetch(`${BASE_URL}/api/products`, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Server error:", errorText);
+        Alert.alert("Lỗi server", `Mã lỗi: ${res.status}`);
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        setSuccessModalVisible(true);
+        router.setParams({ refresh: "true" });
+      } else {
+        Alert.alert("Lỗi", data.message || "Thêm sản phẩm thất bại");
+      }
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        Alert.alert("Lỗi", "Hết thời gian kết nối (10s)");
+      } else {
+        console.error("Lỗi kết nối:", err);
+        Alert.alert("Lỗi", "Không kết nối được server");
+      }
+    }
   };
 
-  const renderCategoryItem = ({ item }: { item: { id: string; name: string } }) => (
+  const renderCategoryItem = ({ item }: { item: Category }) => (
     <TouchableOpacity
       style={styles.categoryItem}
       onPress={() => {
         setCategoryId(item.id);
         setCategoryModalVisible(false);
+        console.log("ĐÃ CHỌN DANH MỤC:", item);
       }}
     >
       <Text style={styles.categoryText}>{item.name}</Text>
@@ -115,7 +267,6 @@ export default function AddProductScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack}>
           <Ionicons name="chevron-back-outline" size={28} color="#FBBC05" />
@@ -125,27 +276,46 @@ export default function AddProductScreen() {
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
-        {/* Tên sản phẩm */}
         <Text style={styles.label}>Tên sản phẩm</Text>
         <TextInput
           style={[styles.input, focusedInput === "title" && styles.inputFocused]}
           placeholder="Nhập tên sản phẩm"
           value={title}
           onChangeText={setTitle}
-          onFocus={() => handleFocus("title")}
-          onBlur={handleBlur}
+          onFocus={() => setFocusedInput("title")}
+          onBlur={() => setFocusedInput(null)}
         />
 
-        {/* Danh mục */}
         <Text style={styles.label}>Danh mục</Text>
         <TouchableOpacity
           style={[styles.pickerWrapper, focusedInput === "category" && styles.inputFocused]}
-          onPress={() => setCategoryModalVisible(true)}
-          onFocus={() => handleFocus("category")}
-          onBlur={handleBlur}
+          onPress={async () => {
+            const token = await AsyncStorage.getItem("jwt_token");
+            console.log("BẤM CHỌN DANH MỤC - token:", token ? "OK" : "null");
+
+            if (!token) {
+              Alert.alert("Lỗi", "Bạn chưa đăng nhập.", [
+                { text: "OK", onPress: () => router.replace("/login" as any) },
+              ]);
+              return;
+            }
+
+            if (categories.length === 0 && !isLoadingCategories) {
+              console.log("Danh mục rỗng → gọi fetchCategories...");
+              setIsLoadingCategories(true);
+              await fetchCategories(token);
+            }
+
+            setCategoryModalVisible(true);
+            console.log("MỞ MODAL - categories length:", categories.length);
+          }}
+          onFocus={() => setFocusedInput("category")}
+          onBlur={() => setFocusedInput(null)}
         >
           <Text style={styles.pickerText}>
-            {categoryId ? categories.find((c) => c.id === categoryId)?.name : "Chọn danh mục"}
+            {categoryId
+              ? categories.find((c) => c.id === categoryId)?.name || "Chọn danh mục"
+              : "Chọn danh mục"}
           </Text>
           <Ionicons name="chevron-down-outline" size={20} color="#333" />
         </TouchableOpacity>
@@ -153,19 +323,31 @@ export default function AddProductScreen() {
         <Modal visible={categoryModalVisible} transparent animationType="fade">
           <TouchableOpacity
             style={styles.modalOverlay}
-            onPress={() => setCategoryModalVisible(false)}
+            activeOpacity={1}
+            onPress={() => {
+              setCategoryModalVisible(false);
+              console.log("ĐÓNG MODAL DANH MỤC");
+            }}
           >
             <View style={styles.modalContent}>
-              <FlatList
-                data={categories}
-                keyExtractor={(item) => item.id}
-                renderItem={renderCategoryItem}
-              />
+              {isCheckingToken ? (
+                <Text style={styles.categoryText}>Đang kiểm tra đăng nhập...</Text>
+              ) : isLoadingCategories ? (
+                <Text style={styles.categoryText}>Đang tải danh mục...</Text>
+              ) : categories.length === 0 ? (
+                <Text style={styles.categoryText}>Không có danh mục con</Text>
+              ) : (
+                <FlatList
+                  data={categories}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={renderCategoryItem}
+                  ListEmptyComponent={<Text style={styles.categoryText}>Không có danh mục con</Text>}
+                />
+              )}
             </View>
           </TouchableOpacity>
         </Modal>
 
-        {/* Giá bán */}
         <Text style={styles.label}>Giá bán hiện tại</Text>
         <TextInput
           style={[styles.input, focusedInput === "price" && styles.inputFocused]}
@@ -173,8 +355,8 @@ export default function AddProductScreen() {
           value={price}
           onChangeText={setPrice}
           keyboardType="numeric"
-          onFocus={() => handleFocus("price")}
-          onBlur={handleBlur}
+          onFocus={() => setFocusedInput("price")}
+          onBlur={() => setFocusedInput(null)}
         />
 
         <Text style={styles.label}>Giá cũ (tùy chọn)</Text>
@@ -184,8 +366,8 @@ export default function AddProductScreen() {
           value={oldPrice}
           onChangeText={setOldPrice}
           keyboardType="numeric"
-          onFocus={() => handleFocus("oldPrice")}
-          onBlur={handleBlur}
+          onFocus={() => setFocusedInput("oldPrice")}
+          onBlur={() => setFocusedInput(null)}
         />
 
         <Text style={styles.label}>Số lượng hàng</Text>
@@ -195,8 +377,8 @@ export default function AddProductScreen() {
           value={quantity}
           onChangeText={setQuantity}
           keyboardType="numeric"
-          onFocus={() => handleFocus("quantity")}
-          onBlur={handleBlur}
+          onFocus={() => setFocusedInput("quantity")}
+          onBlur={() => setFocusedInput(null)}
         />
 
         <Text style={styles.label}>Mô tả chi tiết</Text>
@@ -206,11 +388,10 @@ export default function AddProductScreen() {
           value={description}
           onChangeText={setDescription}
           multiline
-          onFocus={() => handleFocus("description")}
-          onBlur={handleBlur}
+          onFocus={() => setFocusedInput("description")}
+          onBlur={() => setFocusedInput(null)}
         />
 
-        {/* Ảnh sản phẩm */}
         <Text style={styles.label}>Ảnh sản phẩm</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
           <TouchableOpacity style={styles.addImageButton} onPress={pickImages}>
@@ -219,11 +400,8 @@ export default function AddProductScreen() {
 
           {images.map((uri, index) => (
             <View key={index} style={styles.imageWrapper}>
-              <Image source={{ uri }} style={styles.imageThumb} />
-              <TouchableOpacity
-                style={styles.removeImageButton}
-                onPress={() => removeImage(index)}
-              >
+              <Image source={{ uri }} style={styles.imageThumb} resizeMode="cover" />
+              <TouchableOpacity style={styles.removeImageButton} onPress={() => removeImage(index)}>
                 <Ionicons name="close-outline" size={18} color="#fff" />
               </TouchableOpacity>
             </View>
@@ -235,14 +413,11 @@ export default function AddProductScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Modal thành công */}
       <Modal visible={successModalVisible} transparent animationType="fade">
         <View style={successModalStyles.modalOverlay}>
           <View style={successModalStyles.modalContainer}>
             <Text style={successModalStyles.title}>Thành công!</Text>
-            <Text style={successModalStyles.message}>
-              Sản phẩm đã được thêm thành công!
-            </Text>
+            <Text style={successModalStyles.message}>Sản phẩm đã được thêm thành công!</Text>
             <TouchableOpacity
               style={successModalStyles.button}
               onPress={() => {

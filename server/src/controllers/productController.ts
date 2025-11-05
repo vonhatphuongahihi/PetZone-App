@@ -11,14 +11,14 @@ const upload = multer({ dest: "tmp/" });
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    const { storeId, categoryId, title, description, price, oldPrice } = req.body;
+    const { storeId, categoryId, title, description, price, oldPrice, quantity } = req.body; // [THÊM] quantity
     const files = req.files as Express.Multer.File[];
     const imageUrls: { url: string; alt: string | null }[] = [];
 
-    if (!storeId || !title || !price) {
+    if (!storeId || !title || !price || !quantity) { // [SỬA] Thêm kiểm tra quantity
       return res.status(400).json({
         success: false,
-        message: "Thiếu thông tin bắt buộc: storeId, title, price.",
+        message: "Thiếu thông tin bắt buộc: storeId, title, price, quantity.",
       });
     }
 
@@ -41,10 +41,13 @@ export const createProduct = async (req: Request, res: Response) => {
         description: description || null,
         price: Number(price),
         oldPrice: oldPrice ? Number(oldPrice) : null,
+        quantity: Number(quantity), // [THÊM] Lưu quantity
         images: { create: imageUrls },
       },
       include: { images: true, category: true },
     });
+
+    console.log("Created product:", product); // [THÊM] Log để debug
 
     return res.status(201).json({ success: true, data: product });
   } catch (error) {
@@ -66,10 +69,34 @@ export const getProductsByStore = async (req: Request, res: Response) => {
       orderBy: { createdAt: "desc" },
     });
 
+    console.log("Products fetched for store:", storeId, "Count:", products.length); // [THÊM] Log để debug
+
     return res.json({ success: true, data: products });
   } catch (error) {
     console.error("Error fetching products:", error);
     return res.status(500).json({ success: false, message: "Lỗi khi lấy danh sách sản phẩm." });
+  }
+};
+
+export const getProductsByCategory = async (req: Request, res: Response) => { // [THÊM] Hàm mới
+  try {
+    const categoryId = Number(req.params.categoryId);
+    if (isNaN(categoryId)) {
+      return res.status(400).json({ success: false, message: "ID danh mục không hợp lệ." });
+    }
+
+    const products = await prisma.product.findMany({
+      where: { categoryId },
+      include: { images: true, category: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    console.log("Products fetched for category:", categoryId, "Count:", products.length);
+
+    return res.json({ success: true, data: products });
+  } catch (error) {
+    console.error("Error fetching products by category:", error);
+    return res.status(500).json({ success: false, message: "Lỗi khi lấy danh sách sản phẩm theo danh mục." });
   }
 };
 
@@ -80,7 +107,7 @@ export const updateProduct = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "ID sản phẩm không hợp lệ." });
     }
 
-    const { storeId, categoryId, title, description, price, oldPrice } = req.body;
+    const { storeId, categoryId, title, description, price, oldPrice, quantity } = req.body; // [THÊM] quantity
     const files = req.files as Express.Multer.File[];
     const imageUrls: { url: string; alt: string | null }[] = [];
 
@@ -101,6 +128,7 @@ export const updateProduct = async (req: Request, res: Response) => {
         description,
         price: price ? Number(price) : undefined,
         oldPrice: oldPrice ? Number(oldPrice) : undefined,
+        quantity: quantity ? Number(quantity) : undefined, // [THÊM] Cập nhật quantity
         storeId: storeId ? String(storeId) : undefined,
         categoryId: categoryId ? Number(categoryId) : undefined,
         images: imageUrls.length > 0
@@ -109,6 +137,8 @@ export const updateProduct = async (req: Request, res: Response) => {
       },
       include: { images: true, category: true },
     });
+
+    console.log("Updated product:", updatedProduct); // [THÊM] Log để debug
 
     return res.json({ success: true, data: updatedProduct });
   } catch (error) {
@@ -127,7 +157,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
     const images = await prisma.productImage.findMany({ where: { productId: id } });
 
     for (const img of images) {
-      const publicId = img.url.split("/").pop()?.split(".")[0]; // lấy public_id từ URL
+      const publicId = img.url.split("/").pop()?.split(".")[0];
       if (publicId) {
         await cloudinary.uploader.destroy(`products/${publicId}`);
       }
@@ -136,6 +166,8 @@ export const deleteProduct = async (req: Request, res: Response) => {
     await prisma.productImage.deleteMany({ where: { productId: id } });
 
     await prisma.product.delete({ where: { id } });
+
+    console.log("Deleted product:", id); // [THÊM] Log để debug
 
     return res.json({ success: true, message: "Xóa sản phẩm thành công." });
   } catch (error) {
