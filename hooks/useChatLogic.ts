@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '@/services/authService';
 import { chatService, Message } from '@/services/chatService';
 import { getSocket } from '@/services/socket';
+import { SocketEventEmitter } from '@/services/socketEventEmitter';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -109,24 +110,22 @@ export function useChatLogic(conversationId: number) {
             });
 
             // Listen for global online/offline events to update status
-            const handleUserOnline = (event: any) => {
-                const { userId } = event.detail;
+            const handleUserOnline = (data: { userId: string }) => {
+                const { userId } = data;
                 if (userId !== myUserIdRef.current) {
                     setIsPeerOnline(true);
                 }
             };
 
-            const handleUserOffline = (event: any) => {
-                const { userId } = event.detail;
+            const handleUserOffline = (data: { userId: string }) => {
+                const { userId } = data;
                 if (userId !== myUserIdRef.current) {
                     setIsPeerOnline(false);
                 }
             };
 
-            if (typeof window !== 'undefined') {
-                window.addEventListener('user_online', handleUserOnline);
-                window.addEventListener('user_offline', handleUserOffline);
-            }
+            SocketEventEmitter.addListener('user_online', handleUserOnline);
+            SocketEventEmitter.addListener('user_offline', handleUserOffline);
 
             socket.on('message:read', (data) => {
                 if (!myUserIdRef.current) return;
@@ -166,10 +165,8 @@ export function useChatLogic(conversationId: number) {
                 socket.off('theme:updated');
 
                 // Remove global online/offline listeners
-                if (typeof window !== 'undefined') {
-                    window.removeEventListener('user_online', handleUserOnline);
-                    window.removeEventListener('user_offline', handleUserOffline);
-                }
+                SocketEventEmitter.removeAllListeners('user_online');
+                SocketEventEmitter.removeAllListeners('user_offline');
             };
         })();
     }, [conversationId]);

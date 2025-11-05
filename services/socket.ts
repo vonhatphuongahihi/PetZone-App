@@ -1,6 +1,7 @@
 import { API_BASE_URL } from '@/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { io, Socket } from 'socket.io-client';
+import { SocketEventEmitter } from './socketEventEmitter';
 
 let socket: Socket | null = null;
 let listenersSetup = false;
@@ -31,15 +32,11 @@ export async function getSocket(): Promise<Socket> {
 
         // Listen for global online/offline events
         socket.on('user_online', (data: { userId: string }) => {
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('user_online', { detail: data }));
-            }
+            SocketEventEmitter.emit('user_online', data);
         });
 
         socket.on('user_offline', (data: { userId: string }) => {
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('user_offline', { detail: data }));
-            }
+            SocketEventEmitter.emit('user_offline', data);
         });
 
         socket.on('connect', () => {
@@ -52,29 +49,21 @@ export async function getSocket(): Promise<Socket> {
 
         // Listen for unread conversation notifications
         socket.on('conversation:unread', (data: any) => {
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('conversation:unread', { detail: data }));
-            }
+            SocketEventEmitter.emit('conversation:unread', data);
         });
 
         // Listen for conversation read events
         socket.on('conversation:read', (data: any) => {
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('conversation:read', { detail: data }));
-            }
+            SocketEventEmitter.emit('conversation:read', data);
         });
 
         // Listen for typing events
         socket.on('typing', (data: any) => {
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('conversation:typing', { detail: data }));
-            }
+            SocketEventEmitter.emit('conversation:typing', data);
         });
 
         socket.on('stop_typing', (data: any) => {
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('conversation:stop_typing', { detail: data }));
-            }
+            SocketEventEmitter.emit('conversation:stop_typing', data);
         });
 
         listenersSetup = true;

@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, FlatList, Image, Text, TextInput, TouchableOp
 import { SafeAreaView } from "react-native-safe-area-context";
 import { chatService, Conversation } from "../../../services/chatService";
 import { getOnlineUsers } from "../../../services/onlineUsersService";
+import { SocketEventEmitter } from "../../../services/socketEventEmitter";
 import { tokenService } from "../../../services/tokenService";
 import { messagesSellerStyles } from './messagesSellerStyles';
 
@@ -25,27 +26,24 @@ export default function MessagesSellerScreen() {
     loadOnlineUsers();
 
     // Listen for real-time online/offline events
-    const handleUserOnline = (event: any) => {
-      const { userId } = event.detail;
+    const handleUserOnline = (data: { userId: string }) => {
       setOnlineUsers(prev => {
-        const newSet = new Set([...prev, userId]);
+        const newSet = new Set([...prev, data.userId]);
         return newSet;
       });
     };
 
-    const handleUserOffline = (event: any) => {
-      const { userId } = event.detail;
+    const handleUserOffline = (data: { userId: string }) => {
       setOnlineUsers(prev => {
         const newSet = new Set(prev);
-        newSet.delete(userId);
+        newSet.delete(data.userId);
         return newSet;
       });
     };
 
     // Listen for unread conversation notifications
-    const handleUnreadNotification = (event: any) => {
-      const { conversationId, message, senderId, senderName, timestamp } = event.detail;
-
+    const handleUnreadNotification = (data: any) => {
+      const { conversationId, message, senderId, timestamp } = data;
       // Only update if this is not from current user
       if (senderId === currentUserId) {
         return;
@@ -74,8 +72,8 @@ export default function MessagesSellerScreen() {
     };
 
     // Listen for typing events
-    const handleTyping = (event: any) => {
-      const { conversationId, userId } = event.detail;
+    const handleTyping = (data: any) => {
+      const { conversationId, userId } = data;
 
       if (userId === currentUserId) return;
 
@@ -91,8 +89,8 @@ export default function MessagesSellerScreen() {
       });
     };
 
-    const handleStopTyping = (event: any) => {
-      const { conversationId, userId } = event.detail;
+    const handleStopTyping = (data: any) => {
+      const { conversationId, userId } = data;
 
       if (userId === currentUserId) return;
 
@@ -105,24 +103,20 @@ export default function MessagesSellerScreen() {
       });
     };
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('user_online', handleUserOnline);
-      window.addEventListener('user_offline', handleUserOffline);
-      window.addEventListener('conversation:unread', handleUnreadNotification);
-      window.addEventListener('conversation:typing', handleTyping);
-      window.addEventListener('conversation:stop_typing', handleStopTyping);
-    }
+    const userOnlineSubscription = SocketEventEmitter.addListener('user_online', handleUserOnline);
+    const userOfflineSubscription = SocketEventEmitter.addListener('user_offline', handleUserOffline);
+    const unreadSubscription = SocketEventEmitter.addListener('conversation:unread', handleUnreadNotification);
+    const typingSubscription = SocketEventEmitter.addListener('conversation:typing', handleTyping);
+    const stopTypingSubscription = SocketEventEmitter.addListener('conversation:stop_typing', handleStopTyping);
 
     return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('user_online', handleUserOnline);
-        window.removeEventListener('user_offline', handleUserOffline);
-        window.removeEventListener('conversation:unread', handleUnreadNotification);
-        window.removeEventListener('conversation:typing', handleTyping);
-        window.removeEventListener('conversation:stop_typing', handleStopTyping);
-      }
+      userOnlineSubscription.remove();
+      userOfflineSubscription.remove();
+      unreadSubscription.remove();
+      typingSubscription.remove();
+      stopTypingSubscription.remove();
     };
-  }, []);
+  }, [currentUserId, isSearchVisible, searchQuery]);
 
   const loadOnlineUsers = async () => {
     try {

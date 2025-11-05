@@ -5,7 +5,16 @@ import express from 'express';
 import helmet from 'helmet';
 import http from 'http';
 import morgan from 'morgan';
+import { Server } from 'socket.io';
+import authRoutes from './routes/auth';
+import categoryRoutes from './routes/category';
+import chatRoutes from './routes/chat';
+import productRoutes from './routes/product';
+import storeRoutes from './routes/store';
 import { setupSocket } from './socket/socket';
+
+// Type alias để tránh lỗi export
+type SocketInstance = Server;
 
 dotenv.config();
 
@@ -48,12 +57,6 @@ app.get('/health', (req, res) => {
     });
 });
 
-import authRoutes from './routes/auth';
-import categoryRoutes from './routes/category';
-import chatRoutes from './routes/chat';
-import productRoutes from './routes/product';
-import storeRoutes from './routes/store';
-
 app.use('/api/auth', authRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/products', productRoutes);
@@ -92,7 +95,7 @@ const httpServer = http.createServer(app);
 const io = setupSocket(httpServer);
 
 // Export socket instance để controller có thể access
-export const getSocketInstance = () => io;
+export const getSocketInstance = (): SocketInstance => io;
 
 httpServer.listen(PORT, () => {
     console.log(`🚀 PetZone API + Socket đang chạy trên cổng ${PORT}`);
