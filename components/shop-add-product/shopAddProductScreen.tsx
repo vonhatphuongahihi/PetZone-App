@@ -18,6 +18,9 @@ import {
 } from "react-native";
 import { styles } from "../../components/shop-add-product/addProductStyle";
 
+// Base URLs for different platforms
+const BASE_URL = Platform.OS === "web" ? "http://localhost:3001" : "http://192.168.1.12:3001";
+
 interface Category {
   id: number;
   name: string;
@@ -89,16 +92,21 @@ export default function AddProductScreen() {
     if (isLoadingCategories) return;
     setIsLoadingCategories(true);
     try {
-      const BASE_URL = Platform.OS === "web" ? "http://localhost:3001" : "http://10.76.162.127:3001";
       const url = `${BASE_URL}/api/categories/child-categories`;
       console.log("BẮT ĐẦU LẤY DANH MỤC TỪ:", url);
+
+      // Tạo AbortController cho timeout thủ công
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 giây timeout
 
       const res = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        signal: AbortSignal.timeout(10000),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId); // Clear timeout nếu request thành công
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -117,7 +125,10 @@ export default function AddProductScreen() {
       }
     } catch (err: any) {
       console.error("LỖI fetchCategories:", err.message);
-      if (retryCount < 2) {
+      if (err.name === 'AbortError') {
+        console.log("Request bị timeout sau 10 giây");
+        Alert.alert("Lỗi", "Kết nối timeout. Vui lòng thử lại.");
+      } else if (retryCount < 2) {
         setTimeout(() => fetchCategories(token, retryCount + 1), 1000);
       } else {
         Alert.alert("Lỗi", "Không thể tải danh mục.");
@@ -213,7 +224,6 @@ export default function AddProductScreen() {
     }
 
     try {
-      const BASE_URL = Platform.OS === "web" ? "http://localhost:3001" : "http://10.141.255.127:3001";
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 

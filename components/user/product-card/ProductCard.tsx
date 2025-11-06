@@ -21,6 +21,7 @@ interface Product {
     price: number;
     oldPrice: number;
     discount: string;
+    tag?: string;
 }
 
 interface ProductCardProps {
@@ -66,7 +67,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, layo
                     <Text style={productCardStyles.categoryText}>{product.category}</Text>
                     <View style={productCardStyles.ratingRow}>
                         <FontAwesome5 name="star" size={10} color="#FFD700" solid/>
-                        <Text style={productCardStyles.ratingText}>{product.rating.toFixed(1)}</Text>
+                        <Text style={productCardStyles.ratingText}>{(Number(product.rating) || 0).toFixed(1)}</Text>
                     </View>
                 </View>
 
@@ -75,15 +76,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, layo
                     {product.name}
                 </Text>
 
-                <Text style={productCardStyles.tagline}>Hàng cực hot</Text>
+                {/* Tag sản phẩm - hiển thị dynamic */}
+                {product.tag && (
+                    <Text style={productCardStyles.tagline}>
+                        {product.tag === 'hot' && 'Hàng cực hot'}
+                        {product.tag === 'new' && 'Hàng mới'}
+                        {product.tag === 'bestseller' && 'Bán chạy'}
+                        {product.tag === 'sale' && 'Giảm giá'}
+                        {product.tag === 'normal' && 'Sản phẩm phổ biến'}
+                    </Text>
+                )}
 
                 {/* Giá */}
                 <View style={productCardStyles.priceRow}>
                     <Text style={productCardStyles.price}>
-                        {product.price.toLocaleString("vi-VN")}đ
+                        {(Number(product.price) || 0).toLocaleString("vi-VN")}đ
                     </Text>
                     <Text style={productCardStyles.oldPrice}>
-                        {product.oldPrice.toLocaleString("vi-VN")}đ
+                        {(Number(product.oldPrice) || 0).toLocaleString("vi-VN")}đ
                     </Text>
                 </View>
             </View>

@@ -78,7 +78,7 @@ export const getProductsByStore = async (req: Request, res: Response) => {
   }
 };
 
-export const getProductsByCategory = async (req: Request, res: Response) => { // [THÊM] Hàm mới
+export const getProductsByCategory = async (req: Request, res: Response) => {
   try {
     const categoryId = Number(req.params.categoryId);
     if (isNaN(categoryId)) {
@@ -87,7 +87,16 @@ export const getProductsByCategory = async (req: Request, res: Response) => { //
 
     const products = await prisma.product.findMany({
       where: { categoryId },
-      include: { images: true, category: true },
+      include: { 
+        images: true, 
+        category: true,
+        store: {
+          select: {
+            storeName: true,
+            avatarUrl: true
+          }
+        }
+      },
       orderBy: { createdAt: "desc" },
     });
 

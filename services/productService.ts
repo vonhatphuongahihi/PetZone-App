@@ -20,6 +20,11 @@ export interface Category {
     updatedAt: string;
 }
 
+export interface Store {
+    storeName: string;
+    avatarUrl?: string;
+}
+
 export interface Product {
     id: number;
     storeId: string;
@@ -32,12 +37,14 @@ export interface Product {
     status: string;
     featured: boolean;
     quantity: number;
+    tag?: string;
     avgRating: number;
     totalReviews: number;
     createdAt: string;
     updatedAt: string;
     images: ProductImage[];
     category?: Category;
+    store?: Store;
 }
 
 export interface CreateProductData {
@@ -104,6 +111,23 @@ export const productService = {
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || 'Lấy danh sách sản phẩm thất bại');
+        }
+
+        return response.json();
+    },
+
+    getProductsByCategory: async (categoryId: number, token: string): Promise<{ success: boolean; data: Product[] }> => {
+        const response = await fetch(`${API_BASE_URL}/products/category/${categoryId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Lấy danh sách sản phẩm theo danh mục thất bại');
         }
 
         return response.json();

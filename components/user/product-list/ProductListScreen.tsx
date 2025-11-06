@@ -1,88 +1,110 @@
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
+    Alert,
     FlatList,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Product, productService } from '../../../services/productService';
+import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
-// Mock data sản phẩm
-const products = [
-    {
-        id: "p1",
-        name: "Vòng Cổ Màu Vàng Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "phuong-shop",
-        shopImage: require("../../../assets/images/shop.png"),
-        sold: 1000,
-        category: "Vòng cổ",
-        rating: 5,
-        image: require("../../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    },
-    {
-        id: "p2",
-        name: "Vòng Cổ Màu Đỏ Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "pet-shop",
-        sold: 500,
-        shopImage: require("../../../assets/images/shop.png"),
-        category: "Vòng cổ",
-        rating: 4.5,
-        image: require("../../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    },
-    {
-        id: "p3",
-        name: "Vòng Cổ Màu Xanh Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "dog-cat-shop",
-        shopImage: require("../../../assets/images/shop.png"),
-        sold: 800,
-        category: "Vòng cổ",
-        rating: 4.8,
-        image: require("../../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    },
-    {
-        id: "p4",
-        name: "Vòng Cổ Màu Xanh Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "dog-cat-shop",
-        shopImage: require("../../../assets/images/shop.png"),
-        sold: 800,
-        category: "Vòng cổ",
-        rating: 4.8,
-        image: require("../../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    }
-];
-
 export default function ProductListScreen() {
-    const { categoryName } = useLocalSearchParams();
+    const { categoryId, categoryName } = useLocalSearchParams();
     const router = useRouter();
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleProductPress = (product: typeof products[0]) => {
-        // Điều hướng đến trang chi tiết sản phẩm
-        // router.push(`/product/${product.id}`);
-        console.log('Product pressed:', product.name);
+    // Fetch products khi component mount
+    useEffect(() => {
+        if (categoryId) {
+            fetchProducts();
+        }
+    }, [categoryId]);
+
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const token = await tokenService.getToken();
+            
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập để xem sản phẩm');
+                return;
+            }
+
+            if (!categoryId) {
+                Alert.alert('Lỗi', 'Không tìm thấy danh mục');
+                return;
+            }
+
+            const response = await productService.getProductsByCategory(
+                parseInt(categoryId as string), 
+                token
+            );
+            
+            if (response.success) {
+                setProducts(response.data);
+            } else {
+                Alert.alert('Lỗi', 'Không thể tải danh sách sản phẩm');
+            }
+        } catch (error: any) {
+            console.error('Error fetching products:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể kết nối đến server');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const renderProduct = ({ item }: { item: typeof products[0] }) => (
+    const handleProductPress = (product: Product) => {
+        router.push(`/product?productId=${product.id}`);
+        console.log('Product pressed:', product.title);
+    };
+
+    const renderProduct = ({ item }: { item: Product }) => (
         <ProductCard
-            product={item}
-            onPress={handleProductPress}
+            product={{
+                id: item.id.toString(),
+                name: item.title,
+                shop: item.store?.storeName || item.storeId,
+                shopImage: item.store?.avatarUrl ? { uri: item.store.avatarUrl } : require("../../../assets/images/shop.png"),
+                sold: Math.floor(Math.random() * 1000), // Tính toán từ dữ liệu bán hàng thực tế, sẽ hiển thị chính xác sau
+                category: item.category?.name || 'Không có danh mục',
+                rating: Number(item.avgRating) || 0,
+                image: item.images?.[0]?.url ? { uri: item.images[0].url } : require("../../../assets/images/cat.png"),
+                price: Number(item.price) || 0,
+                oldPrice: Number(item.oldPrice) || 0,
+                discount: item.oldPrice ? `-${Math.round((1 - Number(item.price) / Number(item.oldPrice)) * 100)}%` : "",
+                tag: item.tag || undefined,
+            }}
+            onPress={() => handleProductPress(item)}
         />
     );
+
+    if (loading) {
+        return (
+            <>
+                <Stack.Screen options={{ headerShown: false }} />
+                <SafeAreaView style={productListStyles.container}>
+                    <View style={productListStyles.header}>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
+                        </TouchableOpacity>
+                        <Text style={productListStyles.headerTitle}>{categoryName}</Text>
+                    </View>
+                    <View style={[productListStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                        <ActivityIndicator size="large" color="#FBBC05" />
+                        <Text style={{ marginTop: 10 }}>Đang tải sản phẩm...</Text>
+                    </View>
+                </SafeAreaView>
+            </>
+        );
+    }
 
     return (
         <>
@@ -97,14 +119,20 @@ export default function ProductListScreen() {
                 </View>
 
                 {/* Danh sách sản phẩm */}
-                <FlatList
-                    data={products}
-                    renderItem={renderProduct}
-                    keyExtractor={(item) => item.id}
-                    numColumns={2}
-                    columnWrapperStyle={{ justifyContent: "space-between" }}
-                    contentContainerStyle={{ padding: 12 }}
-                />
+                {products.length === 0 ? (
+                    <View style={[productListStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 16, color: '#666' }}>Không có sản phẩm nào trong danh mục này</Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={products}
+                        renderItem={renderProduct}
+                        keyExtractor={(item) => item.id.toString()}
+                        numColumns={2}
+                        columnWrapperStyle={{ justifyContent: "space-between" }}
+                        contentContainerStyle={{ padding: 12 }}
+                    />
+                )}
             </SafeAreaView>
         </>
     );
