@@ -74,6 +74,7 @@ model Store {
   status        String           @default("draft")
   featured      Boolean          @default(false)
   quantity      Int              @default(0)
+  tag           String?          @default("normal")        // "hot", "new", "bestseller", "sale", "normal"
   avgRating     Decimal          @default(0.00) @db.Decimal(3, 2)
   totalReviews  Int              @default(0)
   createdAt     DateTime         @default(now()) @map("created_at")

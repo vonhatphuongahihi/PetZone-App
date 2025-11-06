@@ -25,7 +25,7 @@ export const productCardStyles = StyleSheet.create({
     },
     discountText: { color: "#fff", fontSize: 12, fontWeight: "700" },
 
-    image: { width: "100%", height: 130, resizeMode: "contain" },
+    image: { width: "100%", height: 160, resizeMode: "cover" },
 
     info: { padding: 10 },
     shopRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
@@ -40,9 +40,8 @@ export const productCardStyles = StyleSheet.create({
         marginBottom: 6,
     },
     categoryText: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: "500",
-        textTransform: "uppercase",
         width: "60%",
     },
     ratingRow: {
@@ -55,7 +54,7 @@ export const productCardStyles = StyleSheet.create({
         marginLeft: 4,
     },
 
-    productName: { fontSize: 14, fontWeight: "500", marginBottom: 4 },
+    productName: { fontSize: 14, fontWeight: "500", marginBottom: 4, lineHeight: 20 },
     tagline: { fontSize: 11, color: "gray", marginBottom: 4 },
 
     priceRow: { flexDirection: "row", alignItems: "center" },
