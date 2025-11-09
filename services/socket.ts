@@ -1,6 +1,6 @@
-import { API_BASE_URL } from '@/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { io, Socket } from 'socket.io-client';
+import { API_BASE_URL } from '../config/api';
 import { SocketEventEmitter } from './socketEventEmitter';
 
 let socket: Socket | null = null;
@@ -19,8 +19,9 @@ export async function getSocket(): Promise<Socket> {
     }
 
     const token = await AsyncStorage.getItem('jwt_token');
-    const base = (process.env.EXPO_PUBLIC_API_URL as string) || (API_BASE_URL?.replace(/\/api$/, ''));
+    const base = API_BASE_URL.replace(/\/api$/, '');
 
+    console.log('[Socket Client] Connecting to:', base);
 
     socket = io(base, {
         transports: ['websocket'],
@@ -45,6 +46,15 @@ export async function getSocket(): Promise<Socket> {
 
         socket.on('disconnect', () => {
             console.log('[Socket Client] Disconnected from server');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('[Socket Client] Connection error:', error.message);
+            console.error('[Socket Client] Attempted to connect to:', base);
+        });
+
+        socket.on('error', (error) => {
+            console.error('[Socket Client] Socket error:', error);
         });
 
         // Listen for unread conversation notifications
