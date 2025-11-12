@@ -47,6 +47,37 @@ export interface Product {
     store?: Store;
 }
 
+export interface StoreDetail {
+    id: string;
+    storeName: string;
+    avatarUrl?: string;
+    rating: number;
+    totalProducts: number;
+    followersCount: number;
+}
+
+export interface ProductDetail {
+    id: number;
+    storeId: string;
+    categoryId?: number;
+    title: string;
+    slug: string;
+    description?: string;
+    price: number;
+    oldPrice?: number;
+    status: string;
+    featured: boolean;
+    quantity: number;
+    tag?: string;
+    avgRating: number;
+    totalReviews: number;
+    createdAt: string;
+    updatedAt: string;
+    images: ProductImage[];
+    category?: Category;
+    store?: StoreDetail;
+}
+
 export interface CreateProductData {
     storeId: string;
     categoryId?: number;
@@ -128,6 +159,22 @@ export const productService = {
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || 'Lấy danh sách sản phẩm theo danh mục thất bại');
+        }
+
+        return response.json();
+    },
+
+    getProductById: async (id: number, token: string): Promise<{ success: boolean; data: ProductDetail }> => {
+        const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Lấy thông tin sản phẩm thất bại');
         }
 
         return response.json();
