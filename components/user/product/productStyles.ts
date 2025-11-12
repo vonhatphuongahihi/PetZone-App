@@ -1,4 +1,6 @@
-import { StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 export const productStyles = StyleSheet.create({
     container: {
@@ -11,5 +13,391 @@ export const productStyles = StyleSheet.create({
         padding: 12,
         paddingLeft: 16,
     },
-    headerTitle: { fontSize: 16, fontWeight: "600", marginLeft: 16 },
+    headerTitle: { 
+        fontSize: 16, 
+        fontWeight: "600", 
+        flex: 1,
+        marginLeft: 16,
+        marginRight: 16,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    imageContainer: {
+        width: width,
+        height: width,
+        backgroundColor: "#f8f8f8",
+        position: "relative",
+    },
+    productImage: {
+        width: width,
+        height: width,
+    },
+    imagePagination: {
+        position: "absolute",
+        bottom: 16,
+        left: 0,
+        right: 0,
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    paginationDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: "#D9D9D9",
+        marginHorizontal: 4,
+    },
+    paginationDotActive: {
+        backgroundColor: "#FBBC05",
+    },
+    thumbnailContainer: {
+        flexDirection: "row",
+        padding: 16,
+        paddingTop: 12,
+    },
+    thumbnail: {
+        width: 60,
+        height: 60,
+        borderRadius: 8,
+        marginRight: 8,
+        borderWidth: 2,
+        borderColor: "transparent",
+    },
+    thumbnailActive: {
+        borderColor: "#FBBC05",
+    },
+    thumbnailImage: {
+        width: "100%",
+        height: "100%",
+        borderRadius: 6,
+    },
+    productInfo: {
+        padding: 16,
+        paddingTop: 0,
+    },
+    productTitle: {
+        fontSize: 20,
+        fontWeight: "600",
+        color: "#000",
+        marginBottom: 8,
+    },
+    ratingContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 12,
+    },
+    ratingStars: {
+        flexDirection: "row",
+        gap: 4,
+        marginRight: 10,
+    },
+    ratingText: {
+        fontSize: 16,
+        color: "#000",
+        fontWeight: "500",
+    },
+    priceContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 18,
+    },
+    currentPrice: {
+        fontSize: 20,
+        fontWeight: "700",
+        color: "red",
+        marginRight: 12,
+    },
+    oldPrice: {
+        fontSize: 16,
+        color: "#999",
+        textDecorationLine: "line-through",
+    },
+    storeContainer: {
+        flexDirection: "column",
+        alignItems: "center",
+        padding: 10,
+        borderColor: "#D9D9D9",
+        borderWidth: 1,
+        borderRadius: 8,
+        marginBottom: 16,
+    },
+    storeHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        width: '100%',
+        marginBottom: 16,
+    },
+    storeAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 12,
+    },
+    storeName: {
+        fontSize: 15,
+        fontWeight: "600",
+        color: "#333",
+    },
+    followButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderColor: "#FBBC05",
+        borderWidth: 1.5,
+        borderRadius: 8,
+        marginLeft: 'auto',
+    },
+    followButtonText: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#FBBC05",
+    },
+    storeInfo: {
+        width: '100%',
+        flexDirection: "row",
+        justifyContent: "space-around",
+    },
+    storeStats: {
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    storeStatText: {
+        fontSize: 13,
+        color: "#000",
+        marginBottom: 4,
+    },
+    storeStatTextLabel: {
+        fontSize: 11,
+        color: "#999",
+    },
+    quantityContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 8,
+    },
+    quantityLabel: {
+        fontSize: 16,
+        fontWeight: "500",
+        color: "#000",
+    },
+    quantitySelector: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    quantityButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 4,
+        backgroundColor: "#f0f0f0",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    quantityButtonText: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: "#333",
+    },
+    quantityInput: {
+        width: 60,
+        height: 32,
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 4,
+        textAlign: "center",
+        marginHorizontal: 8,
+        padding: 0,
+        fontSize: 16,
+    },
+    totalPrice: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "red",
+        textAlign: "right",
+        marginBottom: 8,
+    },
+    actionContainer: {
+        flexDirection: "row",
+        padding: 16,
+        paddingTop: 0,
+        gap: 12,
+    },
+    addToCartButton: {
+        flex: 6.5,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 10,
+        borderWidth: 1.5,
+        borderColor: "#FBBC05",
+        borderRadius: 8,
+    },
+    addToCartText: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#FBBC05",
+        marginLeft: 8,
+    },
+    buyNowButton: {
+        flex: 3.5,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 10,
+        backgroundColor: "#FBBC05",
+        borderRadius: 8,
+    },
+    buyNowText: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#fff",
+    },
+    tabContainer: {
+        flexDirection: "row",
+        borderBottomWidth: 1,
+        borderBottomColor: "#f0f0f0",
+        marginTop: 8,
+    },
+    tab: {
+        flex: 1,
+        padding: 16,
+        alignItems: "center",
+    },
+    activeTab: {
+        borderBottomWidth: 2,
+        borderBottomColor: "#FBBC05",
+    },
+    tabText: {
+        fontSize: 14,
+        color: "#666",
+    },
+    activeTabText: {
+        color: "#FBBC05",
+        fontWeight: "600",
+    },
+    tabContent: {
+        padding: 16,
+    },
+    detailTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#000",
+        marginBottom: 8,
+    },
+    detailText: {
+        fontSize: 14,
+        color: "#000",
+        lineHeight: 20,
+        marginBottom: 16,
+    },
+    detailRow: {
+        flexDirection: "row",
+        paddingVertical: 8,
+    },
+    detailLabel: {
+        fontSize: 14,
+        color: "#666",
+        width: 100,
+    },
+    detailValue: {
+        fontSize: 14,
+        color: "#000",
+        flex: 1,
+    },
+    reviewSummary: {
+        padding: 16,
+        backgroundColor: "#f8f8f8",
+        borderRadius: 8,
+        marginBottom: 16,
+        flexDirection: "column",
+        alignItems: "center",
+    },
+    reviewSummaryStats: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 6,
+    },
+    overallRating: {
+        fontSize: 24,
+        fontWeight: "700",
+        color: "#000",
+        marginRight: 12,
+    },
+    overallStars: {
+        flexDirection: "row",
+    },
+    reviewCount: {
+        fontSize: 14,
+        color: "#999",
+    },
+    reviewItem: {
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#D9D9D9",
+    },
+    reviewHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 14,
+    },
+    reviewUserAvatar: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        marginRight: 12,
+    },
+    reviewUserInfo: {
+        flex: 1,
+    },
+    reviewUserName: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#000",
+        marginBottom: 4,
+    },
+    reviewRating: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    reviewDate: {
+        fontSize: 12,
+        color: "#999",
+        marginLeft: 8,
+    },
+    reviewContent: {
+        fontSize: 14,
+        color: "#000",
+        lineHeight: 20,
+        marginBottom: 12,
+    },
+    reviewImages: {
+        flexDirection: "row",
+    },
+    reviewImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 8,
+        marginRight: 8,
+    },
+    section: {
+        marginTop: 16,
+        marginBottom: 18,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "#000",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        marginBottom: 16,
+    },
+    productsList: {
+        paddingLeft: 16,
+        paddingRight: 4,
+    },
+    productWrapper: {
+        width: 160,
+        marginRight: 12,
+    },
 });

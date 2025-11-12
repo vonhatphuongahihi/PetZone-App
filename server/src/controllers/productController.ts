@@ -47,6 +47,16 @@ export const createProduct = async (req: Request, res: Response) => {
       include: { images: true, category: true },
     });
 
+    // [THÊM] Cập nhật totalProducts trong Store
+    await prisma.store.update({
+      where: { id: String(storeId) },
+      data: {
+        totalProducts: {
+          increment: 1
+        }
+      }
+    });
+
     console.log("Created product:", product); // [THÊM] Log để debug
 
     return res.status(201).json({ success: true, data: product });
@@ -109,6 +119,28 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
   }
 };
 
+export const getProductById = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, message: "ID sản phẩm không hợp lệ." });
+    }
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { images: true, category: true, store: true },
+    });
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Sản phẩm không tồn tại." });
+    }
+    
+    return res.json({ success: true, data: product });
+  } catch (error) {
+    console.error("Error fetching product by ID:", error);
+    return res.status(500).json({ success: false, message: "Lỗi khi lấy thông tin sản phẩm." });
+  }
+};
+
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
@@ -163,6 +195,16 @@ export const deleteProduct = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "ID sản phẩm không hợp lệ." });
     }
 
+    // [THÊM] Lấy thông tin sản phẩm trước khi xóa để biết storeId
+    const productToDelete = await prisma.product.findUnique({
+      where: { id },
+      select: { storeId: true }
+    });
+
+    if (!productToDelete) {
+      return res.status(404).json({ success: false, message: "Sản phẩm không tồn tại." });
+    }
+
     const images = await prisma.productImage.findMany({ where: { productId: id } });
 
     for (const img of images) {
@@ -175,6 +217,16 @@ export const deleteProduct = async (req: Request, res: Response) => {
     await prisma.productImage.deleteMany({ where: { productId: id } });
 
     await prisma.product.delete({ where: { id } });
+
+    // [THÊM] Giảm totalProducts trong Store
+    await prisma.store.update({
+      where: { id: productToDelete.storeId },
+      data: {
+        totalProducts: {
+          decrement: 1
+        }
+      }
+    });
 
     console.log("Deleted product:", id); // [THÊM] Log để debug
 
