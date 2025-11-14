@@ -15,12 +15,12 @@ interface Product {
     shop: string;
     shopImage: ImageSourcePropType;
     sold: number;
-    category: string;
+    category?: string;
     rating: number;
     image: ImageSourcePropType;
-    price: number;
-    oldPrice: number;
-    discount: string;
+    price: number | string;
+    oldPrice?: number | string;
+    discount?: string;
 }
 
 interface ProductCardProps {
@@ -34,15 +34,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, layo
         ? [productCardStyles.card, productCardStyles.horizontalCard]
         : productCardStyles.card;
 
+    // Hàm format giá
+    const formatPrice = (price: number | string) => {
+        const num = typeof price === 'string' ? parseInt(price) : price;
+        return num.toLocaleString('vi-VN') + '₫';
+    };
+
     return (
         <TouchableOpacity
             style={cardStyle}
             onPress={() => onPress?.(product)}
         >
             {/* Badge giảm giá */}
-            <View style={productCardStyles.discountBadge}>
-                <Text style={productCardStyles.discountText}>{product.discount}</Text>
-            </View>
+            {product.discount && (
+                <View style={productCardStyles.discountBadge}>
+                    <Text style={productCardStyles.discountText}>{product.discount}</Text>
+                </View>
+            )}
 
             {/* Ảnh sản phẩm */}
             <Image source={product.image} style={productCardStyles.image} />
@@ -77,14 +85,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, layo
 
                 <Text style={productCardStyles.tagline}>Hàng cực hot</Text>
 
-                {/* Giá */}
+                {/* Giá: Giá mới trước, giá cũ sau */}
                 <View style={productCardStyles.priceRow}>
-                    <Text style={productCardStyles.price}>
-                        {product.price.toLocaleString("vi-VN")}đ
+                    <Text style={[productCardStyles.price, { color: '#FF3B30', fontWeight: 'bold' }]}>
+                        {formatPrice(product.price)}
                     </Text>
-                    <Text style={productCardStyles.oldPrice}>
-                        {product.oldPrice.toLocaleString("vi-VN")}đ
-                    </Text>
+                    {product.oldPrice && (
+                        <Text style={[productCardStyles.oldPrice, { textDecorationLine: 'line-through', color: '#999', marginLeft: 6 }]}>
+                            {formatPrice(product.oldPrice)}
+                        </Text>
+                    )}
                 </View>
             </View>
         </TouchableOpacity>

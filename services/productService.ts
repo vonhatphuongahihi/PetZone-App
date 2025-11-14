@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://10.76.162.127:3001/api';
+const API_BASE_URL = 'http://10.143.19.127:3001/api';
 
 export interface ProductImage {
     id: number;

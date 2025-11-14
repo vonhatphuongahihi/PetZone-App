@@ -89,7 +89,7 @@ export default function AddProductScreen() {
     if (isLoadingCategories) return;
     setIsLoadingCategories(true);
     try {
-      const BASE_URL = Platform.OS === "web" ? "http://localhost:3001" : "http://10.76.162.127:3001";
+      const BASE_URL = Platform.OS === "web" ? "http://localhost:3001" : "http://10.143.19.127:3001";
       const url = `${BASE_URL}/api/categories/child-categories`;
       console.log("BẮT ĐẦU LẤY DANH MỤC TỪ:", url);
 
