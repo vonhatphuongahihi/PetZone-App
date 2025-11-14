@@ -13,6 +13,7 @@ import chatRoutes from './routes/chat';
 import productRoutes from './routes/product';
 import storeRoutes from './routes/store';
 import supportRoutes from './routes/support';
+import userRoutes from './routes/user';
 import { setupSocket } from './socket/socket';
 
 // Type alias để tránh lỗi export
@@ -67,6 +68,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/chat', chatRoutes);
+app.use('/api/users', userRoutes);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Log toàn bộ error an toàn

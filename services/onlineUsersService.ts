@@ -1,6 +1,6 @@
-import { API_BASE_URL } from '@/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 let onlineUsersCache: string[] = [];
 let lastFetchTime = 0;
