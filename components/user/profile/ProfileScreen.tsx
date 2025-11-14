@@ -1,12 +1,39 @@
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
-import { Image, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Image, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { tokenService } from "../../../services/tokenService";
+import { UserInfo, userInfoService } from "../../../services/userInfoService";
 import { styles } from "./profileStyles";
 
 export default function ProfileScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadUserInfo();
+  }, []);
+
+  const loadUserInfo = async () => {
+    try {
+      setLoading(true);
+      const token = await tokenService.getToken();
+      if (!token) {
+        router.replace('/login');
+        return;
+      }
+
+      const response = await userInfoService.getUserInfo(token);
+      setUserInfo(response.user);
+    } catch (error: any) {
+      console.error('Load user info error:', error);
+      router.replace('/login');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -14,9 +41,7 @@ export default function ProfileScreen() {
 
   const confirmLogout = async () => {
     setShowLogoutModal(false);
-    // Xóa token khỏi localStorage hoặc AsyncStorage
     try {
-      // Nếu dùng AsyncStorage
       const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('jwt_token'); // Xóa cả jwt_token
@@ -35,17 +60,34 @@ export default function ProfileScreen() {
     setShowLogoutModal(false);
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color="#FFB400" />
+          <Text style={{ marginTop: 10, color: '#666' }}>Đang tải thông tin...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <Image
-            source={require("../../../assets/images/icon.png")} // sử dụng icon.png thay cho avatar
+            source={
+              userInfo?.avatarUrl 
+                ? { uri: userInfo.avatarUrl }
+                : require("../../../assets/images/icon.png")
+            }
             style={styles.avatar}
           />
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.name}>Vo Nhat Phuong</Text>
+            <Text style={styles.name}>
+              {userInfo?.username || 'Đang tải...'}
+            </Text>
             <Text style={styles.rank}>Hạng bạc</Text>
           </View>
           <View style={styles.pawCircle}>
@@ -109,10 +151,14 @@ export default function ProfileScreen() {
           <Text style={styles.menuText}>Bảo mật</Text>
           <MaterialIcons name="chevron-right" size={25} color="#FBBC05" />
         </TouchableOpacity>
-        <View style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/about-us')}>
           <Text style={styles.menuText}>Về chúng tôi</Text>
           <MaterialIcons name="chevron-right" size={25} color="#FBBC05" />
-        </View>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/support')}>
+          <Text style={styles.menuText}>Hỗ trợ</Text>
+          <MaterialIcons name="chevron-right" size={25} color="#FBBC05" />
+        </TouchableOpacity>
 
         {/* Nút đăng xuất */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>

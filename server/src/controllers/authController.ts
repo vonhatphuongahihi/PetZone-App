@@ -168,7 +168,16 @@ export const authController = {
 
             const user = await prisma.user.findUnique({
                 where: { id: userId },
-                select: { id: true, email: true, username: true, role: true, isActive: true, createdAt: true, updatedAt: true }
+                select: { 
+                    id: true, 
+                    email: true, 
+                    username: true, 
+                    avatarUrl: true,
+                    role: true, 
+                    isActive: true, 
+                    createdAt: true, 
+                    updatedAt: true 
+                }
             });
 
             if (!user) {
@@ -236,6 +245,5 @@ export const authController = {
             res.status(500).json({ error: 'Cập nhật thất bại', message: 'Đã xảy ra lỗi trong quá trình cập nhật thông tin' });
         }
     },
-
 
 };

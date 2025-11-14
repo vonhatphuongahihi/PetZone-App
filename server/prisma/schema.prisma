@@ -16,6 +16,7 @@ model User {
   email     String   @unique
   username  String   @unique
   password  String
+  avatarUrl String?  @map("avatar_url")
   isActive  Boolean  @default(true)
   role      String   @default("USER")
   createdAt DateTime @default(now())
@@ -23,6 +24,7 @@ model User {
 
   // Relations
   stores    Store[]
+  addresses UserAddress[]
   messages  Message[]                 @relation("UserMessages")
   conversationParticipants ConversationParticipant[] @relation("UserParticipants")
 
@@ -161,4 +163,23 @@ model ConversationParticipant {
   @@unique([conversationId, userId])
   @@index([userId])
   @@map("conversation_participants")
+}
+
+// User Address Model
+model UserAddress {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  name        String   // Họ và tên người nhận
+  phoneNumber String   @map("phone_number")
+  province    String   // Tỉnh/Thành phố, Quận/Huyện, Phường/Xã
+  street      String   // Tên đường, Tòa nhà, Số nhà
+  type        String   @default("Nhà riêng") // "Nhà riêng", "Văn phòng"
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_addresses")
 }
