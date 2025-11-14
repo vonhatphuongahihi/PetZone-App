@@ -113,17 +113,6 @@ export default function UserInfoScreen() {
     if (loading) {
         return (
             <SafeAreaView style={userInfoStyles.container}>
-                {/* Header */}
-                <View style={userInfoStyles.header}>
-                    <TouchableOpacity 
-                        style={userInfoStyles.backButton}
-                        onPress={() => router.back()}
-                    >
-                        <MaterialIcons name="arrow-back-ios" size={20} color="#FFB400" />
-                    </TouchableOpacity>
-                    <Text style={userInfoStyles.headerTitle}>Thông tin tài khoản</Text>
-                </View>
-
                 <View style={userInfoStyles.loadingContainer}>
                     <ActivityIndicator size="large" color="#FFB400" />
                     <Text style={userInfoStyles.loadingText}>Đang tải thông tin...</Text>
@@ -135,17 +124,6 @@ export default function UserInfoScreen() {
     if (!userInfo) {
         return (
             <SafeAreaView style={userInfoStyles.container}>
-                {/* Header */}
-                <View style={userInfoStyles.header}>
-                    <TouchableOpacity 
-                        style={userInfoStyles.backButton}
-                        onPress={() => router.back()}
-                    >
-                        <MaterialIcons name="arrow-back-ios" size={20} color="#FFB400" />
-                    </TouchableOpacity>
-                    <Text style={userInfoStyles.headerTitle}>Thông tin tài khoản</Text>
-                </View>
-
                 <View style={userInfoStyles.errorContainer}>
                     <Text style={userInfoStyles.errorText}>
                         Không thể tải thông tin tài khoản
@@ -163,34 +141,18 @@ export default function UserInfoScreen() {
 
     return (
         <SafeAreaView style={userInfoStyles.container}>
-            {/* Header */}
-            <View style={userInfoStyles.header}>
-                <TouchableOpacity 
-                    style={userInfoStyles.backButton}
-                    onPress={() => router.back()}
-                >
-                    <MaterialIcons name="arrow-back-ios" size={20} color="#FFB400" />
-                </TouchableOpacity>
-                <Text style={userInfoStyles.headerTitle}>Thông tin tài khoản</Text>
-            </View>
-
             <ScrollView style={userInfoStyles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Avatar Section */}
                 <View style={userInfoStyles.avatarSection}>
                     <View style={userInfoStyles.avatarWrapper}>
                         <Image 
-                            source={require('../../../assets/images/icon.png')}
+                            source={
+                                userInfo.avatarUrl 
+                                    ? { uri: userInfo.avatarUrl }
+                                    : require('../../../assets/images/icon.png')
+                            }
                             style={userInfoStyles.avatar}
                         />
-                        <TouchableOpacity 
-                            style={userInfoStyles.editAvatarButton}
-                            onPress={() => {
-                                // TODO: Implement image picker
-                                Alert.alert('Thông báo', 'Tính năng đổi ảnh đại diện sẽ có trong phiên bản sau');
-                            }}
-                        >
-                            <MaterialIcons name="camera-alt" size={16} color="#FFFFFF" />
-                        </TouchableOpacity>
                     </View>
                     
                     <Text style={userInfoStyles.usernameText}>{userInfo.username}</Text>
@@ -202,11 +164,6 @@ export default function UserInfoScreen() {
 
                 {/* User Info Form */}
                 <View style={userInfoStyles.formSection}>
-                    <Text style={userInfoStyles.sectionTitle}>Thông tin cá nhân</Text>
-                    <Text style={userInfoStyles.sectionSubtitle}>
-                        Quản lý thông tin cá nhân của bạn
-                    </Text>
-
                     {/* Username */}
                     <View style={userInfoStyles.inputGroup}>
                         <Text style={userInfoStyles.label}>Tên người dùng</Text>
@@ -327,3 +284,4 @@ export default function UserInfoScreen() {
         </SafeAreaView>
     );
 }
+

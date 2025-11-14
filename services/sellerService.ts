@@ -1,5 +1,5 @@
 // Seller Service
-const API_BASE_URL = 'http://10.0.180.200:3001/api';
+const API_BASE_URL = 'http://10.0.173.60:3001/api';
 
 export interface SellerProfile {
     store: {
@@ -130,57 +130,5 @@ export const sellerService = {
         }
 
         return response.json();
-    },
-
-    // Upload avatar
-    uploadAvatar: async (imageUri: string, token: string): Promise<{ success: boolean; message: string; profile?: SellerProfile; avatarUrl?: string }> => {
-        try {
-            console.log('=== Upload Avatar Start ===');
-            console.log('Image URI:', imageUri);
-            
-            // Create form data
-            const formData = new FormData();
-            
-            // Get file info
-            const filename = imageUri.split('/').pop() || 'avatar.jpg';
-            const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-            console.log('File info:', { filename, type });
-
-            formData.append('avatar', {
-                uri: imageUri,
-                name: filename,
-                type: type,
-            } as any);
-
-            const url = `${API_BASE_URL}/store/profile/avatar`;
-            console.log('Uploading to:', url);
-
-            const response = await fetch(url, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    // Don't set Content-Type for FormData, browser will set it automatically with boundary
-                },
-                body: formData,
-            });
-
-            console.log('Response status:', response.status);
-
-            const data = await response.json();
-            console.log('Response data:', data);
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Upload avatar thất bại');
-            }
-
-            console.log('=== Upload Avatar Success ===');
-            return data;
-        } catch (error: any) {
-            console.error('=== Upload Avatar Error ===');
-            console.error('Error:', error);
-            throw error;
-        }
     },
 };

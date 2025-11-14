@@ -5,6 +5,7 @@ export interface UserInfo {
     id: string;
     email: string;
     username: string;
+    avatarUrl?: string;
     role: string;
     isActive: boolean;
     createdAt: string;
