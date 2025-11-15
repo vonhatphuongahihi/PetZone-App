@@ -23,17 +23,18 @@ const styles = StyleSheet.create({
   // Input
   label: {
     fontSize: 14,
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: 8,
+    marginBottom: 4,
     color: "#444",
   },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 6,
-    padding: 10,
+    padding: 8,
     fontSize: 14,
     backgroundColor: "#fff",
+    height: 40,
   },
   select: {
     flexDirection: "row",
@@ -45,18 +46,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
   },
 
-  // Footer
+  // Action Buttons
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 15,
     borderTopWidth: 1,
+    borderBottomWidth: 1,
     borderColor: "#eee",
     backgroundColor: "#fff",
+    marginVertical: 5,
   },
   cancelBtn: {
     flex: 1,
@@ -184,6 +183,132 @@ dropdownText: {
   fontSize: 16,
   color: '#333',
 },
+
+  // Address List
+  addressListContainer: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    marginTop: 10,
+  },
+  addressListTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  addressList: {
+    flex: 1,
+  },
+  addressCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 15,
+    marginVertical: 5,
+    padding: 15,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  addressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  addressNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  addressName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginRight: 10,
+  },
+  defaultBadge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  defaultBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  addressActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  setDefaultBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#FFB400',
+    marginRight: 8,
+  },
+  setDefaultText: {
+    color: '#FFB400',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  deleteBtn: {
+    padding: 8,
+    borderRadius: 4,
+    minWidth: 32,
+    minHeight: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addressPhone: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  addressDetail: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  addressTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addressType: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginLeft: 10,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+  },
 
 });
 

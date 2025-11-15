@@ -88,7 +88,16 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
 
     const products = await prisma.product.findMany({
       where: { categoryId },
-      include: { images: true, category: true },
+      include: { 
+        images: true, 
+        category: true,
+        store: {
+          select: {
+            storeName: true,
+            avatarUrl: true
+          }
+        }
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -146,6 +155,16 @@ export const deleteProduct = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: "ID không hợp lệ." });
+
+    // [THÊM] Lấy thông tin sản phẩm trước khi xóa để biết storeId
+    const productToDelete = await prisma.product.findUnique({
+      where: { id },
+      select: { storeId: true }
+    });
+
+    if (!productToDelete) {
+      return res.status(404).json({ success: false, message: "Sản phẩm không tồn tại." });
+    }
 
     const images = await prisma.productImage.findMany({ where: { productId: id } });
 

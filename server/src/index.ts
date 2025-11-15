@@ -7,6 +7,9 @@ import http from 'http';
 import morgan from 'morgan';
 import { Server } from "socket.io"; // THÊM DÒNG NÀY
 
+// Type alias để tránh lỗi export
+type SocketInstance = Server;
+
 dotenv.config();
 
 export const prisma = new PrismaClient();
@@ -47,18 +50,15 @@ app.get('/health', (req, res) => {
     });
 });
 
-import authRoutes from './routes/auth';
-import categoryRoutes from './routes/category';
-import chatRoutes from './routes/chat';
-import productRoutes from './routes/product';
-import storeRoutes from './routes/store';
-
 app.use('/api/auth', authRoutes);
+app.use('/api/addresses', addressRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/support', supportRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/chat', chatRoutes);
+app.use('/api/users', userRoutes);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Global error handler:', err);

@@ -12,6 +12,8 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Product, productService } from '../../../services/productService';
+import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
@@ -25,6 +27,30 @@ const getFirstString = (param: string | string[] | undefined) =>
 export default function ProductListScreen() {
     const params = useLocalSearchParams();
     const router = useRouter();
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch products khi component mount
+    useEffect(() => {
+        if (categoryId) {
+            fetchProducts();
+        }
+    }, [categoryId]);
+
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const token = await tokenService.getToken();
+            
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập để xem sản phẩm');
+                return;
+            }
+
+            if (!categoryId) {
+                Alert.alert('Lỗi', 'Không tìm thấy danh mục');
+                return;
+            }
 
     const categoryId = getFirstString(params.categoryId);
     const categoryName = getFirstString(params.categoryName);

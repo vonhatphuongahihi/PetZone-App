@@ -32,6 +32,10 @@ router.get('/category/:categoryId', getProductsByCategory);
 
 router.get("/store/:storeId", getProductsByStore);
 
+router.get("/category/:categoryId", getProductsByCategory);
+
+router.get("/:id", getProductById);
+
 router.put("/:id", uploadImages, updateProduct);
 
 router.delete("/:id", deleteProduct);

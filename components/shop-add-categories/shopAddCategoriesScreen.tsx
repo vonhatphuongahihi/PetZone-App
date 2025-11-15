@@ -67,7 +67,7 @@ export default function AddCategoryScreen() {
 
   // Handle submit
   const handleSubmit = async () => {
-    if (!mainCategory.trim() || !subCategory.trim()) {
+    if (!subCategory.trim()) {
       Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ các trường bắt buộc.");
       return;
     }

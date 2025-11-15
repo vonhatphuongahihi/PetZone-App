@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { SocketEventEmitter } from '../../services/socketEventEmitter';
 import { sellerTopNavStyles } from './sellerTopNavStyles';
 
 export const SellerTopNavigation: React.FC = () => {
@@ -9,26 +10,20 @@ export const SellerTopNavigation: React.FC = () => {
 
     useEffect(() => {
         // Listen for unread conversation notifications
-        const handleUnreadNotification = (event: any) => {
-            const { conversationId } = event.detail;
+        const handleUnreadNotification = (data: { conversationId: number }) => {
             setUnreadCount(prev => prev + 1);
         };
 
-        const handleMarkAsRead = (event: any) => {
-            const { conversationId } = event.detail;
+        const handleMarkAsRead = (data: { conversationId: number }) => {
             setUnreadCount(prev => Math.max(0, prev - 1));
         };
 
-        if (typeof window !== 'undefined') {
-            window.addEventListener('conversation:unread', handleUnreadNotification);
-            window.addEventListener('conversation:read', handleMarkAsRead);
-        }
+        SocketEventEmitter.addListener('conversation:unread', handleUnreadNotification);
+        SocketEventEmitter.addListener('conversation:read', handleMarkAsRead);
 
         return () => {
-            if (typeof window !== 'undefined') {
-                window.removeEventListener('conversation:unread', handleUnreadNotification);
-                window.removeEventListener('conversation:read', handleMarkAsRead);
-            }
+            SocketEventEmitter.removeAllListeners('conversation:unread');
+            SocketEventEmitter.removeAllListeners('conversation:read');
         };
     }, []);
 

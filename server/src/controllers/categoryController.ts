@@ -128,7 +128,6 @@ export const getAllCategories = async (req: Request, res: Response) => {
     const categories = await prisma.category.findMany({
       where: { parentId: null },
       include: { children: true },
-      orderBy: { createdAt: "desc" },
     });
 
     console.log("Categories fetched:", categories);

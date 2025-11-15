@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://10.76.162.127:3001/api';
+import { API_BASE_URL } from '../config/api';
 
 export interface Category {
   id: number;
