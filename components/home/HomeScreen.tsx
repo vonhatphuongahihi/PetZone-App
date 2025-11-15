@@ -1,197 +1,189 @@
+// src/screens/HomeScreen.tsx
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React, { useState } from "react";
-import { FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ProductCard } from "../user/product-card/ProductCard";
 import SearchBarWithPopup from "../user/search-bar-with-popup/SearchBarWithPopup";
 import { homeStyles } from './homeStyles';
-// Mock data
-const parentCategories = [
-    { id: "1", name: "Thức ăn", icon: require("../../assets/images/food-icon.png") },
-    { id: "2", name: "Đồ chơi", icon: require("../../assets/images/toy-icon.png") },
-    { id: "3", name: "Phụ kiện", icon: require("../../assets/images/accessory-icon.png") },
-    { id: "4", name: "Dụng cụ", icon: require("../../assets/images/tool-icon.png") },
-    { id: "5", name: "Quần áo", icon: require("../../assets/images/clothes-icon.png") },
-];
 
-// Mock data sản phẩm
-const todayProducts = [
-    {
-        id: "p1",
-        name: "Vòng Cổ Màu Vàng Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "phuong-shop",
-        shopImage: require("../../assets/images/shop.png"),
-        sold: 1000,
-        category: "Vòng cổ",
-        rating: 5,
-        image: require("../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    },
-    {
-        id: "p2",
-        name: "Vòng Cổ Màu Đỏ Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "pet-shop",
-        sold: 500,
-        shopImage: require("../../assets/images/shop.png"),
-        category: "Vòng cổ",
-        rating: 4.5,
-        image: require("../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    }
-];
-
-const newProducts = [
-    {
-        id: "p3",
-        name: "Thức Ăn Cho Chó Premium Quality",
-        shop: "food-shop",
-        shopImage: require("../../assets/images/shop.png"),
-        sold: 800,
-        category: "Thức ăn",
-        rating: 4.8,
-        image: require("../../assets/images/cat.png"),
-        price: 125000,
-        oldPrice: 150000,
-        discount: "-17%",
-    },
-    {
-        id: "p4",
-        name: "Đồ Chơi Thú Cưng Cao Cấp",
-        shop: "toy-shop",
-        shopImage: require("../../assets/images/shop.png"),
-        sold: 300,
-        category: "Đồ chơi",
-        rating: 4.7,
-        image: require("../../assets/images/cat.png"),
-        price: 85000,
-        oldPrice: 95000,
-        discount: "-11%",
-    }
-];
-
-const hotProducts = [
-    {
-        id: "p5",
-        name: "Áo Khoác Cho Chó Mèo Siêu Cute",
-        shop: "fashion-pet",
-        shopImage: require("../../assets/images/shop.png"),
-        sold: 1500,
-        category: "Quần áo",
-        rating: 4.9,
-        image: require("../../assets/images/cat.png"),
-        price: 199000,
-        oldPrice: 250000,
-        discount: "-20%",
-    },
-    {
-        id: "p6",
-        name: "Dây Dắt Chó Cao Cấp Da Thật",
-        shop: "accessory-shop",
-        shopImage: require("../../assets/images/shop.png"),
-        sold: 900,
-        category: "Phụ kiện",
-        rating: 4.6,
-        image: require("../../assets/images/cat.png"),
-        price: 156000,
-        oldPrice: 180000,
-        discount: "-13%",
-    }
-];
+const API_BASE_URL = 'http://10.143.19.127:3001/api';
 
 const recentSearches = ["Thức ăn cho chó", "Vòng cổ", "Đồ chơi"];
 const hotSearchProducts = [
     { id: 1, name: "Thức ăn Royal Canin", price: 450000, oldPrice: 500000, image: require("../../assets/images/cat.png") },
-    { id: 2, name: "Vòng cổ da thật", price: 120000, oldPrice: 150000, image: require("../../assets/images/cat.png") }
+    { id: 2, name: "Vòng cổ da thật", price: 120000, oldPrice: 150000, image: require("../../assets/images/cat.png") },
 ];
 
-// Mock data cho top cửa hàng bán chạy
 const topStores = [
-    {
-        id: "s1",
-        name: "PetZone Store",
-        avatar: require("../../assets/images/shop.png"),
-        followerCount: 14,
-        soldCount: 1000,
-        isFollowed: true,
-    },
-    {
-        id: "s2",
-        name: "Pet Paradise Shop",
-        avatar: require("../../assets/images/shop.png"),
-        followerCount: 20,
-        soldCount: 980,
-        isFollowed: false,
-    },
-    {
-        id: "s3",
-        name: "Happy Pet Store",
-        avatar: require("../../assets/images/shop.png"),
-        followerCount: 50,
-        soldCount: 756,
-        isFollowed: false,
-    },
-    {
-        id: "s4",
-        name: "Pet Care Center",
-        avatar: require("../../assets/images/shop.png"),
-        followerCount: 25,
-        soldCount: 642,
-        isFollowed: true,
-    }
+    { id: "s1", name: "PetZone Store", avatar: require("../../assets/images/shop.png"), followerCount: 14, soldCount: 1000, isFollowed: true },
+    { id: "s2", name: "Pet Paradise Shop", avatar: require("../../assets/images/shop.png"), followerCount: 20, soldCount: 980, isFollowed: false },
+    { id: "s3", name: "Happy Pet Store", avatar: require("../../assets/images/shop.png"), followerCount: 50, soldCount: 756, isFollowed: false },
+    { id: "s4", name: "Pet Care Center", avatar: require("../../assets/images/shop.png"), followerCount: 25, soldCount: 642, isFollowed: true }
 ];
 
 export default function HomeScreen() {
-    // State để quản lý trạng thái follow của các store
-    const [storeFollowStates, setStoreFollowStates] = useState<{ [key: string]: boolean }>(() => {
-        const initialStates: { [key: string]: boolean } = {};
-        topStores.forEach(store => {
-            initialStates[store.id] = store.isFollowed;
-        });
-        return initialStates;
-    });
+    const [categories, setCategories] = useState<any[]>([]);
+    const [todayProducts, setTodayProducts] = useState<any[]>([]);
+    const [newProducts, setNewProducts] = useState<any[]>([]);
+    const [hotProducts, setHotProducts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleProductPress = (product: any) => {
-        console.log('Product pressed:', product.name);
-        // Điều hướng đến trang chi tiết sản phẩm
-    };
+    const { refresh } = useLocalSearchParams();
+
+    const [storeFollowStates, setStoreFollowStates] = useState<{ [key: string]: boolean }>(() => {
+        const init: any = {};
+        topStores.forEach(s => init[s.id] = s.isFollowed);
+        return init;
+    });
 
     const handleToggleFollow = (storeId: string) => {
         setStoreFollowStates(prev => ({
             ...prev,
-            [storeId]: !prev[storeId]
+            [storeId]: !prev[storeId],
         }));
     };
 
-    const renderCategoryItem = ({ item }: { item: typeof parentCategories[0] }) => (
+    // 🔹 Fetch danh mục cha
+    const fetchCategories = async (token: string) => {
+        try {
+            const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+            const res = await fetch(`${API_BASE_URL}/categories`, { headers });
+
+            if (res.status === 401) {
+                await AsyncStorage.removeItem("jwt_token");
+                Alert.alert("Phiên hết hạn", "Vui lòng đăng nhập lại.", [
+                    { text: "OK", onPress: () => router.replace("/login") }
+                ]);
+                return;
+            }
+
+            const json = await res.json();
+            if (json.success) setCategories(json.data);
+        } catch (error) {
+            console.error("Lỗi tải danh mục:", error);
+            Alert.alert("Lỗi", "Không tải được danh mục");
+        }
+    };
+
+    // 🔹 Fetch sản phẩm
+    const fetchProducts = async (token: string) => {
+        try {
+            const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+            const [todayRes, newRes, hotRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/products/today`, { headers }),
+                fetch(`${API_BASE_URL}/products/new`, { headers }),
+                fetch(`${API_BASE_URL}/products/hot`, { headers }),
+            ]);
+
+            if (todayRes.status === 401 || newRes.status === 401 || hotRes.status === 401) {
+                await AsyncStorage.removeItem("jwt_token");
+                Alert.alert("Phiên hết hạn", "Vui lòng đăng nhập lại.", [
+                    { text: "OK", onPress: () => router.replace("/login") }
+                ]);
+                return;
+            }
+
+            const today = await todayRes.json();
+            const newP = await newRes.json();
+            const hot = await hotRes.json();
+
+            setTodayProducts(today.success ? today.data : []);
+            setNewProducts(newP.success ? newP.data : []);
+            setHotProducts(hot.success ? hot.data : []);
+        } catch (err) {
+            console.error("Lỗi API:", err);
+            Alert.alert("Lỗi", "Không kết nối được server");
+        }
+    };
+
+    useEffect(() => {
+        (async () => {
+            setLoading(true);
+            const token = await AsyncStorage.getItem("jwt_token");
+
+            if (!token) {
+                Alert.alert("Lỗi", "Bạn chưa đăng nhập", [
+                    { text: "OK", onPress: () => router.replace("/login") }
+                ]);
+                setLoading(false);
+                return;
+            }
+
+            await Promise.all([fetchCategories(token), fetchProducts(token)]);
+            setLoading(false);
+        })();
+    }, [refresh]);
+
+    // 🔹 Render danh mục cha
+    const renderCategoryItem = ({ item }: any) => (
         <TouchableOpacity
             style={homeStyles.categoryItem}
-            onPress={() => {
-                router.push(`/product-list?categoryId=${item.id}&categoryName=${item.name}`);
-            }}
+            onPress={() =>
+                router.push(`/categories?parentId=${item.id}&parentName=${item.name}`)
+            }
         >
             <View style={homeStyles.categoryIconContainer}>
-                <Image source={item.icon} style={homeStyles.categoryIcon} />
-                <Text style={homeStyles.categoryText}>{item.name}</Text>
+                {/* 🔹 Paste ảnh cho danh mục tại đây */}
+                <Image
+                    source={
+                        item.icon
+                            ? { uri: item.icon }
+                            : require("../../assets/images/food-icon.png") // <-- paste ảnh local mặc định
+                    }
+                    style={homeStyles.categoryIcon}
+                />
             </View>
+            <Text style={homeStyles.categoryText}>{item.name}</Text>
         </TouchableOpacity>
     );
 
-    const renderProductItem = ({ item }: { item: any }) => (
-        <View style={homeStyles.productWrapper}>
-            <ProductCard
-                product={item}
-                onPress={handleProductPress}
-                layout="horizontal"
-            />
-        </View>
-    );
+    // 🔹 Render sản phẩm
+    const renderProductItem = ({ item }: { item: any }) => {
+        const productForCard = {
+            id: item.id,
+            name: item.title || "Sản phẩm",
+            price: item.price || 0,
+            oldPrice: item.oldPrice,
+            image: item.images?.[0]?.url
+                ? { uri: item.images[0].url }
+                : require("../../assets/images/cat.png"),
+            shop: item.store?.name || "Pet Shop",
+            shopImage: item.store?.avatar
+                ? { uri: item.store.avatar }
+                : require("../../assets/images/shop.png"),
+            sold: item.soldCount || 0,
+            rating: item.rating || 5,
+            discount: item.oldPrice
+                ? `-${Math.round((item.oldPrice - item.price) / item.oldPrice * 100)}%`
+                : "",
+            category: item.category?.name || "Chưa phân loại",
+        };
 
-    const renderStoreItem = ({ item }: { item: typeof topStores[0] }) => {
+        return (
+            <View style={homeStyles.productWrapper}>
+                <ProductCard
+                    product={productForCard}
+                    onPress={() => Alert.alert("Đang phát triển")}
+                    layout="horizontal"
+                />
+            </View>
+        );
+    };
+
+    // 🔹 Render cửa hàng
+    const renderStoreItem = ({ item }: any) => {
         const isFollowed = storeFollowStates[item.id];
 
         return (
@@ -199,26 +191,23 @@ export default function HomeScreen() {
                 <Image source={item.avatar} style={homeStyles.storeAvatar} />
                 <View style={homeStyles.storeInfo}>
                     <Text style={homeStyles.storeName} numberOfLines={2}>{item.name}</Text>
+
                     <TouchableOpacity
-                        style={[
-                            homeStyles.followButton,
-                            { backgroundColor: isFollowed ? '#E0E0E0' : '#FBBC05' }
-                        ]}
+                        style={[homeStyles.followButton, { backgroundColor: isFollowed ? "#E0E0E0" : "#FBBC05" }]}
                         onPress={() => handleToggleFollow(item.id)}
                     >
-                        <Text style={[
-                            homeStyles.followButtonText,
-                            { color: isFollowed ? '#666' : '#FFF' }
-                        ]}>
+                        <Text style={[homeStyles.followButtonText, { color: isFollowed ? "#666" : "#FFF" }]}>
                             {isFollowed ? "Bỏ theo dõi" : "Theo dõi"}
                         </Text>
                     </TouchableOpacity>
+
                     <View style={homeStyles.storeStatRow}>
-                        <Feather name="users" color="#7F8C8D" size={12} />
+                        <Feather name="users" size={12} color="#7F8C8D" />
                         <Text style={homeStyles.storeStatText}>{item.followerCount} người theo dõi</Text>
                     </View>
+
                     <View style={homeStyles.storeStatRow}>
-                        <Feather name="shopping-bag" color="#7F8C8D" size={12} />
+                        <Feather name="shopping-bag" size={12} color="#7F8C8D" />
                         <Text style={homeStyles.storeStatText}>{item.soldCount} đã bán</Text>
                     </View>
                 </View>
@@ -226,57 +215,54 @@ export default function HomeScreen() {
         );
     };
 
+    if (loading) {
+        return (
+            <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" color="#FBBC05" />
+                <Text style={{ marginTop: 10, color: "#666" }}>Đang tải...</Text>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={homeStyles.container}>
             <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Header với Search Bar và Cart */}
+                {/* Header */}
                 <View style={homeStyles.header}>
                     <View style={homeStyles.searchBarContainer}>
-                        <SearchBarWithPopup
-                            recentSearches={recentSearches}
-                            hotProducts={hotSearchProducts}
-                        />
+                        <SearchBarWithPopup recentSearches={recentSearches} hotProducts={hotSearchProducts} />
                     </View>
-                    <TouchableOpacity
-                        style={homeStyles.cartButton}
-                        onPress={() => { router.push('/cart'); }}
-                    >
+                    <TouchableOpacity style={homeStyles.cartButton} onPress={() => router.push('/cart')}>
                         <MaterialCommunityIcons name="cart" color="#FBBC05" size={30} />
                     </TouchableOpacity>
                 </View>
 
-                {/* Banner Hero */}
+                {/* Banner */}
                 <View style={homeStyles.heroBanner}>
                     <View style={homeStyles.heroContent}>
-                        {/* Background Image */}
-                        <Image
-                            source={require("../../assets/images/banner.png")}
-                            style={homeStyles.heroBackgroundImage}
-                        />
-                        {/* Text Content Overlay */}
+                        <Image source={require("../../assets/images/banner.png")} style={homeStyles.heroBackgroundImage} />
                         <View style={homeStyles.heroTextContainer}>
                             <Text style={homeStyles.heroSubtitle}>
                                 Những sản phẩm tốt nhất{'\n'}cho thú cưng của bạn
                             </Text>
-                            <TouchableOpacity style={homeStyles.heroButton} onPress={() => { router.push('/categories'); }}>
+                            <TouchableOpacity style={homeStyles.heroButton} onPress={() => router.push('/categories')}>
                                 <Text style={homeStyles.heroButtonText}>Mua ngay</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
                 </View>
 
-                {/* Categories */}
+                {/* Danh mục */}
                 <View style={homeStyles.section}>
                     <View style={homeStyles.sectionHeader}>
                         <Text style={homeStyles.sectionTitle}>Danh mục</Text>
                     </View>
                     <FlatList
-                        data={parentCategories}
+                        data={categories}
                         renderItem={renderCategoryItem}
-                        keyExtractor={(item) => item.id}
                         horizontal
-                        scrollEnabled={true}
                         showsHorizontalScrollIndicator={false}
+                        keyExtractor={(item) => item.id.toString()}
                         contentContainerStyle={homeStyles.categoriesList}
                     />
                 </View>
@@ -285,17 +271,16 @@ export default function HomeScreen() {
                 <View style={homeStyles.section}>
                     <View style={homeStyles.sectionHeader}>
                         <Text style={homeStyles.sectionTitle}>Gợi ý hôm nay</Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => router.push({ pathname: '/product-list', params: { title: 'Gợi ý hôm nay', type: 'today' } })}>
                             <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
                         </TouchableOpacity>
                     </View>
                     <FlatList
                         data={todayProducts}
                         renderItem={renderProductItem}
-                        keyExtractor={(item) => item.id}
                         horizontal
-                        scrollEnabled={true}
                         showsHorizontalScrollIndicator={false}
+                        keyExtractor={(item) => item.id.toString()}
                         contentContainerStyle={homeStyles.productsList}
                     />
                 </View>
@@ -304,17 +289,16 @@ export default function HomeScreen() {
                 <View style={homeStyles.section}>
                     <View style={homeStyles.sectionHeader}>
                         <Text style={homeStyles.sectionTitle}>Sản phẩm mới</Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => router.push({ pathname: '/product-list', params: { title: 'Sản phẩm mới', type: 'new' } })}>
                             <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
                         </TouchableOpacity>
                     </View>
                     <FlatList
                         data={newProducts}
                         renderItem={renderProductItem}
-                        keyExtractor={(item) => item.id}
                         horizontal
-                        scrollEnabled={true}
                         showsHorizontalScrollIndicator={false}
+                        keyExtractor={(item) => item.id.toString()}
                         contentContainerStyle={homeStyles.productsList}
                     />
                 </View>
@@ -323,39 +307,32 @@ export default function HomeScreen() {
                 <View style={homeStyles.section}>
                     <View style={homeStyles.sectionHeader}>
                         <Text style={homeStyles.sectionTitle}>Khuyến mãi HOT</Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => router.push({ pathname: '/product-list', params: { title: 'Khuyến mãi HOT', type: 'hot' } })}>
                             <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
                         </TouchableOpacity>
                     </View>
                     <FlatList
                         data={hotProducts}
                         renderItem={renderProductItem}
-                        keyExtractor={(item) => item.id}
                         horizontal
-                        scrollEnabled={true}
                         showsHorizontalScrollIndicator={false}
+                        keyExtractor={(item) => item.id.toString()}
                         contentContainerStyle={homeStyles.productsList}
                     />
                 </View>
 
-                {/* Top cửa hàng bán chạy */}
+                {/* Cửa hàng nổi bật */}
                 <View style={homeStyles.section}>
                     <View style={homeStyles.sectionHeader}>
-                        <Text style={homeStyles.sectionTitle}>Top cửa hàng bán chạy</Text>
-                        <TouchableOpacity>
-                            <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
-                        </TouchableOpacity>
+                        <Text style={homeStyles.sectionTitle}>Cửa hàng nổi bật</Text>
                     </View>
-
-                    {/* Danh sách cửa hàng */}
                     <FlatList
                         data={topStores}
                         renderItem={renderStoreItem}
-                        keyExtractor={(item) => item.id}
                         horizontal
-                        scrollEnabled={true}
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={homeStyles.storesList}
+                        keyExtractor={(item) => item.id}
+                        contentContainerStyle={{ paddingLeft: 16, paddingBottom: 8 }}
                     />
                 </View>
             </ScrollView>

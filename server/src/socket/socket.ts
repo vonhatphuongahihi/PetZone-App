@@ -7,7 +7,7 @@ import { markRead, saveMessage } from '../services/chatService';
 type JwtPayload = { id: string; email?: string; userId?: string };
 
 // Extend Socket.IO Server type để thêm custom method
-interface ExtendedServer extends Server {
+export interface ExtendedServer extends Server {
     getOnlineUsers(): string[];
 }
 

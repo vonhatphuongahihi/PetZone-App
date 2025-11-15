@@ -2,9 +2,12 @@ import express from "express";
 import {
     createProduct,
     deleteProduct,
-    getProductById,
+    getAllProducts,
+    getHotProducts,
+    getNewProducts,
     getProductsByCategory,
     getProductsByStore,
+    getTodayProducts,
     updateProduct,
     uploadImages,
 } from "../controllers/productController";
@@ -15,7 +18,17 @@ const router = express.Router();
 // Áp dụng authentication middleware cho tất cả routes
 router.use(authMiddleware);
 
+router.get('/', getAllProducts);
+
+router.get('/today', getTodayProducts);
+
+router.get('/new', getNewProducts);
+
+router.get('/hot', getHotProducts);
+
 router.post("/", uploadImages, createProduct);
+
+router.get('/category/:categoryId', getProductsByCategory);
 
 router.get("/store/:storeId", getProductsByStore);
 
