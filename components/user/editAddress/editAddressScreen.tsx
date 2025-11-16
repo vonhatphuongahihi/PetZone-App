@@ -1,4 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
     Modal,
@@ -10,7 +11,8 @@ import {
 } from "react-native";
 import { styles } from "./editAddressStyle";
 
-export default function EditAddressScreen({ navigation }: any) {
+export default function EditAddressScreen() {
+    const router = useRouter();
     const [name, setName] = useState("Nguyễn Thu Phương");
     const [phone, setPhone] = useState("(+84) 389 144 068");
     const [province, setProvince] = useState(
@@ -31,7 +33,7 @@ export default function EditAddressScreen({ navigation }: any) {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.navigate("payment")}>
+                <TouchableOpacity onPress={() => router.back()}>
                     <MaterialIcons name="arrow-back-ios" size={24} color="#FCCB05" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Sửa Địa chỉ</Text>
@@ -135,7 +137,7 @@ export default function EditAddressScreen({ navigation }: any) {
                                 style={[styles.alertPrimaryBtn, { backgroundColor: "#F44336" }]}
                                 onPress={() => {
                                     setShowDelete(false);
-                                    navigation.goBack();
+                                    router.back();
                                 }}
                             >
                                 <Text style={styles.alertPrimaryBtnText}>Xóa</Text>
@@ -170,7 +172,7 @@ export default function EditAddressScreen({ navigation }: any) {
                                 style={[styles.alertPrimaryBtn, { backgroundColor: "#FBBC05" }]}
                                 onPress={() => {
                                     setShowSuccess(false);
-                                    navigation.navigate("HomeScreen");
+                                    router.push("/");
                                 }}
                             >
                                 <Text style={styles.alertPrimaryBtnText}>Tiếp tục mua sắm</Text>

@@ -223,6 +223,49 @@ export default function CartScreen() {
     setDeletingItemId(null);
   };
 
+  // Xử lý mua hàng
+  const handleBuy = () => {
+    const selectedItems = cartItems.filter(item => checkedProducts[item.id]);
+
+    if (selectedItems.length === 0) {
+      Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một sản phẩm');
+      return;
+    }
+
+    // Tính tổng tiền
+    const totalAmount = selectedItems.reduce((sum, item) => {
+      return sum + (Number(item.product.price) * item.quantity);
+    }, 0);
+
+    // Gom sản phẩm theo shop
+    const selectedShops = Object.values(
+      selectedItems.reduce((acc, item) => {
+        const shopId = item.product.store.id;
+        const shopName = item.product.store.storeName;
+
+        if (!acc[shopId]) {
+          acc[shopId] = {
+            shopId,
+            shopName,
+            products: [] as CartItem[],
+          };
+        }
+        acc[shopId].products.push(item);
+        return acc;
+      }, {} as Record<string, { shopId: string; shopName: string; products: CartItem[] }>)
+    );
+
+    // Chuyển sang trang thanh toán với dữ liệu
+    router.push({
+      pathname: "/payment",
+      params: {
+        selectedItems: JSON.stringify(selectedItems),
+        selectedShops: JSON.stringify(selectedShops),
+        totalAmount: totalAmount.toString(),
+      }
+    });
+  };
+
   // Render 1 shop
   const renderShop = ({
     item,
@@ -363,7 +406,8 @@ export default function CartScreen() {
         </Text>
         <TouchableOpacity
           style={styles.buyBtn}
-          onPress={() => router.push("/payment")}
+          onPress={handleBuy}
+          disabled={Object.keys(checkedProducts).filter((id) => checkedProducts[id]).length === 0}
         >
           <Text style={styles.buyBtnText}>
             Mua hàng (
