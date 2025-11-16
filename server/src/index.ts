@@ -11,6 +11,7 @@ import authRoutes from './routes/auth';
 import cartRoutes from './routes/cart';
 import categoryRoutes from './routes/category';
 import chatRoutes from './routes/chat';
+import orderRoutes from './routes/order';
 import productRoutes from './routes/product';
 import storeRoutes from './routes/store';
 import supportRoutes from './routes/support';
@@ -62,6 +63,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);

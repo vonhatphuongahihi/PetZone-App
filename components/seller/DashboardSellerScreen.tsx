@@ -1,70 +1,62 @@
 import { AntDesign, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { storeService } from '../../services/storeService';
 import { tokenService } from '../../services/tokenService';
 import { dashboardSellerStyles } from './dashboardSellerStyles';
 import { SellerBottomNavigation } from './SellerBottomNavigation';
 import { SellerTopNavigation } from './SellerTopNavigation';
 
+interface BestSellingProduct {
+    id: number;
+    name: string;
+    price: number;
+    sold: number;
+    image: string | null;
+    rating: number;
+}
+
 export default function DashboardSellerScreen() {
     const [storeName, setStoreName] = useState('PetZone Store');
     const [loading, setLoading] = useState(true);
-
-    // Mock data - sẽ được thay thế bằng data từ database
-    const stats = {
-        totalRevenue: 100000000,
-        totalOrders: 118,
-        totalProducts: 30,
+    const [stats, setStats] = useState({
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalProducts: 0,
         rating: 4.8
-    };
+    });
+    const [bestSellingProducts, setBestSellingProducts] = useState<BestSellingProduct[]>([]);
 
     useEffect(() => {
-        const fetchStoreData = async () => {
+        const fetchDashboardData = async () => {
             try {
                 const token = await tokenService.getToken();
-                if (token) {
-                    const storeData = await storeService.getMyStore(token);
-                    setStoreName(storeData.store.storeName);
+                if (!token) {
+                    setLoading(false);
+                    return;
                 }
+
+                // Fetch store name
+                const storeData = await storeService.getMyStore(token);
+                setStoreName(storeData.store.storeName);
+
+                // Fetch stats
+                const statsResponse = await storeService.getSellerStats(token);
+                setStats(statsResponse.data);
+
+                // Fetch best selling products
+                const productsResponse = await storeService.getBestSellingProducts(token);
+                setBestSellingProducts(productsResponse.data);
             } catch (error) {
-                console.error('Error fetching store data:', error);
-                // Keep default store name if error
+                console.error('Error fetching dashboard data:', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchStoreData();
+        fetchDashboardData();
     }, []);
-
-    const bestSellingProducts = [
-        {
-            id: 1,
-            name: "Vòng chuông bấm xinh cho mèo",
-            rating: 5.0,
-            price: 125000,
-            sold: 30,
-            image: require('@/assets/images/dog-feet.png') // Placeholder
-        },
-        {
-            id: 2,
-            name: "Thức ăn khô cho chó",
-            rating: 4.8,
-            price: 250000,
-            sold: 25,
-            image: require('@/assets/images/dog-feet.png') // Placeholder
-        },
-        {
-            id: 3,
-            name: "Đồ chơi cho mèo",
-            rating: 4.9,
-            price: 85000,
-            sold: 20,
-            image: require('@/assets/images/dog-feet.png') // Placeholder
-        }
-    ];
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
@@ -72,6 +64,19 @@ export default function DashboardSellerScreen() {
             currency: 'VND'
         }).format(amount);
     };
+
+    if (loading) {
+        return (
+            <View style={dashboardSellerStyles.container}>
+                <SellerTopNavigation />
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#FBBC05" />
+                    <Text style={{ marginTop: 12, color: '#666' }}>Đang tải...</Text>
+                </View>
+                <SellerBottomNavigation />
+            </View>
+        );
+    }
 
     return (
         <View style={dashboardSellerStyles.container}>
@@ -102,10 +107,6 @@ export default function DashboardSellerScreen() {
                             <View style={dashboardSellerStyles.kpiInfo}>
                                 <Text style={dashboardSellerStyles.kpiTitle}>Tổng doanh thu</Text>
                                 <Text style={dashboardSellerStyles.kpiValue}>{formatCurrency(stats.totalRevenue)}</Text>
-                                <View style={dashboardSellerStyles.kpiTrend}>
-                                    <Text style={dashboardSellerStyles.trendUp}>↗</Text>
-                                    <Text style={dashboardSellerStyles.trendUpText}>12%</Text>
-                                </View>
                             </View>
                         </View>
                         <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
@@ -120,10 +121,6 @@ export default function DashboardSellerScreen() {
                             <View style={dashboardSellerStyles.kpiInfo}>
                                 <Text style={dashboardSellerStyles.kpiTitle}>Số đơn hàng</Text>
                                 <Text style={dashboardSellerStyles.kpiValue}>{stats.totalOrders}</Text>
-                                <View style={dashboardSellerStyles.kpiTrend}>
-                                    <Text style={dashboardSellerStyles.trendDown}>↘</Text>
-                                    <Text style={dashboardSellerStyles.trendDownText}>6%</Text>
-                                </View>
                             </View>
                         </View>
                         <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
@@ -161,30 +158,36 @@ export default function DashboardSellerScreen() {
                 {/* Sản phẩm bán chạy */}
                 <View style={dashboardSellerStyles.productsSection}>
                     <Text style={dashboardSellerStyles.productsTitle}>Sản phẩm bán chạy</Text>
-                    {bestSellingProducts.map((product) => (
-                        <View key={product.id} style={dashboardSellerStyles.productCard}>
-                            <Image
-                                source={product.image}
-                                style={dashboardSellerStyles.productImage}
-                                contentFit="cover"
-                            />
-                            <View style={dashboardSellerStyles.productInfo}>
-                                <View>
-                                    <Text style={dashboardSellerStyles.productName}>{product.name}</Text>
-                                    <View style={dashboardSellerStyles.ratingContainer}>
-                                        <Text style={dashboardSellerStyles.productRating}>Đánh giá: {product.rating}</Text>
-                                        <AntDesign name="star" size={12} color="#FBBC05" />
+                    {bestSellingProducts.length === 0 ? (
+                        <View style={{ padding: 20, alignItems: 'center' }}>
+                            <Text style={{ color: '#999', fontSize: 14 }}>Chưa có sản phẩm bán chạy</Text>
+                        </View>
+                    ) : (
+                        bestSellingProducts.map((product) => (
+                            <View key={product.id} style={dashboardSellerStyles.productCard}>
+                                <Image
+                                    source={product.image ? { uri: product.image } : require('@/assets/images/dog-feet.png')}
+                                    style={dashboardSellerStyles.productImage}
+                                    contentFit="cover"
+                                />
+                                <View style={dashboardSellerStyles.productInfo}>
+                                    <View>
+                                        <Text style={dashboardSellerStyles.productName}>{product.name}</Text>
+                                        <View style={dashboardSellerStyles.ratingContainer}>
+                                            <Text style={dashboardSellerStyles.productRating}>Đánh giá: {product.rating}</Text>
+                                            <AntDesign name="star" size={12} color="#FBBC05" />
+                                        </View>
                                     </View>
-                                </View>
-                                <View style={dashboardSellerStyles.productBottom}>
-                                    <Text style={dashboardSellerStyles.productPrice}>{formatCurrency(product.price)}</Text>
-                                    <View style={dashboardSellerStyles.soldButton}>
-                                        <Text style={dashboardSellerStyles.soldText}>Đã bán: {product.sold}</Text>
+                                    <View style={dashboardSellerStyles.productBottom}>
+                                        <Text style={dashboardSellerStyles.productPrice}>{formatCurrency(product.price)}</Text>
+                                        <View style={dashboardSellerStyles.soldButton}>
+                                            <Text style={dashboardSellerStyles.soldText}>Đã bán: {product.sold}</Text>
+                                        </View>
                                     </View>
                                 </View>
                             </View>
-                        </View>
-                    ))}
+                        ))
+                    )}
                 </View>
             </ScrollView>
 

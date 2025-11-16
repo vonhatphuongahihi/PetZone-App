@@ -1,4 +1,5 @@
-import { API_BASE_URL } from '../config/api';
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.143.27:3001/api';
 
 export interface CreateStoreData {
     storeName: string;
@@ -122,5 +123,39 @@ export const storeService = {
 
             return false;
         }
+    },
+
+    getSellerStats: async (token: string): Promise<{ success: boolean; data: { totalRevenue: number; totalOrders: number; totalProducts: number; rating: number } }> => {
+        const response = await fetch(`${API_BASE_URL}/store/stats`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Lấy thống kê thất bại');
+        }
+
+        return response.json();
+    },
+
+    getBestSellingProducts: async (token: string): Promise<{ success: boolean; data: Array<{ id: number; name: string; price: number; sold: number; image: string | null; rating: number }> }> => {
+        const response = await fetch(`${API_BASE_URL}/store/best-selling`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Lấy sản phẩm bán chạy thất bại');
+        }
+
+        return response.json();
     }
 };
