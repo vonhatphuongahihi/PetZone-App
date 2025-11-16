@@ -13,9 +13,9 @@ export const productStyles = StyleSheet.create({
         padding: 12,
         paddingLeft: 16,
     },
-    headerTitle: { 
-        fontSize: 16, 
-        fontWeight: "600", 
+    headerTitle: {
+        fontSize: 16,
+        fontWeight: "600",
         flex: 1,
         marginLeft: 16,
         marginRight: 16,
@@ -399,5 +399,67 @@ export const productStyles = StyleSheet.create({
     productWrapper: {
         width: 160,
         marginRight: 12,
+    },
+    // Success Modal Styles
+    successModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    successModalContainer: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 24,
+        alignItems: 'center',
+        width: width * 0.85,
+        maxWidth: 320,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 10,
+    },
+    successIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#E8F5E9',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    successIcon: {
+        width: 50,
+        height: 50,
+    },
+    successTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#000',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    successMessage: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    successButton: {
+        backgroundColor: '#FBBC05',
+        paddingHorizontal: 40,
+        paddingVertical: 12,
+        borderRadius: 8,
+        minWidth: 120,
+    },
+    successButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#fff',
     },
 });

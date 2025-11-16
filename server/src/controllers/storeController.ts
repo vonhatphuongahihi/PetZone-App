@@ -365,7 +365,7 @@ export const storeController = {
                     where: { id: userId },
                     data: { username: ownerName.trim() }
                 });
-                
+
                 // Update the response to include new username
                 updatedStore.user.username = ownerName.trim();
             }
@@ -389,57 +389,153 @@ export const storeController = {
 
             if (!userId) {
                 return res.status(401).json({
-                    error: 'Unauthorized',
+                    success: false,
                     message: 'User not authenticated'
                 });
             }
 
             const store = await prisma.store.findFirst({
-                where: { userId, deletedAt: null },
-                select: {
-                    id: true,
-                    storeName: true,
-                    rating: true,
-                    revenue: true,
-                    totalOrders: true,
-                    totalReviews: true,
-                    followersCount: true,
-                    createdAt: true
-                }
+                where: { userId, deletedAt: null }
             });
 
             if (!store) {
                 return res.status(404).json({
-                    error: 'Store not found',
-                    message: 'No store found for this user'
+                    success: false,
+                    message: 'Store not found'
                 });
             }
 
             // Count products
-            const productCount = await prisma.product.count({
+            const totalProducts = await prisma.product.count({
                 where: { storeId: store.id }
             });
 
+            // Get orders for this store
+            const orders = await prisma.order.findMany({
+                where: {
+                    storeId: store.id,
+                    deletedAt: null,
+                    status: {
+                        in: ['confirmed', 'shipped'] // Only count confirmed and shipped orders
+                    }
+                },
+                include: {
+                    orderItems: true
+                }
+            });
+
+            // Calculate total revenue from orders
+            const totalRevenue = orders.reduce((sum: number, order: any) => {
+                return sum + Number(order.total);
+            }, 0);
+
+            // Count total orders
+            const totalOrders = orders.length;
+
+            // Calculate average rating (default to 4.8 if no reviews)
+            const rating = store.rating || 4.8;
+
             const stats = {
-                storeName: store.storeName,
-                rating: store.rating,
-                revenue: store.revenue,
-                totalOrders: store.totalOrders,
-                totalProducts: productCount,
-                totalReviews: store.totalReviews,
-                followersCount: store.followersCount,
-                memberSince: store.createdAt
+                totalRevenue,
+                totalOrders,
+                totalProducts,
+                rating
             };
 
             res.json({
-                message: 'Seller stats fetched successfully',
-                stats
+                success: true,
+                data: stats
             });
         } catch (error) {
             console.error('Get seller stats error:', error);
             res.status(500).json({
-                error: 'Failed to get seller stats',
+                success: false,
                 message: 'An error occurred while fetching seller stats'
+            });
+        }
+    },
+
+    getBestSellingProducts: async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user?.id;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
+            }
+
+            const store = await prisma.store.findFirst({
+                where: { userId, deletedAt: null }
+            });
+
+            if (!store) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Store not found'
+                });
+            }
+
+            // Get all order items for this store
+            const orderItems = await prisma.orderItem.findMany({
+                where: {
+                    order: {
+                        storeId: store.id,
+                        deletedAt: null,
+                        status: {
+                            in: ['confirmed', 'shipped']
+                        }
+                    }
+                },
+                include: {
+                    product: {
+                        include: {
+                            images: true
+                        }
+                    }
+                }
+            });
+
+            // Group by product and calculate total sold
+            const productSales: any = {};
+            orderItems.forEach((item: any) => {
+                const productId = item.productId;
+                if (!productId) return;
+
+                if (!productSales[productId]) {
+                    productSales[productId] = {
+                        product: item.product,
+                        totalSold: 0,
+                        totalRevenue: 0
+                    };
+                }
+                productSales[productId].totalSold += item.quantity;
+                productSales[productId].totalRevenue += Number(item.totalPrice);
+            });
+
+            // Convert to array and sort by totalSold
+            const bestSellingProducts = Object.values(productSales)
+                .sort((a: any, b: any) => b.totalSold - a.totalSold)
+                .slice(0, 3) // Top 3
+                .map((item: any) => ({
+                    id: item.product.id,
+                    name: item.product.title,
+                    price: Number(item.product.price),
+                    sold: item.totalSold,
+                    image: item.product.images?.[0]?.url || null,
+                    rating: Number(item.product.avgRating) || 4.8
+                }));
+
+            res.json({
+                success: true,
+                data: bestSellingProducts
+            });
+        } catch (error) {
+            console.error('Get best selling products error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching best selling products'
             });
         }
     }

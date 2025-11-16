@@ -31,16 +31,17 @@ export const styles = StyleSheet.create({
 
     // Card sản phẩm
     productCard: {
-        flex: 1,
-        backgroundColor: "#fff",
-        margin: 6,
-        borderRadius: 10,
-        padding: 8,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
+        width: 160,
+        height: 220,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 10,
+        marginVertical: 6,
         elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
     },
 
     imageWrapper: {
@@ -51,10 +52,10 @@ export const styles = StyleSheet.create({
         overflow: "hidden",
     },
     productImage: {
-       width: "100%", 
-       height: 150, 
-       borderRadius: 8, 
-       resizeMode: "cover",
+        width: "100%",
+        height: 150,
+        borderRadius: 8,
+        resizeMode: "cover",
     },
 
     // Tag "Còn X sản phẩm"
@@ -87,7 +88,7 @@ export const styles = StyleSheet.create({
         marginTop: 4,
     },
     productPrice: {
-        color: "#E53935", 
+        color: "#E53935",
         fontWeight: "700",
     },
     oldPrice: {
@@ -96,7 +97,7 @@ export const styles = StyleSheet.create({
         fontSize: 12,
     },
     discount: {
-        color: "#F9C332", 
+        color: "#F9C332",
         fontWeight: "700",
         fontSize: 12,
     },
@@ -107,7 +108,7 @@ export const styles = StyleSheet.create({
         marginTop: 4,
     },
     soldLabel: {
-        fontSize: 12, 
+        fontSize: 12,
         color: "#666"
     },
     rating: {

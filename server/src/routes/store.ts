@@ -15,5 +15,6 @@ router.put('/update', storeController.updateStore);
 router.get('/profile', storeController.getSellerProfile);
 router.put('/profile', storeController.updateSellerProfile);
 router.get('/stats', storeController.getSellerStats);
+router.get('/best-selling', storeController.getBestSellingProducts);
 
 export default router;

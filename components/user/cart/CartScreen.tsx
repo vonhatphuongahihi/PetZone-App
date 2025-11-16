@@ -1,51 +1,20 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
   Image,
+  Modal,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CartItem, cartService } from '../../../services/cartService';
 import styles from "./cartStyle";
-
-type Product = {
-  id: string;
-  shopId: string;
-  title: string; // Shop name
-  subtitle: string; // Product name
-  price: number;
-  image: any;
-};
-
-const products: Product[] = [
-  {
-    id: "1",
-    shopId: "shop1",
-    title: "Thuphuong.pet",
-    subtitle: "Vòng chuông bấm xinh cho mèo",
-    price: 125000,
-    image: require("../../../assets/images/cat1.png"),
-  },
-  {
-    id: "2",
-    shopId: "shop1",
-    title: "Thuphuong.pet",
-    subtitle: "Áo xinh cho chó",
-    price: 135000,
-    image: require("../../../assets/images/cat1.png"),
-  },
-  {
-    id: "3",
-    shopId: "shop2",
-    title: "Nhatphuong.pet",
-    subtitle: "Chuồng thú cưng",
-    price: 300000,
-    image: require("../../../assets/images/cat1.png"),
-  },
-];
 
 // Checkbox component
 function CustomCheckbox({
@@ -69,58 +38,88 @@ export default function CartScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const [cart, setCart] = useState<Product[]>(products);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [checkedShops, setCheckedShops] = useState<{ [shopId: string]: boolean }>({});
   const [checkedProducts, setCheckedProducts] = useState<{ [productId: string]: boolean }>({});
   const [checkedAll, setCheckedAll] = useState(false);
+  const [updatingQuantities, setUpdatingQuantities] = useState<{ [cartItemId: string]: boolean }>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const [quantities, setQuantities] = useState<{ [productId: string]: number }>(() =>
-    products.reduce((acc, p) => ({ ...acc, [p.id]: 1 }), {})
-  );
+  // Fetch cart từ API
+  const fetchCart = async () => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem('jwt_token');
+      if (!token) {
+        Alert.alert('Lỗi', 'Vui lòng đăng nhập');
+        router.replace('/login');
+        return;
+      }
+
+      const response = await cartService.getCart(token);
+      setCartItems(response.data);
+    } catch (error: any) {
+      console.error('Error fetching cart:', error);
+      Alert.alert('Lỗi', error.message || 'Không tải được giỏ hàng');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCart();
+  }, []);
 
   // Gom sản phẩm theo shop
   const shops = Object.values(
-    cart.reduce((acc, product) => {
-      if (!acc[product.shopId]) {
-        acc[product.shopId] = {
-          shopId: product.shopId,
-          title: product.title,
-          products: [] as Product[],
+    cartItems.reduce((acc, item) => {
+      const shopId = item.product.store.id;
+      const shopName = item.product.store.storeName;
+
+      if (!acc[shopId]) {
+        acc[shopId] = {
+          shopId,
+          title: shopName,
+          products: [] as CartItem[],
         };
       }
-      acc[product.shopId].products.push(product);
+      acc[shopId].products.push(item);
       return acc;
-    }, {} as Record<string, { shopId: string; title: string; products: Product[] }>)
+    }, {} as Record<string, { shopId: string; title: string; products: CartItem[] }>)
   );
 
   // Toggle sản phẩm
-  const toggleProduct = (product: Product) => {
+  const toggleProduct = (item: CartItem) => {
     const newCheckedProducts = {
       ...checkedProducts,
-      [product.id]: !checkedProducts[product.id],
+      [item.id]: !checkedProducts[item.id],
     };
 
-    const shopProducts = cart.filter((p) => p.shopId === product.shopId);
-    const allChecked = shopProducts.every((p) => newCheckedProducts[p.id]);
+    const shopId = item.product.store.id;
+    const shopProducts = cartItems.filter((i) => i.product.store.id === shopId);
+    const allChecked = shopProducts.every((i) => newCheckedProducts[i.id]);
 
     setCheckedProducts(newCheckedProducts);
     setCheckedShops({
       ...checkedShops,
-      [product.shopId]: allChecked,
+      [shopId]: allChecked,
     });
 
-    const allProductsChecked = cart.every((p) => newCheckedProducts[p.id]);
+    const allProductsChecked = cartItems.every((i) => newCheckedProducts[i.id]);
     setCheckedAll(allProductsChecked);
   };
 
   // Toggle shop
   const toggleShop = (shopId: string) => {
-    const shopProducts = cart.filter((p) => p.shopId === shopId);
+    const shopProducts = cartItems.filter((i) => i.product.store.id === shopId);
     const newValue = !checkedShops[shopId];
 
     const newCheckedProducts = { ...checkedProducts };
-    shopProducts.forEach((p) => {
-      newCheckedProducts[p.id] = newValue;
+    shopProducts.forEach((i) => {
+      newCheckedProducts[i.id] = newValue;
     });
 
     setCheckedProducts(newCheckedProducts);
@@ -129,7 +128,7 @@ export default function CartScreen() {
       [shopId]: newValue,
     });
 
-    const allProductsChecked = cart.every((p) => newCheckedProducts[p.id]);
+    const allProductsChecked = cartItems.every((i) => newCheckedProducts[i.id]);
     setCheckedAll(allProductsChecked);
   };
 
@@ -153,35 +152,129 @@ export default function CartScreen() {
   };
 
   // Tăng/giảm số lượng
-  const changeQuantity = (productId: string, delta: number) => {
-    setQuantities((prev) => {
-      const newQty = Math.max(1, (prev[productId] || 1) + delta);
-      return { ...prev, [productId]: newQty };
-    });
+  const changeQuantity = async (cartItemId: string, delta: number) => {
+    const item = cartItems.find(i => i.id === cartItemId);
+    if (!item) return;
+
+    const newQty = Math.max(1, item.quantity + delta);
+    if (newQty === item.quantity) return;
+
+    try {
+      setUpdatingQuantities(prev => ({ ...prev, [cartItemId]: true }));
+      const token = await AsyncStorage.getItem('jwt_token');
+      if (!token) {
+        Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+        return;
+      }
+
+      await cartService.updateQuantity(token, cartItemId, newQty);
+      await fetchCart(); // Refresh cart
+    } catch (error: any) {
+      console.error('Error updating quantity:', error);
+      Alert.alert('Lỗi', error.message || 'Không thể cập nhật số lượng');
+    } finally {
+      setUpdatingQuantities(prev => {
+        const newState = { ...prev };
+        delete newState[cartItemId];
+        return newState;
+      });
+    }
   };
 
   // Xóa sản phẩm
-  const removeProduct = (productId: string) => {
-    setCart((prev) => prev.filter((p) => p.id !== productId));
+  const removeProduct = (cartItemId: string) => {
+    setDeletingItemId(cartItemId);
+    setShowDeleteModal(true);
+  };
 
-    const newChecked = { ...checkedProducts };
-    delete newChecked[productId];
-    setCheckedProducts(newChecked);
+  const handleConfirmDelete = async () => {
+    if (!deletingItemId) return;
 
-    const newQuantities = { ...quantities };
-    delete newQuantities[productId];
-    setQuantities(newQuantities);
+    try {
+      setDeleting(true);
+      const token = await AsyncStorage.getItem('jwt_token');
+      if (!token) {
+        Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+        setShowDeleteModal(false);
+        setDeletingItemId(null);
+        return;
+      }
+
+      await cartService.removeItem(token, deletingItemId);
+
+      const newChecked = { ...checkedProducts };
+      delete newChecked[deletingItemId];
+      setCheckedProducts(newChecked);
+
+      await fetchCart(); // Refresh cart
+
+      setShowDeleteModal(false);
+      setDeletingItemId(null);
+    } catch (error: any) {
+      console.error('Error removing item:', error);
+      Alert.alert('Lỗi', error.message || 'Không thể xóa sản phẩm');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingItemId(null);
+  };
+
+  // Xử lý mua hàng
+  const handleBuy = () => {
+    const selectedItems = cartItems.filter(item => checkedProducts[item.id]);
+
+    if (selectedItems.length === 0) {
+      Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một sản phẩm');
+      return;
+    }
+
+    // Tính tổng tiền
+    const totalAmount = selectedItems.reduce((sum, item) => {
+      return sum + (Number(item.product.price) * item.quantity);
+    }, 0);
+
+    // Gom sản phẩm theo shop
+    const selectedShops = Object.values(
+      selectedItems.reduce((acc, item) => {
+        const shopId = item.product.store.id;
+        const shopName = item.product.store.storeName;
+
+        if (!acc[shopId]) {
+          acc[shopId] = {
+            shopId,
+            shopName,
+            products: [] as CartItem[],
+          };
+        }
+        acc[shopId].products.push(item);
+        return acc;
+      }, {} as Record<string, { shopId: string; shopName: string; products: CartItem[] }>)
+    );
+
+    // Chuyển sang trang thanh toán với dữ liệu
+    router.push({
+      pathname: "/payment",
+      params: {
+        selectedItems: JSON.stringify(selectedItems),
+        selectedShops: JSON.stringify(selectedShops),
+        totalAmount: totalAmount.toString(),
+      }
+    });
   };
 
   // Render 1 shop
   const renderShop = ({
     item,
   }: {
-    item: { shopId: string; title: string; products: Product[] };
+    item: { shopId: string; title: string; products: CartItem[] };
   }) => (
-    <View style={styles.item}>
+    <View>
       {/* Shop header */}
-      <View style={styles.row}>
+      <View style={styles.shopHeader}>
         <CustomCheckbox
           checked={!!checkedShops[item.shopId]}
           onToggle={() => toggleShop(item.shopId)}
@@ -196,46 +289,66 @@ export default function CartScreen() {
       </View>
 
       {/* Products */}
-      {item.products.map((product) => (
-        <View key={product.id} style={styles.productRow}>
-          <CustomCheckbox
-            checked={!!checkedProducts[product.id]}
-            onToggle={() => toggleProduct(product)}
-          />
-          <Image source={product.image} style={styles.image} />
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={styles.productName}>{product.subtitle}</Text>
-            <Text style={styles.productDesc}>Trắng | M</Text>
+      {item.products.map((cartItem) => {
+        const product = cartItem.product;
+        const imageUri = product.images?.[0]?.url;
+        const isLoading = updatingQuantities[cartItem.id];
 
-            <View style={styles.rowBetween}>
-              <Text style={styles.price}>
-                {(product.price * (quantities[product.id] || 1)).toLocaleString()}đ
+        return (
+          <View key={cartItem.id} style={styles.productRow}>
+            <CustomCheckbox
+              checked={!!checkedProducts[cartItem.id]}
+              onToggle={() => toggleProduct(cartItem)}
+            />
+            <Image
+              source={imageUri ? { uri: imageUri } : require("../../../assets/images/cat1.png")}
+              style={styles.image}
+            />
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.productName}>{product.title}</Text>
+              <Text style={styles.productDesc}>
+                {product.category?.name || 'Chưa phân loại'}
               </Text>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <View style={styles.counter}>
+
+              <View style={styles.rowBetween}>
+                <Text style={styles.price}>
+                  {(Number(product.price) * cartItem.quantity).toLocaleString()}đ
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <View style={styles.counter}>
+                    <TouchableOpacity
+                      style={styles.counterBtn}
+                      onPress={() => changeQuantity(cartItem.id, -1)}
+                      disabled={isLoading || cartItem.quantity <= 1}
+                    >
+                      <Text style={[styles.counterText, (isLoading || cartItem.quantity <= 1) && { opacity: 0.4 }]}>-</Text>
+                    </TouchableOpacity>
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#FBBC05" />
+                    ) : (
+                      <Text style={styles.counterValue}>{cartItem.quantity}</Text>
+                    )}
+                    <TouchableOpacity
+                      style={styles.counterBtn}
+                      onPress={() => changeQuantity(cartItem.id, 1)}
+                      disabled={isLoading}
+                    >
+                      <Text style={[styles.counterText, isLoading && { opacity: 0.4 }]}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+
                   <TouchableOpacity
-                    style={styles.counterBtn}
-                    onPress={() => changeQuantity(product.id, -1)}
+                    onPress={() => removeProduct(cartItem.id)}
+                    style={{ padding: 4 }}
                   >
-                    <Text style={styles.counterText}>-</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.counterValue}>{quantities[product.id]}</Text>
-                  <TouchableOpacity
-                    style={styles.counterBtn}
-                    onPress={() => changeQuantity(product.id, 1)}
-                  >
-                    <Text style={styles.counterText}>+</Text>
+                    <Text style={styles.remove}>Xóa</Text>
                   </TouchableOpacity>
                 </View>
-
-                <TouchableOpacity onPress={() => removeProduct(product.id)}>
-                  <Text style={styles.remove}>Xóa</Text>
-                </TouchableOpacity>
               </View>
             </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 
@@ -249,17 +362,28 @@ export default function CartScreen() {
           color="#FBBC05"
           onPress={() => router.back()}
         />
-        <Text style={styles.headerTitle}>Giỏ hàng ({cart.length})</Text>
+        <Text style={styles.headerTitle}>Giỏ hàng ({cartItems.length})</Text>
       </View>
 
-      {/* Danh sách shops */}
-      <FlatList
-        data={shops}
-        keyExtractor={(item) => item.shopId}
-        renderItem={renderShop}
-        contentContainerStyle={{ padding: 15, paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FBBC05" />
+          <Text style={styles.loadingText}>Đang tải giỏ hàng...</Text>
+        </View>
+      ) : cartItems.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <MaterialIcons name="shopping-cart" size={64} color="#D0D0D0" />
+          <Text style={styles.emptyText}>Giỏ hàng của bạn đang trống</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={shops}
+          keyExtractor={(item) => item.shopId}
+          renderItem={renderShop}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       {/* Footer */}
       <View
@@ -269,22 +393,21 @@ export default function CartScreen() {
         ]}
       >
         <CustomCheckbox checked={checkedAll} onToggle={toggleAll} />
-        <Text style={{ flex: 1 }}>Tất cả</Text>
-        <Text style={{ color: "red", marginRight: 10, fontWeight: "bold" }}>
+        <Text style={styles.footerText}>Tất cả</Text>
+        <Text style={styles.totalPrice}>
           {Object.keys(checkedProducts)
             .filter((id) => checkedProducts[id])
-            .reduce(
-              (sum, id) =>
-                sum +
-                (products.find((p) => p.id === id)?.price || 0) *
-                quantities[id],
-              0
-            )
+            .reduce((sum, id) => {
+              const item = cartItems.find(i => i.id === id);
+              if (!item) return sum;
+              return sum + (Number(item.product.price) * item.quantity);
+            }, 0)
             .toLocaleString()}đ
         </Text>
         <TouchableOpacity
           style={styles.buyBtn}
-          onPress={() => router.push("/payment")}
+          onPress={handleBuy}
+          disabled={Object.keys(checkedProducts).filter((id) => checkedProducts[id]).length === 0}
         >
           <Text style={styles.buyBtnText}>
             Mua hàng (
@@ -293,6 +416,56 @@ export default function CartScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelDelete}
+      >
+        <TouchableOpacity
+          style={styles.deleteModalOverlay}
+          activeOpacity={1}
+          onPress={handleCancelDelete}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.deleteModalContainer}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.deleteIconContainer}>
+              <MaterialIcons name="delete-outline" size={50} color="#E53935" />
+            </View>
+            <Text style={styles.deleteModalTitle}>Xác nhận xóa</Text>
+            <Text style={styles.deleteModalMessage}>
+              Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?
+            </Text>
+
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteModalButtonCancel]}
+                onPress={handleCancelDelete}
+                disabled={deleting}
+              >
+                <Text style={styles.deleteModalButtonCancelText}>Hủy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteModalButtonConfirm]}
+                onPress={handleConfirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.deleteModalButtonConfirmText}>Xóa</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }

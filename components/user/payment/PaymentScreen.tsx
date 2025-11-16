@@ -1,7 +1,10 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router"; // ✅ dùng router thay vì navigation prop
-import React, { useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
+    Alert,
     Image,
     Modal,
     ScrollView,
@@ -9,22 +12,131 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import styles from "./paymentStyle"; // import style riêng
+import { addressService, UserAddress } from "../../../services/addressService";
+import { CartItem } from "../../../services/cartService";
+import { orderService } from "../../../services/orderService";
+import styles from "./paymentStyle";
+
+interface SelectedShop {
+    shopId: string;
+    shopName: string;
+    products: CartItem[];
+}
 
 export default function CheckoutScreen() {
+    const router = useRouter();
+    const params = useLocalSearchParams();
+
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [showSuccess, setShowSuccess] = useState(false);
     const [showWarning, setShowWarning] = useState(false);
 
-    const router = useRouter();
+    const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
+    const [selectedShops, setSelectedShops] = useState<SelectedShop[]>([]);
+    const [totalAmount, setTotalAmount] = useState(0);
+    const [shippingFee] = useState(30000); // Phí vận chuyển cố định
+    const [address, setAddress] = useState<UserAddress | null>(null);
+    const [loadingAddress, setLoadingAddress] = useState(true);
+    const [placingOrder, setPlacingOrder] = useState(false);
 
-    const handlePlaceOrder = () => {
+    // Load dữ liệu từ params (chỉ chạy một lần khi mount)
+    useEffect(() => {
+        if (params.selectedItems) {
+            try {
+                const items = JSON.parse(params.selectedItems as string) as CartItem[];
+                setSelectedItems(items);
+
+                if (params.selectedShops) {
+                    const shops = JSON.parse(params.selectedShops as string) as SelectedShop[];
+                    setSelectedShops(shops);
+                }
+
+                if (params.totalAmount) {
+                    setTotalAmount(Number(params.totalAmount));
+                }
+            } catch (error) {
+                console.error('Error parsing params:', error);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Chỉ chạy một lần khi component mount
+
+    // Load địa chỉ mặc định
+    useEffect(() => {
+        const loadAddress = async () => {
+            try {
+                setLoadingAddress(true);
+                const token = await AsyncStorage.getItem('jwt_token');
+                if (!token) return;
+
+                const response = await addressService.getUserAddresses(token);
+                const defaultAddress = response.data.find(addr => addr.isDefault) || response.data[0];
+                setAddress(defaultAddress || null);
+            } catch (error) {
+                console.error('Error loading address:', error);
+            } finally {
+                setLoadingAddress(false);
+            }
+        };
+
+        loadAddress();
+    }, []);
+
+    const handlePlaceOrder = async () => {
         if (!paymentMethod) {
             setShowWarning(true);
             return;
         }
-        setShowSuccess(true);
+
+        if (!address) {
+            Alert.alert('Lỗi', 'Vui lòng chọn địa chỉ giao hàng');
+            return;
+        }
+
+        if (selectedItems.length === 0) {
+            Alert.alert('Lỗi', 'Không có sản phẩm nào để đặt hàng');
+            return;
+        }
+
+        try {
+            setPlacingOrder(true);
+            const token = await AsyncStorage.getItem('jwt_token');
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                return;
+            }
+
+            // Chuẩn bị dữ liệu đơn hàng
+            const orderItems = selectedItems.map(item => ({
+                productId: item.product.id,
+                storeId: item.product.store.id,
+                title: item.product.title,
+                sku: undefined, // Product có thể không có slug trong CartItem
+                price: Number(item.product.price),
+                quantity: item.quantity
+            }));
+
+            // Tạo đơn hàng
+            await orderService.createOrder({
+                items: orderItems,
+                addressId: address.id,
+                paymentMethod: paymentMethod,
+                shippingFee: shippingFee
+            }, token);
+
+            // Xóa các sản phẩm đã đặt khỏi giỏ hàng (đã được xử lý ở backend)
+            // Có thể refresh cart nếu cần
+
+            setShowSuccess(true);
+        } catch (error: any) {
+            console.error('Error placing order:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể đặt hàng. Vui lòng thử lại.');
+        } finally {
+            setPlacingOrder(false);
+        }
     };
+
+    const totalPayment = totalAmount + shippingFee;
 
     return (
         <View style={styles.container}>
@@ -40,69 +152,105 @@ export default function CheckoutScreen() {
             <ScrollView
                 contentContainerStyle={{ padding: 15, paddingBottom: 40 }}
                 showsVerticalScrollIndicator={false}
+                nestedScrollEnabled={true}
             >
                 {/* Địa chỉ */}
                 <View style={[styles.card, { paddingVertical: 8, paddingHorizontal: 14 }]}>
-                    <View style={styles.rowBetween}>
-                        <View style={{ flexDirection: "row", alignItems: "center" }}>
-                            <MaterialIcons
-                                name="location-on"
-                                size={20}
-                                color="#FBBC05"
-                                style={{ marginRight: 6 }}
-                            />
-                            <Text style={styles.bold}>
-                                Nguyễn Thu Phương | (+84) 389 144 068
-                            </Text>
+                    {loadingAddress ? (
+                        <View style={{ padding: 20, alignItems: 'center' }}>
+                            <ActivityIndicator size="small" color="#FBBC05" />
                         </View>
-                        {/* ✅ Điều hướng sang editAddress */}
-                        <TouchableOpacity onPress={() => router.push("/editAddress")}>
-                            <MaterialIcons
-                                name="arrow-forward-ios"
-                                size={14}
-                                color="rgba(0,0,0,0.55)"
-                            />
+                    ) : address ? (
+                        <>
+                            <View style={styles.rowBetween}>
+                                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                    <MaterialIcons
+                                        name="location-on"
+                                        size={20}
+                                        color="#FBBC05"
+                                        style={{ marginRight: 6 }}
+                                    />
+                                    <Text style={styles.bold}>
+                                        {address.name} | {address.phoneNumber}
+                                    </Text>
+                                </View>
+                                <TouchableOpacity onPress={() => router.push("/editAddress")}>
+                                    <MaterialIcons
+                                        name="arrow-forward-ios"
+                                        size={14}
+                                        color="rgba(0,0,0,0.55)"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                            <Text style={{ marginTop: 4, marginLeft: 28 }}>
+                                {address.street}{"\n"}{address.province}
+                            </Text>
+                        </>
+                    ) : (
+                        <TouchableOpacity
+                            onPress={() => router.push("/addAddress")}
+                            style={{ padding: 10 }}
+                        >
+                            <Text style={{ color: "#FBBC05", textAlign: 'center' }}>
+                                + Thêm địa chỉ giao hàng
+                            </Text>
                         </TouchableOpacity>
-                    </View>
-                    <Text style={{ marginTop: 4, marginLeft: 28 }}>
-                        Kí túc xá Khu A, Đường số 6{"\n"}Phường Đông Hòa, Thành phố Dĩ An,
-                        Bình Dương
-                    </Text>
+                    )}
                 </View>
 
-                {/* Sản phẩm */}
-                <View style={[styles.card, { paddingVertical: 8, paddingHorizontal: 14 }]}>
-                    <View style={styles.row}>
-                        <MaterialIcons
-                            name="storefront"
-                            size={20}
-                            color="#FBBC05"
-                            style={{ marginRight: 6 }}
-                        />
-                        <Text style={styles.bold}>Thuphuong.pet</Text>
-                    </View>
+                {/* Sản phẩm theo shop */}
+                {selectedShops.map((shop) => {
+                    const shopTotal = shop.products.reduce((sum, item) => {
+                        return sum + (Number(item.product.price) * item.quantity);
+                    }, 0);
+                    const totalQuantity = shop.products.reduce((sum, item) => sum + item.quantity, 0);
 
-                    <View style={[styles.row, { marginTop: 10 }]}>
-                        <Image
-                            source={require("../../../assets/images/cat1.png")}
-                            style={styles.image}
-                        />
-                        <View style={{ flex: 1, marginLeft: 10 }}>
-                            <Text style={styles.productName}>
-                                Vòng chuông bấm xinh cho mèo
-                            </Text>
-                            <Text style={styles.price}>125.000đ</Text>
-                            <Text style={{ fontSize: 12, color: "gray" }}>x1</Text>
+                    return (
+                        <View key={shop.shopId} style={[styles.card, { paddingVertical: 8, paddingHorizontal: 14, marginTop: 12 }]}>
+                            <View style={styles.row}>
+                                <MaterialIcons
+                                    name="storefront"
+                                    size={20}
+                                    color="#FBBC05"
+                                    style={{ marginRight: 6 }}
+                                />
+                                <Text style={styles.bold}>{shop.shopName}</Text>
+                            </View>
+
+                            {shop.products.map((cartItem) => {
+                                const product = cartItem.product;
+                                const imageUri = product.images?.[0]?.url;
+
+                                return (
+                                    <View key={cartItem.id} style={[styles.row, { marginTop: 10 }]}>
+                                        <Image
+                                            source={imageUri ? { uri: imageUri } : require("../../../assets/images/cat1.png")}
+                                            style={styles.image}
+                                        />
+                                        <View style={{ flex: 1, marginLeft: 10 }}>
+                                            <Text style={styles.productName}>
+                                                {product.title}
+                                            </Text>
+                                            <Text style={styles.price}>
+                                                {Number(product.price).toLocaleString()}đ
+                                            </Text>
+                                            <Text style={{ fontSize: 12, color: "gray" }}>
+                                                x{cartItem.quantity}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                );
+                            })}
+
+                            <View style={[styles.rowBetween, { marginTop: 10 }]}>
+                                <Text style={{ color: "gray", fontSize: 13 }}>
+                                    Tổng số tiền ({totalQuantity} sản phẩm)
+                                </Text>
+                                <Text style={styles.price}>{shopTotal.toLocaleString()}đ</Text>
+                            </View>
                         </View>
-                    </View>
-
-                    <View style={[styles.rowBetween, { marginTop: 10 }]}>
-                        <Text style={{ color: "gray", fontSize: 13 }}>
-                            Tổng số tiền (1 sản phẩm)
-                        </Text>
-                        <Text style={styles.price}>125.000đ</Text>
-                    </View>
-                </View>
+                    );
+                })}
 
                 {/* Phương thức thanh toán */}
                 <View style={[styles.card, { paddingVertical: 8, paddingHorizontal: 14 }]}>
@@ -165,15 +313,15 @@ export default function CheckoutScreen() {
 
                     <View style={[styles.rowBetween, { marginTop: 10 }]}>
                         <Text>Tổng tiền hàng</Text>
-                        <Text>125.000đ</Text>
+                        <Text>{totalAmount.toLocaleString()}đ</Text>
                     </View>
                     <View style={styles.rowBetween}>
                         <Text>Tổng phí vận chuyển</Text>
-                        <Text>30.000đ</Text>
+                        <Text>{shippingFee.toLocaleString()}đ</Text>
                     </View>
                     <View style={styles.rowBetween}>
                         <Text>Tổng thanh toán</Text>
-                        <Text style={styles.boldRed}>155.000đ</Text>
+                        <Text style={styles.boldRed}>{totalPayment.toLocaleString()}đ</Text>
                     </View>
                 </View>
 
@@ -186,9 +334,17 @@ export default function CheckoutScreen() {
 
             {/* Footer */}
             <View style={styles.footer}>
-                <Text style={styles.footerPrice}>155.000đ</Text>
-                <TouchableOpacity style={styles.buyBtn} onPress={handlePlaceOrder}>
-                    <Text style={styles.buyBtnText}>Đặt hàng</Text>
+                <Text style={styles.footerPrice}>{totalPayment.toLocaleString()}đ</Text>
+                <TouchableOpacity
+                    style={styles.buyBtn}
+                    onPress={handlePlaceOrder}
+                    disabled={selectedItems.length === 0 || !address || placingOrder}
+                >
+                    {placingOrder ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <Text style={styles.buyBtnText}>Đặt hàng</Text>
+                    )}
                 </TouchableOpacity>
             </View>
 

@@ -24,9 +24,9 @@ export const styles = StyleSheet.create({
         color: "#333",
     },
     childCard: {
-        width: '47%', 
+        width: '47%',
         height: 140,
-        margin: 4, 
+        margin: 4,
         backgroundColor: "#FFFAE8",
         borderRadius: 10,
         alignItems: "center",
@@ -42,7 +42,8 @@ export const styles = StyleSheet.create({
     childImage: {
         width: 60,
         height: 60,
-        resizeMode: "contain",
+        borderRadius: 30,   
+        resizeMode: "cover", 
         marginBottom: 8,
     },
 

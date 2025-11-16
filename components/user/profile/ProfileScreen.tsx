@@ -1,8 +1,10 @@
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Image, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { orderService } from "../../../services/orderService";
 import { tokenService } from "../../../services/tokenService";
 import { UserInfo, userInfoService } from "../../../services/userInfoService";
 import { styles } from "./profileStyles";
@@ -11,10 +13,21 @@ export default function ProfileScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [orderCounts, setOrderCounts] = useState({
+    pending: 0,
+    shipped: 0,
+    delivered: 0,
+  });
 
   useEffect(() => {
     loadUserInfo();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadOrderCounts();
+    }, [])
+  );
 
   const loadUserInfo = async () => {
     try {
@@ -32,6 +45,28 @@ export default function ProfileScreen() {
       router.replace('/login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadOrderCounts = async () => {
+    try {
+      const token = await AsyncStorage.getItem('jwt_token');
+      if (!token) return;
+
+      // Load counts for each status
+      const [pendingRes, shippedRes, deliveredRes] = await Promise.all([
+        orderService.getUserOrders(token, 'pending').catch(() => ({ data: [] })),
+        orderService.getUserOrders(token, 'shipped').catch(() => ({ data: [] })),
+        orderService.getUserOrders(token, 'delivered').catch(() => ({ data: [] })),
+      ]);
+
+      setOrderCounts({
+        pending: pendingRes.data?.length || 0,
+        shipped: shippedRes.data?.length || 0,
+        delivered: deliveredRes.data?.length || 0,
+      });
+    } catch (error: any) {
+      console.error('Error loading order counts:', error);
     }
   };
 
@@ -78,7 +113,7 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <Image
             source={
-              userInfo?.avatarUrl 
+              userInfo?.avatarUrl
                 ? { uri: userInfo.avatarUrl }
                 : require("../../../assets/images/icon.png")
             }
@@ -107,12 +142,19 @@ export default function ProfileScreen() {
             <MenuItem
               icon="credit-card"
               label="Xác nhận"
+              badge={orderCounts.pending > 0 ? orderCounts.pending : undefined}
               onPress={() => router.push('/order-confirm')}
             />
-            <MenuItem icon="local-shipping" label="Giao hàng"
+            <MenuItem
+              icon="local-shipping"
+              label="Giao hàng"
+              badge={orderCounts.shipped > 0 ? orderCounts.shipped : undefined}
               onPress={() => router.push('/delivery')}
             />
-            <MenuItem icon="star" label="Đánh giá" badge={1}
+            <MenuItem
+              icon="star"
+              label="Đánh giá"
+              badge={orderCounts.delivered > 0 ? orderCounts.delivered : undefined}
               onPress={() => router.push('/product-rating')}
             />
           </View>
@@ -124,20 +166,20 @@ export default function ProfileScreen() {
             <Text style={styles.cardTitle}>Hồ sơ</Text>
           </View>
           <View style={styles.row}>
-            <MenuItem 
-              icon="person" 
-              label="Tài khoản" 
-              onPress={() => router.push('/user-info')} 
+            <MenuItem
+              icon="person"
+              label="Tài khoản"
+              onPress={() => router.push('/user-info')}
             />
-            <MenuItem 
-              icon="shopping-cart" 
+            <MenuItem
+              icon="shopping-cart"
               label="Giỏ hàng"
-              onPress={() => router.push('/cart')} 
+              onPress={() => router.push('/cart')}
             />
-            <MenuItem 
-              icon="location-on" 
+            <MenuItem
+              icon="location-on"
               label="Địa chỉ"
-              onPress={() => router.push('/addAddress')} 
+              onPress={() => router.push('/addAddress')}
             />
           </View>
         </View>
