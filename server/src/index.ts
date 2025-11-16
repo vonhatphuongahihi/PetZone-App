@@ -6,6 +6,14 @@ import helmet from 'helmet';
 import http from 'http';
 import morgan from 'morgan';
 import { Server } from "socket.io"; // THÊM DÒNG NÀY
+import addressRoutes from './routes/address';
+import authRoutes from './routes/auth';
+import categoryRoutes from './routes/category';
+import chatRoutes from './routes/chat';
+import productRoutes from './routes/product';
+import storeRoutes from './routes/store';
+import supportRoutes from './routes/support';
+import userRoutes from './routes/user';
 
 // Type alias để tránh lỗi export
 type SocketInstance = Server;
@@ -83,21 +91,21 @@ const httpServer = http.createServer(app);
 
 // === THÊM CORS CHO SOCKET.IO ===
 const io = new Server(httpServer, {
-  cors: {
-    origin: [
-      "http://localhost:8081",
-      "http://localhost:19006",
-      "http://10.0.2.2:8081",
-      "http://127.0.0.1:8081",
-      "exp://10.143.19.127:8081",        // THAY IP MÁY BẠN
-      "http://10.143.19.127:8081",       // THAY IP MÁY BẠN
-      "http://192.168.1.x:8081",         // Mạng nhà
-    ],
-    methods: ["GET", "POST"],
-    credentials: true
-  },
-  path: "/socket.io",
-  transports: ["websocket", "polling"]
+    cors: {
+        origin: [
+            "http://localhost:8081",
+            "http://localhost:19006",
+            "http://10.0.2.2:8081",
+            "http://127.0.0.1:8081",
+            "exp://10.143.19.127:8081",        // THAY IP MÁY BẠN
+            "http://10.143.19.127:8081",       // THAY IP MÁY BẠN
+            "http://192.168.1.x:8081",         // Mạng nhà
+        ],
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    path: "/socket.io",
+    transports: ["websocket", "polling"]
 });
 
 // Export socket instance

@@ -5,6 +5,7 @@ import {
     getAllProducts,
     getHotProducts,
     getNewProducts,
+    getProductById,
     getProductsByCategory,
     getProductsByStore,
     getTodayProducts,
@@ -31,8 +32,6 @@ router.post("/", uploadImages, createProduct);
 router.get('/category/:categoryId', getProductsByCategory);
 
 router.get("/store/:storeId", getProductsByStore);
-
-router.get("/category/:categoryId", getProductsByCategory);
 
 router.get("/:id", getProductById);
 

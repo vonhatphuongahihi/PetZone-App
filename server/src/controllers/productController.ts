@@ -88,8 +88,8 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
 
     const products = await prisma.product.findMany({
       where: { categoryId },
-      include: { 
-        images: true, 
+      include: {
+        images: true,
         category: true,
         store: {
           select: {
@@ -182,6 +182,37 @@ export const deleteProduct = async (req: Request, res: Response) => {
     return res.json({ success: true, message: "Xóa thành công." });
   } catch (error: any) {
     console.error("Error deleteProduct:", error.message);
+    return res.status(500).json({ success: false, message: "Lỗi server." });
+  }
+};
+
+// === GET BY ID ===
+export const getProductById = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ success: false, message: "ID không hợp lệ." });
+
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        images: true,
+        category: true,
+        store: {
+          select: {
+            storeName: true,
+            avatarUrl: true
+          }
+        }
+      },
+    });
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Sản phẩm không tồn tại." });
+    }
+
+    return res.json({ success: true, data: product });
+  } catch (error: any) {
+    console.error("Error getProductById:", error.message);
     return res.status(500).json({ success: false, message: "Lỗi server." });
   }
 };

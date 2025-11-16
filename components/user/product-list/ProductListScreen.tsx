@@ -12,52 +12,27 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Product, productService } from '../../../services/productService';
-import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.143.19.127:3001/api';
+const API_BASE_URL = 'http://10.0.35.227:3001/api';
 
 // Helper: lấy string đầu tiên nếu param là string | string[]
 const getFirstString = (param: string | string[] | undefined) =>
-  Array.isArray(param) ? param[0] : param;
+    Array.isArray(param) ? param[0] : param;
 
 export default function ProductListScreen() {
     const params = useLocalSearchParams();
     const router = useRouter();
-    const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
 
-    // Fetch products khi component mount
-    useEffect(() => {
-        if (categoryId) {
-            fetchProducts();
-        }
-    }, [categoryId]);
-
-    const fetchProducts = async () => {
-        try {
-            setLoading(true);
-            const token = await tokenService.getToken();
-            
-            if (!token) {
-                Alert.alert('Lỗi', 'Vui lòng đăng nhập để xem sản phẩm');
-                return;
-            }
-
-            if (!categoryId) {
-                Alert.alert('Lỗi', 'Không tìm thấy danh mục');
-                return;
-            }
-
+    // Extract params
     const categoryId = getFirstString(params.categoryId);
     const categoryName = getFirstString(params.categoryName);
     const typeParam = getFirstString(params.type);
-
     const title = categoryName || (typeParam ? typeParam.toUpperCase() : 'Sản phẩm');
 
+    // State
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);

@@ -15,8 +15,6 @@ import {
     View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Category, categoryService } from '../../../services/categoryService';
-import { tokenService } from '../../../services/tokenService';
 import { categoriesStyles } from './categoriesStyles';
 
 export default function CategoriesScreen() {
