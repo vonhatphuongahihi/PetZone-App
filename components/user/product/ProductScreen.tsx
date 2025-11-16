@@ -1,4 +1,5 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -7,6 +8,7 @@ import {
     Dimensions,
     FlatList,
     Image,
+    Modal,
     ScrollView,
     Text,
     TextInput,
@@ -39,9 +41,12 @@ export default function ProductScreen() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState<'info' | 'reviews'>('info');
+    const [addingToCart, setAddingToCart] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
     const imageCarouselRef = useRef<FlatList>(null);
     const [otherProducts, setOtherProducts] = useState<Product[]>([]);
-    
+
     // Mock reviews data
     const [reviews] = useState<Review[]>([
         {
@@ -60,7 +65,7 @@ export default function ProductScreen() {
         try {
             setLoading(true);
             const token = await tokenService.getToken();
-            
+
             if (!token) {
                 Alert.alert('Lỗi', 'Vui lòng đăng nhập để xem sản phẩm');
                 router.back();
@@ -68,10 +73,10 @@ export default function ProductScreen() {
             }
 
             const response = await productService.getProductById(
-                parseInt(productId as string), 
+                parseInt(productId as string),
                 token
             );
-            
+
             if (response.success) {
                 setProduct(response.data);
             } else {
@@ -91,7 +96,7 @@ export default function ProductScreen() {
         try {
             setLoading(true);
             const token = await tokenService.getToken();
-            
+
             if (!token) {
                 Alert.alert('Lỗi', 'Vui lòng đăng nhập để xem sản phẩm');
                 return;
@@ -103,10 +108,10 @@ export default function ProductScreen() {
             }
 
             const response = await productService.getProductsByCategory(
-                parseInt(String(product?.categoryId)), 
+                parseInt(String(product?.categoryId)),
                 token
             );
-            
+
             if (response.success) {
                 setOtherProducts(response.data.filter(p => p.id !== product?.id));
             } else {
@@ -158,9 +163,59 @@ export default function ProductScreen() {
         }
     }, [product, fetchOtherProducts]);
 
-    const handleAddToCart = () => {
-        const finalQuantity = quantity || 1;
-        Alert.alert('Thông báo', `Đã thêm ${finalQuantity} sản phẩm vào giỏ hàng`);
+    const handleAddToCart = async () => {
+        if (addingToCart) return;
+
+        try {
+            setAddingToCart(true);
+            const finalQuantity = quantity || 1;
+            const token = await AsyncStorage.getItem('jwt_token');
+
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập để thêm vào giỏ hàng', [
+                    { text: 'Hủy', style: 'cancel' },
+                    { text: 'Đăng nhập', onPress: () => router.replace('/login') }
+                ]);
+                return;
+            }
+
+            if (!product?.id) {
+                Alert.alert('Lỗi', 'Không tìm thấy sản phẩm');
+                return;
+            }
+
+            // Validate quantity
+            if (finalQuantity < 1) {
+                Alert.alert('Lỗi', 'Số lượng phải lớn hơn 0');
+                return;
+            }
+
+            if (product.quantity && finalQuantity > product.quantity) {
+                Alert.alert('Lỗi', `Số lượng vượt quá số lượng còn lại (${product.quantity})`);
+                return;
+            }
+
+            console.log('Adding to cart:', { productId: product.id, quantity: finalQuantity });
+            const { cartService } = await import('../../../services/cartService');
+            const result = await cartService.addToCart(token, Number(product.id), finalQuantity);
+
+            console.log('Add to cart result:', result);
+
+            // Hiển thị modal thành công
+            setSuccessMessage(`Đã thêm ${finalQuantity} sản phẩm vào giỏ hàng!`);
+            setShowSuccessModal(true);
+
+            // Tự động ẩn sau 2.5 giây
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 2500);
+        } catch (error: any) {
+            console.error('Error adding to cart:', error);
+            const errorMessage = error.message || 'Không thể thêm vào giỏ hàng. Vui lòng thử lại.';
+            Alert.alert('Lỗi', errorMessage);
+        } finally {
+            setAddingToCart(false);
+        }
     };
 
     const handleBuyNow = () => {
@@ -170,9 +225,9 @@ export default function ProductScreen() {
 
     const renderImagePagination = () => {
         if (!product?.images || product.images.length <= 1) return null;
-        
+
         return (
-            <View 
+            <View
                 style={productStyles.imagePagination}
                 accessible={false}
                 importantForAccessibility="no-hide-descendants"
@@ -195,26 +250,26 @@ export default function ProductScreen() {
         const stars = [];
         const fullStars = Math.floor(rating);
         const hasHalfStar = rating % 1 !== 0;
-        
+
         for (let i = 0; i < fullStars; i++) {
             stars.push(
                 <FontAwesome5 key={i} name="star" size={16} color="#FFD700" solid />
             );
         }
-        
+
         if (hasHalfStar) {
             stars.push(
                 <FontAwesome5 key="half" name="star-half-alt" size={16} color="#FFD700" solid />
             );
         }
-        
+
         const emptyStars = 5 - Math.ceil(rating);
         for (let i = 0; i < emptyStars; i++) {
             stars.push(
                 <FontAwesome5 key={`empty-${i}`} name="star" size={16} color="#E0E0E0" />
             );
         }
-        
+
         return stars;
     };
 
@@ -256,7 +311,6 @@ export default function ProductScreen() {
                     price: Number(item.price) || 0,
                     oldPrice: Number(item.oldPrice) || 0,
                     discount: item.oldPrice ? `-${Math.round((1 - Number(item.price) / Number(item.oldPrice)) * 100)}%` : "",
-                    tag: item.tag || undefined,
                 }}
                 onPress={() => router.push(`/product?productId=${item.id}`)}
                 layout="horizontal"
@@ -335,8 +389,8 @@ export default function ProductScreen() {
                                 setCurrentImageIndex(newIndex);
                             }}
                             renderItem={({ item }) => (
-                                <Image 
-                                    source={{ uri: item.url }} 
+                                <Image
+                                    source={{ uri: item.url }}
                                     style={productStyles.productImage}
                                     resizeMode="cover"
                                     accessible={true}
@@ -372,7 +426,7 @@ export default function ProductScreen() {
                     {/* Product Info */}
                     <View style={productStyles.productInfo}>
                         <Text style={productStyles.productTitle}>{product.title}</Text>
-                        
+
                         {/* Rating */}
                         <View style={productStyles.ratingContainer}>
                             <View style={productStyles.ratingStars}>
@@ -398,12 +452,12 @@ export default function ProductScreen() {
                         {/* Store Info */}
                         <View style={productStyles.storeContainer}>
                             <View style={productStyles.storeHeader}>
-                                <Image 
-                                    source={product.store?.avatarUrl ? { uri: product.store.avatarUrl } : require("../../../assets/images/shop.png")} 
-                                    style={productStyles.storeAvatar} 
+                                <Image
+                                    source={product.store?.avatarUrl ? { uri: product.store.avatarUrl } : require("../../../assets/images/shop.png")}
+                                    style={productStyles.storeAvatar}
                                 />
                                 <Text style={productStyles.storeName}>{product.store?.storeName || product.storeId}</Text>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={productStyles.followButton}
                                     accessible={true}
                                     accessibilityLabel="Xem shop"
@@ -412,7 +466,7 @@ export default function ProductScreen() {
                                     <Text style={productStyles.followButtonText}>Xem shop</Text>
                                 </TouchableOpacity>
                             </View>
-                            
+
                             <View style={productStyles.storeInfo}>
                                 <View style={productStyles.storeStats}>
                                     <Text style={productStyles.storeStatText}>{product.store?.rating || 0}</Text>
@@ -437,7 +491,7 @@ export default function ProductScreen() {
                         <View style={productStyles.quantityContainer}>
                             <Text style={productStyles.quantityLabel}>Số lượng</Text>
                             <View style={productStyles.quantitySelector}>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={productStyles.quantityButton}
                                     onPress={() => handleQuantityChange(-1)}
                                     accessible={true}
@@ -454,7 +508,7 @@ export default function ProductScreen() {
                                             setQuantity(0);
                                             return;
                                         }
-                                        
+
                                         const num = parseInt(text);
                                         if (!isNaN(num) && num >= 1 && num <= (product.quantity || 1)) {
                                             setQuantity(num);
@@ -471,7 +525,7 @@ export default function ProductScreen() {
                                     accessibilityLabel="Số lượng sản phẩm"
                                     accessibilityHint={`Nhập số lượng từ 1 đến ${product.quantity || 1}`}
                                 />
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={productStyles.quantityButton}
                                     onPress={() => handleQuantityChange(1)}
                                     accessible={true}
@@ -490,19 +544,26 @@ export default function ProductScreen() {
 
                     {/* Action Buttons */}
                     <View style={productStyles.actionContainer}>
-                        <TouchableOpacity 
-                            style={productStyles.addToCartButton} 
+                        <TouchableOpacity
+                            style={[productStyles.addToCartButton, addingToCart && { opacity: 0.6 }]}
                             onPress={handleAddToCart}
+                            disabled={addingToCart}
                             accessible={true}
                             accessibilityLabel="Thêm vào giỏ hàng"
                             accessibilityRole="button"
                             accessibilityHint={`Thêm ${quantity || 1} sản phẩm vào giỏ hàng`}
                         >
-                            <Ionicons name="cart-outline" size={24} color="#FBBC05" />
-                            <Text style={productStyles.addToCartText}>Thêm vào giỏ hàng</Text>
+                            {addingToCart ? (
+                                <ActivityIndicator size="small" color="#FBBC05" />
+                            ) : (
+                                <Ionicons name="cart-outline" size={24} color="#FBBC05" />
+                            )}
+                            <Text style={productStyles.addToCartText}>
+                                {addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
+                            </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
-                            style={productStyles.buyNowButton} 
+                        <TouchableOpacity
+                            style={productStyles.buyNowButton}
                             onPress={handleBuyNow}
                             accessible={true}
                             accessibilityLabel="Mua ngay"
@@ -515,7 +576,7 @@ export default function ProductScreen() {
 
                     {/* Tabs */}
                     <View style={productStyles.tabContainer}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[productStyles.tab, activeTab === 'info' && productStyles.activeTab]}
                             onPress={() => setActiveTab('info')}
                             accessible={true}
@@ -527,7 +588,7 @@ export default function ProductScreen() {
                                 Thông tin chi tiết
                             </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[productStyles.tab, activeTab === 'reviews' && productStyles.activeTab]}
                             onPress={() => setActiveTab('reviews')}
                             accessible={true}
@@ -549,7 +610,7 @@ export default function ProductScreen() {
                                 <Text style={productStyles.detailText}>
                                     {product.description || 'Chưa có mô tả chi tiết cho sản phẩm này.'}
                                 </Text>
-                                
+
                                 <Text style={productStyles.detailTitle}>Thông tin sản phẩm</Text>
                                 <View style={productStyles.detailRow}>
                                     <Text style={productStyles.detailLabel}>Danh mục</Text>
@@ -616,9 +677,41 @@ export default function ProductScreen() {
                             accessibilityLabel="Danh sách sản phẩm gợi ý"
                         />
                     </View>
- 
+
                 </ScrollView>
             </SafeAreaView>
+
+            {/* Success Modal */}
+            <Modal
+                visible={showSuccessModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowSuccessModal(false)}
+            >
+                <TouchableOpacity
+                    style={productStyles.successModalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowSuccessModal(false)}
+                >
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        style={productStyles.successModalContainer}
+                        onPress={(e) => e.stopPropagation()}
+                    >
+                        <View style={productStyles.successIconContainer}>
+                            <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />
+                        </View>
+                        <Text style={productStyles.successTitle}>Thành công!</Text>
+                        <Text style={productStyles.successMessage}>{successMessage}</Text>
+                        <TouchableOpacity
+                            style={productStyles.successButton}
+                            onPress={() => setShowSuccessModal(false)}
+                        >
+                            <Text style={productStyles.successButtonText}>Đóng</Text>
+                        </TouchableOpacity>
+                    </TouchableOpacity>
+                </TouchableOpacity>
+            </Modal>
         </>
     );
 }

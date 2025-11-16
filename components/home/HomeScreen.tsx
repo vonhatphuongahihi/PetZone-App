@@ -18,7 +18,8 @@ import { ProductCard } from "../user/product-card/ProductCard";
 import SearchBarWithPopup from "../user/search-bar-with-popup/SearchBarWithPopup";
 import { homeStyles } from './homeStyles';
 
-const API_BASE_URL = 'http://10.143.19.127:3001/api';
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.35.227:3001/api';
 
 const recentSearches = ["Thức ăn cho chó", "Vòng cổ", "Đồ chơi"];
 const hotSearchProducts = [
@@ -175,7 +176,7 @@ export default function HomeScreen() {
             <View style={homeStyles.productWrapper}>
                 <ProductCard
                     product={productForCard}
-                    onPress={() => Alert.alert("Đang phát triển")}
+                    onPress={() => router.push(`/product?productId=${item.id}`)}
                     layout="horizontal"
                 />
             </View>

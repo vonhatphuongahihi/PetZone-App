@@ -140,7 +140,7 @@ export default function ProductListScreen() {
     };
 
     const handleProductPress = (product: any) => {
-        Alert.alert("Thông báo", "Chi tiết sản phẩm đang phát triển!");
+        router.push(`/product?productId=${product.id}`);
     };
 
     const renderProduct = ({ item }: { item: any }) => (

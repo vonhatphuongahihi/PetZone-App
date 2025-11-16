@@ -18,8 +18,8 @@ import {
 } from "react-native";
 import { styles } from "../../components/shop-add-product/addProductStyle";
 
-// Base URLs for different platforms
-const BASE_URL = Platform.OS === "web" ? "http://localhost:3001" : "http://192.168.1.12:3001";
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.35.227:3001/api';
 
 interface Category {
   id: number;
@@ -92,8 +92,7 @@ export default function AddProductScreen() {
     if (isLoadingCategories) return;
     setIsLoadingCategories(true);
     try {
-      const BASE_URL = Platform.OS === "web" ? "http://localhost:3001" : "http://10.143.19.127:3001";
-      const url = `${BASE_URL}/api/categories/child-categories`;
+      const url = `${API_BASE_URL}/categories/child-categories`;
       console.log("BẮT ĐẦU LẤY DANH MỤC TỪ:", url);
 
       // Tạo AbortController cho timeout thủ công
@@ -228,7 +227,7 @@ export default function AddProductScreen() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const res = await fetch(`${BASE_URL}/api/products`, {
+      const res = await fetch(`${API_BASE_URL}/products`, {
         method: "POST",
         body: formData,
         headers: {
