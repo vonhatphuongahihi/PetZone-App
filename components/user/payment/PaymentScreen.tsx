@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     Image,
     Modal,
     ScrollView,
@@ -13,6 +14,7 @@ import {
 } from "react-native";
 import { addressService, UserAddress } from "../../../services/addressService";
 import { CartItem } from "../../../services/cartService";
+import { orderService } from "../../../services/orderService";
 import styles from "./paymentStyle";
 
 interface SelectedShop {
@@ -35,6 +37,7 @@ export default function CheckoutScreen() {
     const [shippingFee] = useState(30000); // Phí vận chuyển cố định
     const [address, setAddress] = useState<UserAddress | null>(null);
     const [loadingAddress, setLoadingAddress] = useState(true);
+    const [placingOrder, setPlacingOrder] = useState(false);
 
     // Load dữ liệu từ params (chỉ chạy một lần khi mount)
     useEffect(() => {
@@ -79,12 +82,58 @@ export default function CheckoutScreen() {
         loadAddress();
     }, []);
 
-    const handlePlaceOrder = () => {
+    const handlePlaceOrder = async () => {
         if (!paymentMethod) {
             setShowWarning(true);
             return;
         }
-        setShowSuccess(true);
+
+        if (!address) {
+            Alert.alert('Lỗi', 'Vui lòng chọn địa chỉ giao hàng');
+            return;
+        }
+
+        if (selectedItems.length === 0) {
+            Alert.alert('Lỗi', 'Không có sản phẩm nào để đặt hàng');
+            return;
+        }
+
+        try {
+            setPlacingOrder(true);
+            const token = await AsyncStorage.getItem('jwt_token');
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                return;
+            }
+
+            // Chuẩn bị dữ liệu đơn hàng
+            const orderItems = selectedItems.map(item => ({
+                productId: item.product.id,
+                storeId: item.product.store.id,
+                title: item.product.title,
+                sku: undefined, // Product có thể không có slug trong CartItem
+                price: Number(item.product.price),
+                quantity: item.quantity
+            }));
+
+            // Tạo đơn hàng
+            await orderService.createOrder({
+                items: orderItems,
+                addressId: address.id,
+                paymentMethod: paymentMethod,
+                shippingFee: shippingFee
+            }, token);
+
+            // Xóa các sản phẩm đã đặt khỏi giỏ hàng (đã được xử lý ở backend)
+            // Có thể refresh cart nếu cần
+
+            setShowSuccess(true);
+        } catch (error: any) {
+            console.error('Error placing order:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể đặt hàng. Vui lòng thử lại.');
+        } finally {
+            setPlacingOrder(false);
+        }
     };
 
     const totalPayment = totalAmount + shippingFee;
@@ -289,9 +338,13 @@ export default function CheckoutScreen() {
                 <TouchableOpacity
                     style={styles.buyBtn}
                     onPress={handlePlaceOrder}
-                    disabled={selectedItems.length === 0 || !address}
+                    disabled={selectedItems.length === 0 || !address || placingOrder}
                 >
-                    <Text style={styles.buyBtnText}>Đặt hàng</Text>
+                    {placingOrder ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <Text style={styles.buyBtnText}>Đặt hàng</Text>
+                    )}
                 </TouchableOpacity>
             </View>
 
