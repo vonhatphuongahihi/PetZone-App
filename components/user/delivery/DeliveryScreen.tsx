@@ -32,8 +32,8 @@ export default function DeliveryScreen() {
         return;
       }
 
-      const response = await orderService.getUserOrders(token, 'shipped');
-      setOrders(response.data);
+      const response = await orderService.getUserOrders(token, 'confirmed');
+      setOrders(response.data || []);
     } catch (error: any) {
       console.error('Error loading orders:', error);
     } finally {
@@ -45,6 +45,18 @@ export default function DeliveryScreen() {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const formatDateTime = (dateString: string | null) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -76,10 +88,7 @@ export default function DeliveryScreen() {
             <View key={order.id} style={styles.orderCard}>
               {/* Order Header */}
               <View style={styles.orderHeader}>
-                <View>
-                  <Text style={styles.orderNumber}>Mã đơn: {order.orderNumber}</Text>
-                  <Text style={styles.storeName}>{order.store?.storeName || 'Shop'}</Text>
-                </View>
+                <Text style={styles.storeName}>{order.store?.storeName || 'Shop'}</Text>
                 <View style={styles.statusBadge}>
                   <Text style={styles.statusText}>Đang giao hàng</Text>
                 </View>
@@ -138,14 +147,35 @@ export default function DeliveryScreen() {
               </View>
 
               {/* Delivery Info */}
-              {order.shippedAt && (
+              {order.estimatedDeliveryDate && (
                 <View style={styles.deliveryInfo}>
-                  <MaterialIcons name="local-shipping" size={18} color="#4CAF50" />
+                  <MaterialIcons name="schedule" size={18} color="#2196F3" />
                   <Text style={styles.deliveryText}>
-                    Đã giao hàng: {formatDate(order.shippedAt)}
+                    Dự kiến giao hàng: {formatDate(order.estimatedDeliveryDate)}
                   </Text>
                 </View>
               )}
+
+              {/* Confirm Received Button */}
+              <TouchableOpacity
+                style={styles.receivedButton}
+                onPress={async () => {
+                  try {
+                    const token = await AsyncStorage.getItem('jwt_token');
+                    if (!token) {
+                      router.replace('/login');
+                      return;
+                    }
+                    await orderService.updateOrderStatus(order.id, 'shipped', token);
+                    loadOrders();
+                  } catch (error: any) {
+                    console.error('Error confirming received:', error);
+                  }
+                }}
+              >
+                <MaterialIcons name="check-circle" size={20} color="#fff" />
+                <Text style={styles.receivedButtonText}>Đã nhận hàng</Text>
+              </TouchableOpacity>
             </View>
           ))}
         </ScrollView>

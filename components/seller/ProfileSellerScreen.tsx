@@ -11,7 +11,6 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { SellerProfile, sellerService } from '../../services/sellerService';
 import { tokenService } from '../../services/tokenService';
 import { SellerBottomNavigation } from './SellerBottomNavigation';
@@ -19,12 +18,12 @@ import { SellerTopNavigation } from './SellerTopNavigation';
 
 export default function ProfileSellerScreen() {
     const router = useRouter();
-    
+
     const [profile, setProfile] = useState<SellerProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    
+
     // Form data for editing
     const [formData, setFormData] = useState({
         storeName: '',
@@ -52,13 +51,13 @@ export default function ProfileSellerScreen() {
             console.log('Fetching profile with token:', token);
             const response = await sellerService.getProfile(token);
             console.log('Profile response:', JSON.stringify(response, null, 2));
-            
+
             if (!response.profile) {
                 throw new Error('Profile data not found in response');
             }
-            
+
             setProfile(response.profile);
-            
+
             // Set form data
             setFormData({
                 storeName: response.profile.store.storeName,
@@ -71,7 +70,7 @@ export default function ProfileSellerScreen() {
         } catch (error: any) {
             console.error('Load profile error:', error);
             console.error('Error message:', error.message);
-            
+
             // Handle specific error cases
             if (error.message?.includes('404') || error.message?.includes('Store not found')) {
                 // User doesn't have a store yet
@@ -134,11 +133,11 @@ export default function ProfileSellerScreen() {
             }
 
             await sellerService.updateProfile(formData, token);
-            
+
             // Reload profile to get updated data
             await loadProfile();
             setIsEditing(false);
-            
+
             Alert.alert('Thành công', 'Cập nhật thông tin thành công!');
         } catch (error: any) {
             console.error('Save profile error:', error);
@@ -150,7 +149,7 @@ export default function ProfileSellerScreen() {
 
     const handleCancel = () => {
         if (!profile) return;
-        
+
         // Reset form data to original values
         setFormData({
             storeName: profile.store.storeName,
@@ -186,37 +185,37 @@ export default function ProfileSellerScreen() {
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.container}>
+            <View style={styles.container}>
                 <SellerTopNavigation />
                 <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                     <ActivityIndicator size="large" color="#FFB400" />
                     <Text style={{ marginTop: 10, color: '#666' }}>Đang tải thông tin...</Text>
                 </View>
                 <SellerBottomNavigation />
-            </SafeAreaView>
+            </View>
         );
     }
 
     if (!profile) {
         return (
-            <SafeAreaView style={styles.container}>
+            <View style={styles.container}>
                 <SellerTopNavigation />
                 <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                     <Text style={{ color: '#666', fontSize: 16 }}>Không thể tải thông tin profile</Text>
-                    <TouchableOpacity 
-                        style={styles.retryButton} 
+                    <TouchableOpacity
+                        style={styles.retryButton}
                         onPress={loadProfile}
                     >
                         <Text style={styles.retryButtonText}>Thử lại</Text>
                     </TouchableOpacity>
                 </View>
                 <SellerBottomNavigation />
-            </SafeAreaView>
+            </View>
         );
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <SellerTopNavigation />
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -225,7 +224,7 @@ export default function ProfileSellerScreen() {
                     <View style={styles.avatarWrapper}>
                         <Image
                             source={
-                                profile.store.avatarUrl 
+                                profile.store.avatarUrl
                                     ? { uri: profile.store.avatarUrl }
                                     : require('@/assets/images/icon.png')
                             }
@@ -239,10 +238,10 @@ export default function ProfileSellerScreen() {
                     <Text style={styles.shopName}>{profile.store.storeName}</Text>
                     <View style={styles.starsContainer}>
                         {[...Array(5)].map((_, index) => (
-                            <Text 
-                                key={index} 
+                            <Text
+                                key={index}
                                 style={[
-                                    styles.star, 
+                                    styles.star,
                                     { color: index < Math.floor(Number(profile.store.rating)) ? '#FFB400' : '#E0E0E0' }
                                 ]}
                             >
@@ -290,7 +289,7 @@ export default function ProfileSellerScreen() {
                         <TextInput
                             style={styles.input}
                             value={formData.ownerName}
-                            onChangeText={(text) => setFormData({...formData, ownerName: text})}
+                            onChangeText={(text) => setFormData({ ...formData, ownerName: text })}
                             editable={isEditing}
                             placeholder="Tên của bạn"
                         />
@@ -302,7 +301,7 @@ export default function ProfileSellerScreen() {
                         <TextInput
                             style={styles.input}
                             value={formData.storeName}
-                            onChangeText={(text) => setFormData({...formData, storeName: text})}
+                            onChangeText={(text) => setFormData({ ...formData, storeName: text })}
                             editable={isEditing}
                         />
                     </View>
@@ -313,7 +312,7 @@ export default function ProfileSellerScreen() {
                         <TextInput
                             style={[styles.input, styles.textArea]}
                             value={formData.description}
-                            onChangeText={(text) => setFormData({...formData, description: text})}
+                            onChangeText={(text) => setFormData({ ...formData, description: text })}
                             multiline
                             numberOfLines={6}
                             textAlignVertical="top"
@@ -328,7 +327,7 @@ export default function ProfileSellerScreen() {
                         <TextInput
                             style={styles.input}
                             value={formData.phoneNumber}
-                            onChangeText={(text) => setFormData({...formData, phoneNumber: text})}
+                            onChangeText={(text) => setFormData({ ...formData, phoneNumber: text })}
                             keyboardType="phone-pad"
                             editable={isEditing}
                         />
@@ -353,7 +352,7 @@ export default function ProfileSellerScreen() {
                         <TextInput
                             style={[styles.input, styles.addressInput]}
                             value={formData.address}
-                            onChangeText={(text) => setFormData({...formData, address: text})}
+                            onChangeText={(text) => setFormData({ ...formData, address: text })}
                             multiline
                             numberOfLines={3}
                             textAlignVertical="top"
@@ -402,7 +401,7 @@ export default function ProfileSellerScreen() {
             </ScrollView>
 
             <SellerBottomNavigation />
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -665,7 +664,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 8,
     },
-    
+
     // Additional styles
     retryButton: {
         backgroundColor: '#FFB400',

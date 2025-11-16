@@ -52,21 +52,16 @@ export const styles = StyleSheet.create({
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  orderNumber: {
-    fontSize: 14,
+  storeName: {
+    fontSize: 15,
     fontWeight: '600',
     color: '#1A1A1A',
-    marginBottom: 4,
-  },
-  storeName: {
-    fontSize: 13,
-    color: '#666',
   },
   statusBadge: {
     backgroundColor: '#E3F2FD',
@@ -171,14 +166,31 @@ export const styles = StyleSheet.create({
   deliveryInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E3F2FD',
     padding: 12,
     borderRadius: 8,
+    marginTop: 8,
     gap: 8,
   },
   deliveryText: {
     fontSize: 14,
-    color: '#4CAF50',
+    color: '#2196F3',
     fontWeight: '500',
+  },
+  receivedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 8,
+  },
+  receivedButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

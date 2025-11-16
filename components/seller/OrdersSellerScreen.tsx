@@ -1,139 +1,88 @@
-import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
     Image,
+    Modal,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Order, orderService } from '../../services/orderService';
 import { SellerBottomNavigation } from './SellerBottomNavigation';
 import { SellerTopNavigation } from './SellerTopNavigation';
 
-interface OrderItem {
-    id: string;
-    productName: string;
-    price: number;
-    quantity: number;
-    image: any;
-    weight: string;
-    customerName: string;
-    orderDate: string;
-    status: 'pending' | 'shipping' | 'delivered';
-}
-
-interface Order {
-    id: string;
-    orderNumber: string;
-    customerName: string;
-    customerPhone: string;
-    orderDate: string;
-    totalAmount: number;
-    status: 'pending' | 'shipping' | 'delivered';
-    items: OrderItem[];
-}
-
 export default function OrdersSellerScreen() {
-    const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'shipping' | 'delivered'>('all');
+    const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'confirmed' | 'shipped' | 'cancelled'>('all');
     const [showDropdown, setShowDropdown] = useState(false);
-    
-    const [orders, setOrders] = useState<Order[]>([
-        {
-            id: '1',
-            orderNumber: 'DH001',
-            customerName: 'Nguyễn Văn A',
-            customerPhone: '0901234567',
-            orderDate: '2024-10-12',
-            totalAmount: 243198,
-            status: 'pending',
-            items: [
-                {
-                    id: '1',
-                    productName: 'Cát vệ sinh đậu nành Cats me',
-                    price: 121599,
-                    quantity: 2,
-                    image: require('@/assets/images/icon.png'),
-                    weight: 'Catsme Than',
-                    customerName: 'Nguyễn Văn A',
-                    orderDate: '2024-10-12',
-                    status: 'pending'
-                }
-            ]
-        },
-        {
-            id: '2',
-            orderNumber: 'DH002',
-            customerName: 'Trần Thị B',
-            customerPhone: '0912345678',
-            orderDate: '2024-10-11',
-            totalAmount: 121599,
-            status: 'shipping',
-            items: [
-                {
-                    id: '2',
-                    productName: 'Cát vệ sinh đậu nành Cats me',
-                    price: 121599,
-                    quantity: 1,
-                    image: require('@/assets/images/icon.png'),
-                    weight: 'Catsme Than',
-                    customerName: 'Trần Thị B',
-                    orderDate: '2024-10-11',
-                    status: 'shipping'
-                }
-            ]
-        },
-        {
-            id: '3',
-            orderNumber: 'DH003',
-            customerName: 'Lê Văn C',
-            customerPhone: '0923456789',
-            orderDate: '2024-10-10',
-            totalAmount: 364797,
-            status: 'delivered',
-            items: [
-                {
-                    id: '3',
-                    productName: 'Cát vệ sinh đậu nành Cats me',
-                    price: 121599,
-                    quantity: 3,
-                    image: require('@/assets/images/icon.png'),
-                    weight: 'Catsme Than',
-                    customerName: 'Lê Văn C',
-                    orderDate: '2024-10-10',
-                    status: 'delivered'
-                }
-            ]
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [allOrders, setAllOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+
+    useEffect(() => {
+        loadOrders();
+    }, [selectedFilter]);
+
+    const loadOrders = async () => {
+        try {
+            setLoading(true);
+            const token = await AsyncStorage.getItem('jwt_token');
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                return;
+            }
+
+            // Load all orders for counting
+            const allResponse = await orderService.getStoreOrders(token, undefined);
+            setAllOrders(allResponse.data || []);
+
+            // Load filtered orders
+            const status = selectedFilter === 'all' ? undefined : selectedFilter;
+            const response = await orderService.getStoreOrders(token, status);
+            setOrders(response.data || []);
+        } catch (error: any) {
+            console.error('Error loading orders:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể tải danh sách đơn hàng');
+        } finally {
+            setLoading(false);
         }
-    ]);
+    };
 
     const formatPrice = (price: number) => {
         return price.toLocaleString('vi-VN').replace(/,/g, '.') + 'đ';
     };
 
-    const getFilteredOrders = () => {
-        if (selectedFilter === 'all') {
-            return orders;
+    const getOrderCount = (status: string) => {
+        if (status === 'all') {
+            return allOrders.length;
         }
-        return orders.filter(order => order.status === selectedFilter);
+        return allOrders.filter(order => order.status === status).length;
     };
 
     const getFilterText = (filter: string) => {
         const filterMap = {
             'all': 'Tất cả đơn hàng',
             'pending': 'Chờ xác nhận',
-            'shipping': 'Đang giao',
-            'delivered': 'Đã giao thành công'
+            'confirmed': 'Đang giao hàng',
+            'shipped': 'Đã giao hàng',
+            'cancelled': 'Đã hủy'
         };
-        return filterMap[filter as keyof typeof filterMap] || filter;
+        const baseText = filterMap[filter as keyof typeof filterMap] || filter;
+        const count = getOrderCount(filter);
+        return `${baseText} (${count})`;
     };
 
     const getStatusText = (status: string) => {
         const statusMap = {
             'pending': 'Chờ xác nhận',
-            'shipping': 'Đang giao',
-            'delivered': 'Đã giao thành công',
+            'confirmed': 'Đang giao hàng',
+            'shipped': 'Đã giao hàng',
+            'cancelled': 'Đã hủy',
         };
         return statusMap[status as keyof typeof statusMap] || status;
     };
@@ -141,141 +90,134 @@ export default function OrdersSellerScreen() {
     const getStatusColor = (status: string) => {
         const colorMap = {
             'pending': '#FBBC05',
-            'shipping': '#2196F3',
-            'delivered': '#8BC34A',
+            'confirmed': '#2196F3',
+            'shipped': '#4CAF50',
+            'cancelled': '#E53935',
         };
         return colorMap[status as keyof typeof colorMap] || '#666';
     };
 
-    const handleConfirmOrder = (orderId: string) => {
-        Alert.alert(
-            "Xác nhận đơn hàng",
-            "Bạn có chắc chắn muốn xác nhận đơn hàng này?",
-            [
-                {
-                    text: "Hủy",
-                    style: "cancel"
-                },
-                {
-                    text: "Xác nhận",
-                    onPress: () => {
-                        setOrders(orders.map(order => 
-                            order.id === orderId 
-                                ? { ...order, status: 'shipping' as const }
-                                : order
-                        ));
-                    }
-                }
-            ]
-        );
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
-    const handleDeliverOrder = (orderId: string) => {
-        Alert.alert(
-            "Xác nhận giao hàng",
-            "Xác nhận đã giao hàng thành công?",
-            [
-                {
-                    text: "Hủy",
-                    style: "cancel"
-                },
-                {
-                    text: "Đã giao",
-                    onPress: () => {
-                        setOrders(orders.map(order => 
-                            order.id === orderId 
-                                ? { ...order, status: 'delivered' as const }
-                                : order
-                        ));
-                    }
-                }
-            ]
-        );
+    const handleConfirmOrder = async (orderId: string) => {
+        try {
+            const token = await AsyncStorage.getItem('jwt_token');
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                return;
+            }
+
+            await orderService.updateOrderStatus(orderId, 'confirmed', token);
+            setSuccessMessage('Đơn hàng đã được xác nhận và đang giao hàng!');
+            setShowSuccessModal(true);
+            loadOrders();
+        } catch (error: any) {
+            Alert.alert('Lỗi', error.message || 'Không thể xác nhận đơn hàng');
+        }
     };
 
-    const renderOrderItem = (order: Order) => (
-        <View key={order.id} style={styles.orderCard}>
-            <View style={styles.orderHeader}>
-                <Text style={styles.orderNumber}>#{order.orderNumber}</Text>
-                <View style={[
-                    styles.statusBadge, 
-                    { 
-                        backgroundColor: order.status === 'pending' ? '#FFFBEA' : getStatusColor(order.status) + '20',
-                        borderColor: getStatusColor(order.status)
-                    }
-                ]}>
-                    <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
-                        {getStatusText(order.status)}
-                    </Text>
-                </View>
-            </View>
-            
-            <Text style={styles.customerInfo}>Khách hàng: {order.customerName}</Text>
-            <Text style={styles.customerInfo}>SĐT: {order.customerPhone}</Text>
-            <Text style={styles.orderDate}>Ngày đặt: {order.orderDate}</Text>
-            
-            {order.items.map((item, index) => (
-                <View key={index} style={styles.itemContainer}>
-                    <Image source={item.image} style={styles.productImage} />
-                    <View style={styles.itemInfo}>
-                        <Text style={styles.productName}>{item.productName}</Text>
-                        <Text style={styles.brandName}>{item.weight}</Text>
-                        
-                        <View style={styles.priceSection}>
-                            <Text style={styles.currentPrice}>{formatPrice(item.price)}</Text>
-                            <Text style={styles.quantity}>x{item.quantity}</Text>
-                        </View>
-                        
-                        <Text style={styles.discountInfo}>
-                            Tổng số tiền ({item.quantity} sản phẩm): {formatPrice(item.price * item.quantity)}
+    const handleDeliverOrder = async (orderId: string) => {
+        try {
+            const token = await AsyncStorage.getItem('jwt_token');
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                return;
+            }
+
+            await orderService.updateOrderStatus(orderId, 'shipped', token);
+            setSuccessMessage('Đơn hàng đã được đánh dấu là đang giao!');
+            setShowSuccessModal(true);
+            loadOrders();
+        } catch (error: any) {
+            Alert.alert('Lỗi', error.message || 'Không thể cập nhật trạng thái đơn hàng');
+        }
+    };
+
+    const renderOrderItem = (order: Order) => {
+        const customerName = order.user?.username || 'Khách hàng';
+        const customerPhone = order.user?.email || 'N/A';
+        const orderDate = formatDate(order.createdAt);
+
+        return (
+            <View key={order.id} style={styles.orderCard}>
+                <View style={styles.orderHeader}>
+                    <Text style={styles.customerInfo}>Khách hàng: {customerName}</Text>
+                    <View style={[
+                        styles.statusBadge,
+                        {
+                            backgroundColor: order.status === 'pending' ? '#FFFBEA' : getStatusColor(order.status) + '20',
+                            borderColor: getStatusColor(order.status)
+                        }
+                    ]}>
+                        <Text style={[styles.statusText, { color: getStatusColor(order.status) }]}>
+                            {getStatusText(order.status)}
                         </Text>
                     </View>
                 </View>
-            ))}
-            
-            <View style={styles.orderFooter}>
-                <Text style={styles.totalAmount}>Tổng tiền: {formatPrice(order.totalAmount)}</Text>
+                <Text style={styles.orderDate}>Ngày đặt: {orderDate}</Text>
+
+                {order.orderItems?.map((item: any, index: number) => {
+                    const imageUri = item.product?.images?.[0]?.url;
+                    return (
+                        <View key={item.id || index} style={styles.itemContainer}>
+                            <Image
+                                source={imageUri ? { uri: imageUri } : require('@/assets/images/icon.png')}
+                                style={styles.productImage}
+                            />
+                            <View style={styles.itemInfo}>
+                                <Text style={styles.productName}>{item.title}</Text>
+
+                                <View style={styles.priceSection}>
+                                    <Text style={styles.currentPrice}>{formatPrice(Number(item.unitPrice))}</Text>
+                                    <Text style={styles.quantity}>x{item.quantity}</Text>
+                                </View>
+
+                                <Text style={styles.discountInfo}>
+                                    Thành tiền: {formatPrice(Number(item.totalPrice))}
+                                </Text>
+                            </View>
+                        </View>
+                    );
+                })}
+
+                <View style={styles.orderFooter}>
+                    <Text style={styles.totalAmount}>Tổng tiền: {formatPrice(Number(order.total))}</Text>
+                </View>
+
+                <View style={styles.actionButtons}>
+                    {order.status === 'pending' && (
+                        <TouchableOpacity
+                            style={styles.confirmButton}
+                            onPress={() => handleConfirmOrder(order.id)}
+                        >
+                            <Text style={styles.confirmButtonText}>Xác nhận đơn hàng</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
-            
-            <View style={styles.actionButtons}>
-                {order.status === 'pending' && (
-                    <TouchableOpacity 
-                        style={styles.confirmButton}
-                        onPress={() => handleConfirmOrder(order.id)}
-                    >
-                        <Text style={styles.confirmButtonText}>Xác nhận đơn hàng</Text>
-                    </TouchableOpacity>
-                )}
-                {order.status === 'shipping' && (
-                    <TouchableOpacity 
-                        style={styles.deliverButton}
-                        onPress={() => handleDeliverOrder(order.id)}
-                    >
-                        <Text style={styles.deliverButtonText}>Đã giao hàng</Text>
-                    </TouchableOpacity>
-                )}
-                
-            </View>
-        </View>
-    );
+        );
+    };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <SellerTopNavigation />
-            
+
             {/* Filter Dropdown */}
             <View style={styles.filterContainer}>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.filterButton}
                     onPress={() => setShowDropdown(!showDropdown)}
                 >
                     <Text style={styles.filterButtonText}>{getFilterText(selectedFilter)}</Text>
                     <Text style={styles.dropdownArrow}>{showDropdown ? '▲' : '▼'}</Text>
                 </TouchableOpacity>
-                
+
                 {showDropdown && (
                     <View style={styles.dropdownMenu}>
-                        {['all', 'pending', 'shipping', 'delivered'].map((filter) => (
+                        {['all', 'pending', 'confirmed', 'shipped', 'cancelled'].map((filter) => (
                             <TouchableOpacity
                                 key={filter}
                                 style={[
@@ -298,14 +240,49 @@ export default function OrdersSellerScreen() {
                     </View>
                 )}
             </View>
-            
+
             {/* Orders List */}
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {getFilteredOrders().map(renderOrderItem)}
-            </ScrollView>
-            
+            {loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#FBBC05" />
+                    <Text style={styles.loadingText}>Đang tải đơn hàng...</Text>
+                </View>
+            ) : orders.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>Chưa có đơn hàng nào</Text>
+                </View>
+            ) : (
+                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                    {orders.map(renderOrderItem)}
+                </ScrollView>
+            )}
+
             <SellerBottomNavigation />
-        </SafeAreaView>
+
+            {/* Success Modal */}
+            <Modal
+                visible={showSuccessModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowSuccessModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalIconContainer}>
+                            <Text style={styles.modalIcon}>✓</Text>
+                        </View>
+                        <Text style={styles.modalTitle}>Thành công!</Text>
+                        <Text style={styles.modalMessage}>{successMessage}</Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => setShowSuccessModal(false)}
+                        >
+                            <Text style={styles.modalButtonText}>Đóng</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+        </View>
     );
 }
 
@@ -340,31 +317,26 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
-    },
-    orderNumber: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
+        marginBottom: 8,
     },
     statusBadge: {
         backgroundColor: '#FFFBEA',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 16,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
         borderWidth: 1,
         borderColor: '#FBBC05',
     },
     statusText: {
         color: '#FBBC05',
         textAlign: 'center',
-        fontSize: 14,
+        fontSize: 11,
         fontWeight: '500',
     },
     customerInfo: {
         fontSize: 14,
         color: '#666',
-        marginBottom: 4,
+        marginBottom: 0,
     },
     orderDate: {
         fontSize: 12,
@@ -429,6 +401,9 @@ const styles = StyleSheet.create({
     },
 
     orderFooter: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
         borderTopWidth: 1,
         borderTopColor: '#F0F0F0',
         paddingTop: 12,
@@ -481,7 +456,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
     },
-    
+
     // Filter Dropdown Styles
     filterContainer: {
         backgroundColor: '#FFF',
@@ -551,5 +526,91 @@ const styles = StyleSheet.create({
     dropdownItemTextSelected: {
         color: '#FFB400',
         fontWeight: '600',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 50,
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 14,
+        color: '#666',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 50,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#999',
+    },
+
+    // Success Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 24,
+        width: '80%',
+        maxWidth: 320,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    modalIconContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: '#8BC34A',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    modalIcon: {
+        fontSize: 36,
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 20,
+    },
+    modalButton: {
+        backgroundColor: '#FBBC05',
+        paddingVertical: 12,
+        paddingHorizontal: 32,
+        borderRadius: 8,
+        width: '100%',
+        alignItems: 'center',
+    },
+    modalButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
