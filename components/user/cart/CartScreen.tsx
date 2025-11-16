@@ -7,6 +7,7 @@ import {
   Alert,
   FlatList,
   Image,
+  Modal,
   Text,
   TouchableOpacity,
   View
@@ -43,6 +44,9 @@ export default function CartScreen() {
   const [checkedProducts, setCheckedProducts] = useState<{ [productId: string]: boolean }>({});
   const [checkedAll, setCheckedAll] = useState(false);
   const [updatingQuantities, setUpdatingQuantities] = useState<{ [cartItemId: string]: boolean }>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch cart từ API
   const fetchCart = async () => {
@@ -178,38 +182,45 @@ export default function CartScreen() {
   };
 
   // Xóa sản phẩm
-  const removeProduct = async (cartItemId: string) => {
-    Alert.alert(
-      'Xác nhận',
-      'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xóa',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const token = await AsyncStorage.getItem('jwt_token');
-              if (!token) {
-                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
-                return;
-              }
+  const removeProduct = (cartItemId: string) => {
+    setDeletingItemId(cartItemId);
+    setShowDeleteModal(true);
+  };
 
-              await cartService.removeItem(token, cartItemId);
+  const handleConfirmDelete = async () => {
+    if (!deletingItemId) return;
 
-              const newChecked = { ...checkedProducts };
-              delete newChecked[cartItemId];
-              setCheckedProducts(newChecked);
+    try {
+      setDeleting(true);
+      const token = await AsyncStorage.getItem('jwt_token');
+      if (!token) {
+        Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+        setShowDeleteModal(false);
+        setDeletingItemId(null);
+        return;
+      }
 
-              await fetchCart(); // Refresh cart
-            } catch (error: any) {
-              console.error('Error removing item:', error);
-              Alert.alert('Lỗi', error.message || 'Không thể xóa sản phẩm');
-            }
-          },
-        },
-      ]
-    );
+      await cartService.removeItem(token, deletingItemId);
+
+      const newChecked = { ...checkedProducts };
+      delete newChecked[deletingItemId];
+      setCheckedProducts(newChecked);
+
+      await fetchCart(); // Refresh cart
+
+      setShowDeleteModal(false);
+      setDeletingItemId(null);
+    } catch (error: any) {
+      console.error('Error removing item:', error);
+      Alert.alert('Lỗi', error.message || 'Không thể xóa sản phẩm');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingItemId(null);
   };
 
   // Render 1 shop
@@ -218,9 +229,9 @@ export default function CartScreen() {
   }: {
     item: { shopId: string; title: string; products: CartItem[] };
   }) => (
-    <View style={styles.item}>
+    <View>
       {/* Shop header */}
-      <View style={styles.row}>
+      <View style={styles.shopHeader}>
         <CustomCheckbox
           checked={!!checkedShops[item.shopId]}
           onToggle={() => toggleShop(item.shopId)}
@@ -250,7 +261,7 @@ export default function CartScreen() {
               source={imageUri ? { uri: imageUri } : require("../../../assets/images/cat1.png")}
               style={styles.image}
             />
-            <View style={{ flex: 1, marginLeft: 10 }}>
+            <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.productName}>{product.title}</Text>
               <Text style={styles.productDesc}>
                 {product.category?.name || 'Chưa phân loại'}
@@ -267,7 +278,7 @@ export default function CartScreen() {
                       onPress={() => changeQuantity(cartItem.id, -1)}
                       disabled={isLoading || cartItem.quantity <= 1}
                     >
-                      <Text style={styles.counterText}>-</Text>
+                      <Text style={[styles.counterText, (isLoading || cartItem.quantity <= 1) && { opacity: 0.4 }]}>-</Text>
                     </TouchableOpacity>
                     {isLoading ? (
                       <ActivityIndicator size="small" color="#FBBC05" />
@@ -279,11 +290,14 @@ export default function CartScreen() {
                       onPress={() => changeQuantity(cartItem.id, 1)}
                       disabled={isLoading}
                     >
-                      <Text style={styles.counterText}>+</Text>
+                      <Text style={[styles.counterText, isLoading && { opacity: 0.4 }]}>+</Text>
                     </TouchableOpacity>
                   </View>
 
-                  <TouchableOpacity onPress={() => removeProduct(cartItem.id)}>
+                  <TouchableOpacity
+                    onPress={() => removeProduct(cartItem.id)}
+                    style={{ padding: 4 }}
+                  >
                     <Text style={styles.remove}>Xóa</Text>
                   </TouchableOpacity>
                 </View>
@@ -309,20 +323,21 @@ export default function CartScreen() {
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FBBC05" />
-          <Text style={{ marginTop: 10 }}>Đang tải giỏ hàng...</Text>
+          <Text style={styles.loadingText}>Đang tải giỏ hàng...</Text>
         </View>
       ) : cartItems.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ fontSize: 16, color: '#999' }}>Giỏ hàng trống</Text>
+        <View style={styles.emptyContainer}>
+          <MaterialIcons name="shopping-cart" size={64} color="#D0D0D0" />
+          <Text style={styles.emptyText}>Giỏ hàng của bạn đang trống</Text>
         </View>
       ) : (
         <FlatList
           data={shops}
           keyExtractor={(item) => item.shopId}
           renderItem={renderShop}
-          contentContainerStyle={{ padding: 15, paddingBottom: 100 }}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -335,8 +350,8 @@ export default function CartScreen() {
         ]}
       >
         <CustomCheckbox checked={checkedAll} onToggle={toggleAll} />
-        <Text style={{ flex: 1 }}>Tất cả</Text>
-        <Text style={{ color: "red", marginRight: 10, fontWeight: "bold" }}>
+        <Text style={styles.footerText}>Tất cả</Text>
+        <Text style={styles.totalPrice}>
           {Object.keys(checkedProducts)
             .filter((id) => checkedProducts[id])
             .reduce((sum, id) => {
@@ -357,6 +372,56 @@ export default function CartScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelDelete}
+      >
+        <TouchableOpacity
+          style={styles.deleteModalOverlay}
+          activeOpacity={1}
+          onPress={handleCancelDelete}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.deleteModalContainer}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.deleteIconContainer}>
+              <MaterialIcons name="delete-outline" size={50} color="#E53935" />
+            </View>
+            <Text style={styles.deleteModalTitle}>Xác nhận xóa</Text>
+            <Text style={styles.deleteModalMessage}>
+              Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?
+            </Text>
+
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteModalButtonCancel]}
+                onPress={handleCancelDelete}
+                disabled={deleting}
+              >
+                <Text style={styles.deleteModalButtonCancelText}>Hủy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteModalButtonConfirm]}
+                onPress={handleConfirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.deleteModalButtonConfirmText}>Xóa</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }

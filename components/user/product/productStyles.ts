@@ -13,9 +13,9 @@ export const productStyles = StyleSheet.create({
         padding: 12,
         paddingLeft: 16,
     },
-    headerTitle: { 
-        fontSize: 16, 
-        fontWeight: "600", 
+    headerTitle: {
+        fontSize: 16,
+        fontWeight: "600",
         flex: 1,
         marginLeft: 16,
         marginRight: 16,
@@ -452,7 +452,7 @@ export const productStyles = StyleSheet.create({
     },
     successButton: {
         backgroundColor: '#FBBC05',
-        paddingHorizontal: 32,
+        paddingHorizontal: 40,
         paddingVertical: 12,
         borderRadius: 8,
         minWidth: 120,
