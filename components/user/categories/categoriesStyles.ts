@@ -1,60 +1,65 @@
-import { Dimensions, StyleSheet } from 'react-native';
-const { width } = Dimensions.get('window');
-
-const gap = 12;
+import { StyleSheet } from 'react-native';
 
 export const categoriesStyles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#fff",
-        paddingHorizontal: 16,
-    },
-
-    // Header với mũi tên quay lại
-    headerContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginVertical: 16,
     },
     header: {
         fontSize: 18,
         fontWeight: "700",
-        color: "#333",
+        marginVertical: 16,
+        marginHorizontal: 16,
     },
-
-    // Danh mục con
+    categoryContainer: {
+        paddingTop: 6,
+    },
+    categorySection: {
+        marginBottom: 16,
+        paddingHorizontal: 16,
+    },
+    categoryHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 16,
+    },
+    categoryIcon: {
+        width: 36,
+        height: 36,
+        resizeMode: "contain",
+        marginRight: 10,
+    },
+    categoryTitle: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#FBBC05",
+    },
     childContainer: {
         flexDirection: "row",
         flexWrap: "wrap",
         justifyContent: "space-between",
-        paddingBottom: 20,
+        gap: 10,
     },
     childCard: {
-        width: (width - 32 - gap) / 2, // 32 = padding container 16*2
+        width: "47%",
         backgroundColor: "#FFFAE8",
         borderRadius: 10,
         borderColor: "#E2C290",
         borderWidth: 1,
         paddingVertical: 12,
         paddingHorizontal: 12,
-        marginBottom: 16,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOpacity: 0.05,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 4,
-        elevation: 2,
+        marginBottom: 10,
+        alignItems: "center"
     },
     childImage: {
         width: 80,
         height: 80,
-        resizeMode: "cover", 
+        resizeMode: "contain",
         marginBottom: 8,
-        borderRadius: 40,     
     },
     childText: {
         fontSize: 15,
         fontWeight: "500",
-        textAlign: "center",
     },
 });

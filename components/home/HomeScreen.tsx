@@ -14,12 +14,10 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { API_BASE_URL } from "../../config/api";
 import { ProductCard } from "../user/product-card/ProductCard";
 import SearchBarWithPopup from "../user/search-bar-with-popup/SearchBarWithPopup";
 import { homeStyles } from './homeStyles';
-
-// === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.0.35.227:3001/api';
 
 const recentSearches = ["Thức ăn cho chó", "Vòng cổ", "Đồ chơi"];
 const hotSearchProducts = [
@@ -132,15 +130,15 @@ export default function HomeScreen() {
         <TouchableOpacity
             style={homeStyles.categoryItem}
             onPress={() =>
-                router.push(`/categories?parentId=${item.id}&parentName=${item.name}`)
+                router.push(`/categories`)
             }
         >
             <View style={homeStyles.categoryIconContainer}>
                 {/* 🔹 Paste ảnh cho danh mục tại đây */}
                 <Image
                     source={
-                        item.icon
-                            ? { uri: item.icon }
+                        item.image
+                            ? { uri: item.image }
                             : require("../../assets/images/food-icon.png") // <-- paste ảnh local mặc định
                     }
                     style={homeStyles.categoryIcon}
