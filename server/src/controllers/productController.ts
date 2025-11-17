@@ -53,6 +53,15 @@ export const createProduct = async (req: Request, res: Response) => {
       include: { images: true, category: true },
     });
 
+    await prisma.store.update({
+      where: { id: String(storeId) },
+      data: {
+        totalProducts: {
+          increment: 1
+        }
+      }
+    });
+
     console.log("Created product:", product.id);
     return res.status(201).json({ success: true, data: product });
   } catch (error: any) {
@@ -179,6 +188,16 @@ export const deleteProduct = async (req: Request, res: Response) => {
     await prisma.productImage.deleteMany({ where: { productId: id } });
     await prisma.product.delete({ where: { id } });
 
+    // [THÊM] Giảm totalProducts trong Store
+    await prisma.store.update({
+      where: { id: productToDelete.storeId },
+      data: {
+        totalProducts: {
+          decrement: 1
+        }
+      }
+    });
+
     return res.json({ success: true, message: "Xóa thành công." });
   } catch (error: any) {
     console.error("Error deleteProduct:", error.message);
@@ -194,16 +213,7 @@ export const getProductById = async (req: Request, res: Response) => {
 
     const product = await prisma.product.findUnique({
       where: { id },
-      include: {
-        images: true,
-        category: true,
-        store: {
-          select: {
-            storeName: true,
-            avatarUrl: true
-          }
-        }
-      },
+      include: { images: true, category: true, store: true },
     });
 
     if (!product) {
