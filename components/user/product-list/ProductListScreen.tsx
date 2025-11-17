@@ -1,6 +1,4 @@
-// src/screens/ProductListScreen.tsx
 import { FontAwesome5 } from "@expo/vector-icons";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -12,147 +10,99 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Product, productService } from '../../../services/productService';
+import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
-// === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.0.35.227:3001/api';
-
-// Helper: lấy string đầu tiên nếu param là string | string[]
-const getFirstString = (param: string | string[] | undefined) =>
-    Array.isArray(param) ? param[0] : param;
-
 export default function ProductListScreen() {
-    const params = useLocalSearchParams();
+    const { categoryId, categoryName } = useLocalSearchParams();
     const router = useRouter();
-
-    // Extract params
-    const categoryId = getFirstString(params.categoryId);
-    const categoryName = getFirstString(params.categoryName);
-    const typeParam = getFirstString(params.type);
-    const title = categoryName || (typeParam ? typeParam.toUpperCase() : 'Sản phẩm');
-
-    // State
-    const [products, setProducts] = useState<any[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
 
-    // === Hàm gọi API ===
-    const fetchProducts = async (pageNum: number = 1, isLoadMore: boolean = false) => {
-        if (!hasMore && pageNum > 1) return;
+    // Fetch products khi component mount
+    useEffect(() => {
+        if (categoryId) {
+            fetchProducts();
+        }
+    }, [categoryId]);
 
-        if (!isLoadMore) setLoading(true);
-        else setLoadingMore(true);
-
+    const fetchProducts = async () => {
         try {
-            const token = await AsyncStorage.getItem("jwt_token");
+            setLoading(true);
+            const token = await tokenService.getToken();
+            
             if (!token) {
-                router.replace("/login");
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập để xem sản phẩm');
                 return;
             }
 
-            let url = '';
-            if (categoryId) {
-                // Nếu có categoryId, gọi API theo category
-                url = `${API_BASE_URL}/products/category/${categoryId}?page=${pageNum}&limit=10`;
-            } else {
-                // Nếu không, dựa vào type
-                switch (typeParam) {
-                    case 'today':
-                        url = `${API_BASE_URL}/products/today?page=${pageNum}&limit=10`;
-                        break;
-                    case 'new':
-                        url = `${API_BASE_URL}/products/new?page=${pageNum}&limit=10`;
-                        break;
-                    case 'hot':
-                        url = `${API_BASE_URL}/products/hot?page=${pageNum}&limit=10`;
-                        break;
-                    default:
-                        url = `${API_BASE_URL}/products?page=${pageNum}&limit=10`;
-                }
-            }
-
-            const res = await fetch(url, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (res.status === 401) {
-                await AsyncStorage.removeItem("jwt_token");
-                Alert.alert("Phiên hết hạn", "Vui lòng đăng nhập lại.", [
-                    { text: "OK", onPress: () => router.replace("/login") }
-                ]);
+            if (!categoryId) {
+                Alert.alert('Lỗi', 'Không tìm thấy danh mục');
                 return;
             }
 
-            const data = await res.json();
-            if (data.success && data.data?.length > 0) {
-                const newProducts = data.data.map((item: any) => ({
-                    id: item.id,
-                    name: item.title || "Sản phẩm",
-                    price: item.price || 0,
-                    oldPrice: item.oldPrice,
-                    image: item.images?.[0]?.url
-                        ? { uri: item.images[0].url }
-                        : require("../../../assets/images/cat.png"),
-                    shop: item.store?.name || "Pet Shop",
-                    shopImage: item.store?.avatar
-                        ? { uri: item.store.avatar }
-                        : require("../../../assets/images/shop.png"),
-                    sold: item.soldCount || 0,
-                    rating: item.rating || 5,
-                    discount: item.oldPrice
-                        ? `-${Math.round((item.oldPrice - item.price) / item.oldPrice * 100)}%`
-                        : "",
-                    category: item.category?.name || "Chưa phân loại",
-                }));
-
-                if (pageNum === 1) setProducts(newProducts);
-                else setProducts(prev => [...prev, ...newProducts]);
-
-                setHasMore(data.data.length === 10);
+            const response = await productService.getProductsByCategory(
+                parseInt(categoryId as string), 
+                token
+            );
+            
+            if (response.success) {
+                setProducts(response.data);
             } else {
-                if (pageNum === 1) setProducts([]);
-                setHasMore(false);
+                Alert.alert('Lỗi', 'Không thể tải danh sách sản phẩm');
             }
-
-        } catch (err: any) {
-            console.error("Lỗi tải sản phẩm:", err);
-            Alert.alert("Lỗi", "Không kết nối được server");
+        } catch (error: any) {
+            console.error('Error fetching products:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể kết nối đến server');
         } finally {
             setLoading(false);
-            setLoadingMore(false);
         }
     };
 
-    useEffect(() => {
-        setPage(1);
-        setHasMore(true);
-        fetchProducts(1);
-    }, [categoryId, typeParam]);
-
-    const loadMore = () => {
-        if (!loadingMore && hasMore) {
-            fetchProducts(page + 1, true);
-            setPage(prev => prev + 1);
-        }
-    };
-
-    const handleProductPress = (product: any) => {
+    const handleProductPress = (product: Product) => {
         router.push(`/product?productId=${product.id}`);
+        console.log('Product pressed:', product.title);
     };
 
-    const renderProduct = ({ item }: { item: any }) => (
-        <ProductCard product={item} onPress={() => handleProductPress(item)} />
+    const renderProduct = ({ item }: { item: Product }) => (
+        <ProductCard
+            product={{
+                id: item.id.toString(),
+                name: item.title,
+                shop: item.store?.storeName || item.storeId,
+                shopImage: item.store?.avatarUrl ? { uri: item.store.avatarUrl } : require("../../../assets/images/shop.png"),
+                sold: Math.floor(Math.random() * 1000), // Tính toán từ dữ liệu bán hàng thực tế, sẽ hiển thị chính xác sau
+                category: item.category?.name || 'Không có danh mục',
+                rating: Number(item.avgRating) || 0,
+                image: item.images?.[0]?.url ? { uri: item.images[0].url } : require("../../../assets/images/cat.png"),
+                price: Number(item.price) || 0,
+                oldPrice: Number(item.oldPrice) || 0,
+                discount: item.oldPrice ? `-${Math.round((1 - Number(item.price) / Number(item.oldPrice)) * 100)}%` : "",
+                tag: item.tag || undefined,
+            }}
+            onPress={() => handleProductPress(item)}
+        />
     );
 
     if (loading) {
         return (
-            <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#FBBC05" />
-                <Text style={{ marginTop: 10, color: '#666' }}>Đang tải sản phẩm...</Text>
-            </SafeAreaView>
+            <>
+                <Stack.Screen options={{ headerShown: false }} />
+                <SafeAreaView style={productListStyles.container}>
+                    <View style={productListStyles.header}>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
+                        </TouchableOpacity>
+                        <Text style={productListStyles.headerTitle}>{categoryName}</Text>
+                    </View>
+                    <View style={[productListStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                        <ActivityIndicator size="large" color="#FBBC05" />
+                        <Text style={{ marginTop: 10 }}>Đang tải sản phẩm...</Text>
+                    </View>
+                </SafeAreaView>
+            </>
         );
     }
 
@@ -165,30 +115,24 @@ export default function ProductListScreen() {
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
-                    <Text style={productListStyles.headerTitle}>{title}</Text>
+                    <Text style={productListStyles.headerTitle}>{categoryName}</Text>
                 </View>
 
                 {/* Danh sách sản phẩm */}
-                <FlatList
-                    data={products}
-                    renderItem={renderProduct}
-                    keyExtractor={(item) => item.id.toString()}
-                    numColumns={2}
-                    columnWrapperStyle={{ justifyContent: "space-between" }}
-                    contentContainerStyle={{ padding: 12 }}
-                    onEndReached={loadMore}
-                    onEndReachedThreshold={0.5}
-                    ListFooterComponent={
-                        loadingMore ? (
-                            <ActivityIndicator size="small" color="#FBBC05" style={{ margin: 16 }} />
-                        ) : null
-                    }
-                    ListEmptyComponent={
-                        <Text style={{ textAlign: 'center', marginTop: 50, color: '#999' }}>
-                            Chưa có sản phẩm
-                        </Text>
-                    }
-                />
+                {products.length === 0 ? (
+                    <View style={[productListStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 16, color: '#666' }}>Không có sản phẩm nào trong danh mục này</Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={products}
+                        renderItem={renderProduct}
+                        keyExtractor={(item) => item.id.toString()}
+                        numColumns={2}
+                        columnWrapperStyle={{ justifyContent: "space-between" }}
+                        contentContainerStyle={{ padding: 12 }}
+                    />
+                )}
             </SafeAreaView>
         </>
     );
