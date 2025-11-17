@@ -15,9 +15,32 @@ import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
+
+// Helper: lấy string đầu tiên nếu param là string | string[]
+const getFirstString = (param: string | string[] | undefined) =>
+    Array.isArray(param) ? param[0] : param;
+
 export default function ProductListScreen() {
-    const { categoryId, categoryName } = useLocalSearchParams();
+    const params = useLocalSearchParams();
     const router = useRouter();
+
+    // Extract params
+    const categoryId = getFirstString(params.categoryId);
+    const categoryName = getFirstString(params.categoryName);
+    const typeParam = getFirstString(params.type);
+
+    // Map type sang tiếng Việt
+    const title = categoryName || (
+        typeParam
+            ? {
+                today: 'Gợi ý hôm nay',
+                new: 'Sản phẩm mới',
+                hot: 'Khuyến mãi HOT',
+            }[typeParam] || 'Sản phẩm'
+            : 'Sản phẩm'
+    );
+
+    // State
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -95,7 +118,7 @@ export default function ProductListScreen() {
                         <TouchableOpacity onPress={() => router.back()}>
                             <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                         </TouchableOpacity>
-                        <Text style={productListStyles.headerTitle}>{categoryName}</Text>
+                        <Text style={productListStyles.headerTitle}>{title}</Text>
                     </View>
                     <View style={[productListStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                         <ActivityIndicator size="large" color="#FBBC05" />
@@ -115,7 +138,7 @@ export default function ProductListScreen() {
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
-                    <Text style={productListStyles.headerTitle}>{categoryName}</Text>
+                    <Text style={productListStyles.headerTitle}>{title}</Text>
                 </View>
 
                 {/* Danh sách sản phẩm */}
