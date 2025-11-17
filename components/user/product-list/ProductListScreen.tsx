@@ -16,7 +16,7 @@ import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.0.35.227:3001/api';
+const API_BASE_URL = 'http://192.168.1.231:3001/api';
 
 // Helper: lấy string đầu tiên nếu param là string | string[]
 const getFirstString = (param: string | string[] | undefined) =>
@@ -30,7 +30,17 @@ export default function ProductListScreen() {
     const categoryId = getFirstString(params.categoryId);
     const categoryName = getFirstString(params.categoryName);
     const typeParam = getFirstString(params.type);
-    const title = categoryName || (typeParam ? typeParam.toUpperCase() : 'Sản phẩm');
+
+    // Map type sang tiếng Việt
+    const title = categoryName || (
+        typeParam
+            ? {
+                today: 'Gợi ý hôm nay',
+                new: 'Sản phẩm mới',
+                hot: 'Khuyến mãi HOT',
+            }[typeParam] || 'Sản phẩm'
+            : 'Sản phẩm'
+    );
 
     // State
     const [products, setProducts] = useState<any[]>([]);
@@ -140,8 +150,9 @@ export default function ProductListScreen() {
     };
 
     const handleProductPress = (product: any) => {
-        router.push(`/product?productId=${product.id}`);
+        router.push(`/product?productId=${String(product.id)}` as any);
     };
+
 
     const renderProduct = ({ item }: { item: any }) => (
         <ProductCard product={item} onPress={() => handleProductPress(item)} />
