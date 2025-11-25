@@ -1,4 +1,4 @@
-import { FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -20,6 +20,7 @@ import { Product, ProductDetail, productService } from '../../../services/produc
 import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productStyles } from './productStyles';
+
 
 const { width } = Dimensions.get('window');
 
@@ -113,7 +114,18 @@ export default function ProductScreen() {
             );
 
             if (response.success) {
-                setOtherProducts(response.data.filter(p => p.id !== product?.id));
+                const filteredProducts = response.data.filter(p => p.id !== product?.id);
+                
+                const sortedProducts = filteredProducts.sort((a, b) => {
+                    const isSameStoreA = a.storeId === product?.storeId;
+                    const isSameStoreB = b.storeId === product?.storeId;
+                    
+                    if (isSameStoreA && !isSameStoreB) return -1;
+                    if (!isSameStoreA && isSameStoreB) return 1;
+                    return Math.random() - 0.5;
+                }).slice(0, 10);
+                
+                setOtherProducts(sortedProducts);
             } else {
                 Alert.alert('Lỗi', 'Không thể tải danh sách sản phẩm');
             }
@@ -123,7 +135,7 @@ export default function ProductScreen() {
         } finally {
             setLoading(false);
         }
-    }, [product?.categoryId]);
+    }, [product?.categoryId, product?.id, product?.storeId]);
 
     const handleQuantityChange = (change: number) => {
         const newQuantity = quantity + change;
@@ -311,6 +323,7 @@ export default function ProductScreen() {
                     price: Number(item.price) || 0,
                     oldPrice: Number(item.oldPrice) || 0,
                     discount: item.oldPrice ? `-${Math.round((1 - Number(item.price) / Number(item.oldPrice)) * 100)}%` : "",
+                    tag: item.tag || undefined,
                 }}
                 onPress={() => router.push(`/product?productId=${item.id}`)}
                 layout="horizontal"
@@ -365,6 +378,9 @@ export default function ProductScreen() {
                 <View style={productStyles.header}>
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/cart')} style={productStyles.cartButton}>
+                        <MaterialIcons name="shopping-cart" size={28} color="#FBBC05" />
                     </TouchableOpacity>
                 </View>
 

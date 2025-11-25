@@ -1,6 +1,6 @@
+import { API_BASE_URL } from '@/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { io, Socket } from 'socket.io-client';
-import { API_BASE_URL } from '../config/api';
 import { SocketEventEmitter } from './socketEventEmitter';
 
 let socket: Socket | null = null;
