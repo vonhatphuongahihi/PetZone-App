@@ -1,15 +1,16 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
+// 1. Import thêm Stack ở đây
+import { router, Stack } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { supportService } from "../../services/supportService";
 
@@ -72,7 +73,10 @@ export default function SupportScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* 2. Thêm dòng này để ẩn Header mặc định của Expo Router */}
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Custom Header của ông */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <MaterialIcons name="arrow-back-ios" size={24} color="#FCCB05" />
@@ -178,8 +182,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-    paddingVertical: 15,
-    paddingTop: 50,
+    paddingVertical: 10,
+    paddingTop: 20, 
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     backgroundColor: '#fff',

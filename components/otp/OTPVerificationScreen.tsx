@@ -14,9 +14,10 @@ export default function OTPVerificationScreen({
     username: usernameProp,
     email: emailProp
 }: OTPVerificationScreenProps) {
-    const params = useLocalSearchParams<{ username?: string; email?: string }>();
+    const params = useLocalSearchParams<{ username?: string; email?: string; type?: string }>();
     const username = (params.username as string) || usernameProp || 'bạn';
     const email = (params.email as string) || emailProp || '';
+    const type = (params.type as string) || 'signup';
     const [otp, setOtp] = useState(['', '', '', '']);
     const [isLoading, setIsLoading] = useState(false);
     const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
@@ -52,7 +53,14 @@ export default function OTPVerificationScreen({
 
         try {
             await authService.verifyOtp(email, otpCode);
-            router.replace('/login');
+            if (type === 'forget-password') {
+                router.replace({
+                    pathname: '/reset-password',
+                    params: { email }
+                });
+            } else {
+                router.replace('/login');
+            }
         } catch (error) {
             Alert.alert('Lỗi', 'Mã OTP không đúng hoặc đã hết hạn');
         } finally {

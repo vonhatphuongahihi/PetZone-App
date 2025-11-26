@@ -245,5 +245,46 @@ export const authController = {
             res.status(500).json({ error: 'Cập nhật thất bại', message: 'Đã xảy ra lỗi trong quá trình cập nhật thông tin' });
         }
     },
+    resetPassword: async (req: Request, res: Response) => {
+        try {
+            const { email, password } = req.body;
+
+            // 1. Validate đầu vào
+            if (!email || !password) {
+                return res.status(400).json({ 
+                    error: 'Thiếu thông tin', 
+                    message: 'Email và mật khẩu mới là bắt buộc' 
+                });
+            }
+
+            // 2. Kiểm tra user có tồn tại không
+            const user = await prisma.user.findUnique({ where: { email } });
+
+            if (!user) {
+                return res.status(404).json({ 
+                    error: 'User không tồn tại', 
+                    message: 'Email không tồn tại trong hệ thống' 
+                });
+            }
+
+            // 3. Mã hóa mật khẩu mới (Hash)
+            const hashedPassword = await bcrypt.hash(password, 12);
+
+            // 4. Cập nhật vào Database
+            await prisma.user.update({
+                where: { email },
+                data: { password: hashedPassword }
+            });
+
+            res.json({ message: 'Đặt lại mật khẩu thành công' });
+
+        } catch (error) {
+            console.error('Reset password error:', error);
+            res.status(500).json({ 
+                error: 'Lỗi server', 
+                message: 'Đã xảy ra lỗi khi đặt lại mật khẩu' 
+            });
+        }
+    },
 
 };
