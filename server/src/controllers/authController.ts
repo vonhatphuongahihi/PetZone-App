@@ -176,7 +176,8 @@ export const authController = {
                     role: true, 
                     isActive: true, 
                     createdAt: true, 
-                    updatedAt: true 
+                    updatedAt: true,
+                    dateofBirth: true
                 }
             });
 
@@ -204,7 +205,7 @@ export const authController = {
                 return res.status(401).json({ error: 'Token không hợp lệ', message: 'Token xác thực không hợp lệ' });
             }
 
-            const { username } = req.body;
+            const { username, dateofBirth } = req.body;
 
             if (!username || username.trim() === '') {
                 return res.status(400).json({ error: 'Thiếu thông tin', message: 'Tên người dùng là bắt buộc' });
@@ -224,15 +225,20 @@ export const authController = {
 
             const updatedUser = await prisma.user.update({
                 where: { id: userId },
-                data: { username: username.trim() },
+                data: { 
+                    username: username.trim(),
+                    dateofBirth: dateofBirth || null
+                },
                 select: { 
                     id: true, 
                     email: true, 
                     username: true, 
+                    avatarUrl: true,
                     role: true, 
                     isActive: true,
                     createdAt: true, 
-                    updatedAt: true 
+                    updatedAt: true,
+                    dateofBirth: true
                 }
             });
 

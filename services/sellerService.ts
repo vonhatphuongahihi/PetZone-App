@@ -27,6 +27,7 @@ export interface SellerProfile {
         email: string;
         role: string;
         createdAt: string;
+        avatarUrl?: string; 
     };
 }
 
