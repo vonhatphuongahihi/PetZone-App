@@ -1,4 +1,5 @@
-import { API_BASE_URL } from '../config/api';
+// import { API_BASE_URL } from '../config/api';
+export const API_BASE_URL = 'http://10.11.7.150:3001/api';
 
 export interface RegisterData {
     email: string;

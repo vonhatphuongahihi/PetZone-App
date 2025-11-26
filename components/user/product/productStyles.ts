@@ -13,6 +13,11 @@ export const productStyles = StyleSheet.create({
         padding: 12,
         paddingLeft: 16,
     },
+    cartButton: {
+        flex: 1,
+        paddingRight: 8,
+        alignItems: 'flex-end',
+    },
     headerTitle: {
         fontSize: 16,
         fontWeight: "600",

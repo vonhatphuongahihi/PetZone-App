@@ -367,6 +367,7 @@ export default function MessagesScreen() {
     const lastMessage = getLastMessage(item);
     const time = item.updatedAt ? formatRelativeTime(item.updatedAt) : '';
     const isOtherUserOnline = onlineUsers.has(otherUser.id);
+    const avatarUrl = otherUser.avatarUrl;
 
     // Check if there are unread messages
     const unreadCount = unreadCounts[item.id] || 0;
@@ -405,7 +406,7 @@ export default function MessagesScreen() {
         {/* Avatar */}
         <View style={messagesStyles.avatarContainer}>
           <Image
-            source={require("../../../assets/images/shop.png")}
+            source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.png")}
             style={messagesStyles.avatar}
           />
           {/* Hiển thị nút xanh khi user thực sự online */}

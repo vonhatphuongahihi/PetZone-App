@@ -1,5 +1,4 @@
-// === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.0.194.146:3001/api';
+import { API_BASE_URL } from '../config/api';
 
 export interface CreateStoreData {
     storeName: string;
@@ -142,7 +141,7 @@ export const storeService = {
         return response.json();
     },
 
-    getBestSellingProducts: async (token: string): Promise<{ success: boolean; data: Array<{ id: number; name: string; price: number; sold: number; image: string | null; rating: number }> }> => {
+    getBestSellingProducts: async (token: string): Promise<{ success: boolean; data: { id: number; name: string; price: number; sold: number; image: string | null; rating: number }[] }> => {
         const response = await fetch(`${API_BASE_URL}/store/best-selling`, {
             method: 'GET',
             headers: {
