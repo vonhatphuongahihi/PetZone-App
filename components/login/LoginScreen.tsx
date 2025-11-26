@@ -87,7 +87,7 @@ export default function LoginScreen() {
     };
 
     const handleForgotPassword = () => {
-        Alert.alert('Quên mật khẩu', 'Tính năng đang phát triển');
+        router.push('/forgot-password');
     };
 
     return (
