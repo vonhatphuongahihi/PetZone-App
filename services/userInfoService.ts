@@ -10,10 +10,12 @@ export interface UserInfo {
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
+    dateofBirth?: string;
 }
 
 export interface UpdateUserData {
     username?: string;
+    dateofBirth?: string;
 }
 
 export const userInfoService = {
