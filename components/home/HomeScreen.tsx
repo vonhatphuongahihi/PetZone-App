@@ -233,15 +233,15 @@ export default function HomeScreen() {
         <TouchableOpacity
             style={homeStyles.categoryItem}
             onPress={() =>
-                router.push(`/categories?parentId=${item.id}&parentName=${item.name}`)
+                router.push(`/categories`)
             }
         >
             <View style={homeStyles.categoryIconContainer}>
                 {/* 🔹 Paste ảnh cho danh mục tại đây */}
                 <Image
                     source={
-                        item.icon
-                            ? { uri: item.icon }
+                        item.image
+                            ? { uri: item.image }
                             : require("../../assets/images/food-icon.png") // <-- paste ảnh local mặc định
                     }
                     style={homeStyles.categoryIcon}
@@ -345,14 +345,21 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={homeStyles.container}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Header */}
-                <View style={homeStyles.header}>
+
+            <ScrollView showsVerticalScrollIndicator={false} >
+                <View style={homeStyles.fixedHeader}>
                     <View style={homeStyles.searchBarContainer}>
-                        <SearchBarWithPopup recentSearches={recentSearches} hotProducts={hotSearchProducts} />
+                        <SearchBarWithPopup
+                            recentSearches={recentSearches}
+                            hotProducts={hotSearchProducts}
+                        />
                     </View>
-                    <TouchableOpacity style={homeStyles.cartButton} onPress={() => router.push('/cart')}>
-                        <MaterialCommunityIcons name="cart" color="#FBBC05" size={30} />
+
+                    <TouchableOpacity
+                        style={homeStyles.cartButton}
+                        onPress={() => router.push('/cart')}
+                    >
+                        <MaterialCommunityIcons name="cart" color="#FBBC05" size={28} />
                     </TouchableOpacity>
                 </View>
 

@@ -176,7 +176,8 @@ export const authController = {
                     role: true, 
                     isActive: true, 
                     createdAt: true, 
-                    updatedAt: true 
+                    updatedAt: true,
+                    dateofBirth: true
                 }
             });
 
@@ -204,7 +205,7 @@ export const authController = {
                 return res.status(401).json({ error: 'Token không hợp lệ', message: 'Token xác thực không hợp lệ' });
             }
 
-            const { username } = req.body;
+            const { username, dateofBirth } = req.body;
 
             if (!username || username.trim() === '') {
                 return res.status(400).json({ error: 'Thiếu thông tin', message: 'Tên người dùng là bắt buộc' });
@@ -224,15 +225,20 @@ export const authController = {
 
             const updatedUser = await prisma.user.update({
                 where: { id: userId },
-                data: { username: username.trim() },
+                data: { 
+                    username: username.trim(),
+                    dateofBirth: dateofBirth || null
+                },
                 select: { 
                     id: true, 
                     email: true, 
                     username: true, 
+                    avatarUrl: true,
                     role: true, 
                     isActive: true,
                     createdAt: true, 
-                    updatedAt: true 
+                    updatedAt: true,
+                    dateofBirth: true
                 }
             });
 
@@ -243,6 +249,47 @@ export const authController = {
         } catch (error) {
             console.error('Update profile error:', error);
             res.status(500).json({ error: 'Cập nhật thất bại', message: 'Đã xảy ra lỗi trong quá trình cập nhật thông tin' });
+        }
+    },
+    resetPassword: async (req: Request, res: Response) => {
+        try {
+            const { email, password } = req.body;
+
+            // 1. Validate đầu vào
+            if (!email || !password) {
+                return res.status(400).json({ 
+                    error: 'Thiếu thông tin', 
+                    message: 'Email và mật khẩu mới là bắt buộc' 
+                });
+            }
+
+            // 2. Kiểm tra user có tồn tại không
+            const user = await prisma.user.findUnique({ where: { email } });
+
+            if (!user) {
+                return res.status(404).json({ 
+                    error: 'User không tồn tại', 
+                    message: 'Email không tồn tại trong hệ thống' 
+                });
+            }
+
+            // 3. Mã hóa mật khẩu mới (Hash)
+            const hashedPassword = await bcrypt.hash(password, 12);
+
+            // 4. Cập nhật vào Database
+            await prisma.user.update({
+                where: { email },
+                data: { password: hashedPassword }
+            });
+
+            res.json({ message: 'Đặt lại mật khẩu thành công' });
+
+        } catch (error) {
+            console.error('Reset password error:', error);
+            res.status(500).json({ 
+                error: 'Lỗi server', 
+                message: 'Đã xảy ra lỗi khi đặt lại mật khẩu' 
+            });
         }
     },
 

@@ -53,6 +53,15 @@ export const createProduct = async (req: Request, res: Response) => {
       include: { images: true, category: true },
     });
 
+    await prisma.store.update({
+      where: { id: String(storeId) },
+      data: {
+        totalProducts: {
+          increment: 1
+        }
+      }
+    });
+
     console.log("Created product:", product.id);
     return res.status(201).json({ success: true, data: product });
   } catch (error: any) {
@@ -113,6 +122,9 @@ export const updateProduct = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: "ID không hợp lệ." });
+
+    console.log("req.body:", req.body);
+    console.log("req.files:", req.files);
 
     const { storeId, categoryId, title, description, price, oldPrice, quantity } = req.body;
     const files = req.files as Express.Multer.File[];
@@ -179,6 +191,16 @@ export const deleteProduct = async (req: Request, res: Response) => {
     await prisma.productImage.deleteMany({ where: { productId: id } });
     await prisma.product.delete({ where: { id } });
 
+    // [THÊM] Giảm totalProducts trong Store
+    await prisma.store.update({
+      where: { id: productToDelete.storeId },
+      data: {
+        totalProducts: {
+          decrement: 1
+        }
+      }
+    });
+
     return res.json({ success: true, message: "Xóa thành công." });
   } catch (error: any) {
     console.error("Error deleteProduct:", error.message);
@@ -194,6 +216,7 @@ export const getProductById = async (req: Request, res: Response) => {
 
     const product = await prisma.product.findUnique({
       where: { id },
+<<<<<<< HEAD
       include: {
         images: true,
         category: true,
@@ -249,7 +272,16 @@ export const getTodayProducts = async (req: Request, res: Response) => {
           { oldPrice: { not: null } },
         ],
       },
-      include: { images: true, category: true },
+      include: {
+        images: true,
+        category: true,
+        store: {
+          select: {
+            storeName: true,
+            avatarUrl: true
+          }
+        }
+      },
       orderBy: { createdAt: "desc" },
       take: 10,
     });
@@ -269,7 +301,16 @@ export const getNewProducts = async (req: Request, res: Response) => {
 
     const products = await prisma.product.findMany({
       where: { createdAt: { gte: sevenDaysAgo } },
-      include: { images: true, category: true },
+      include: {
+        images: true,
+        category: true,
+        store: {
+          select: {
+            storeName: true,
+            avatarUrl: true
+          }
+        }
+      },
       orderBy: { createdAt: "desc" },
       take: 10,
     });
@@ -286,7 +327,16 @@ export const getHotProducts = async (req: Request, res: Response) => {
   try {
     const products = await prisma.product.findMany({
       where: { oldPrice: { not: null } },
-      include: { images: true, category: true },
+      include: {
+        images: true,
+        category: true,
+        store: {
+          select: {
+            storeName: true,
+            avatarUrl: true
+          }
+        }
+      },
       take: 50,
     });
 
@@ -306,6 +356,103 @@ export const getHotProducts = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: "Lỗi server." });
   }
 };
+
+// === SEARCH PRODUCTS ===
+interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
+
+export const searchProducts = async (req: Request, res: Response) => {
+  try {
+    const query = (req.query.q as string)?.trim();
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const offset = (page - 1) * limit;
+
+    console.log("Search query:", query);
+    console.log("Limit:", limit, "Page:", page, "Offset:", offset);
+
+    if (!query) {
+      console.warn("Search query missing");
+      return res.status(400).json({
+        success: false,
+        message: "Search query (q) is required",
+      });
+    }
+
+    // Lấy thông tin user nếu có đăng nhập
+    const user = (req as any).user;
+    console.log("Authenticated user:", user);
+
+    const isSeller = user?.role === "SELLER";
+
+    const where: any = {
+      OR: [
+        { title: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } }
+      ]
+    };
+
+    // Nếu là SELLER → chỉ tìm sản phẩm của cửa hàng mình
+    if (isSeller) {
+      const sellerStore = await prisma.store.findFirst({
+        where: { userId: user.id },
+        select: { id: true },
+      });
+
+      console.log("Seller store:", sellerStore);
+
+      if (!sellerStore) {
+        return res.status(400).json({
+          success: false,
+          message: "Seller has no store",
+        });
+      }
+
+      where.storeId = sellerStore.id;
+    }
+
+    console.log("Prisma where filter:", where);
+
+    const products = await prisma.product.findMany({
+      where,
+      skip: offset,
+      take: limit,
+      include: {
+        store: {
+          select: { id: true, storeName: true, avatarUrl: true }
+        },
+        images: {
+          select: { url: true }
+        },
+      }
+    });
+
+    console.log("Found products count:", products.length);
+
+    return res.status(200).json({
+      success: true,
+      data: products,
+      pagination: {
+        page,
+        limit,
+      },
+    });
+
+  } catch (error) {
+    console.error("Search error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error searching products",
+    });
+  }
+};
+
+
 
 // === MULTER MIDDLEWARE ===
 export const uploadImages = upload.array("images", 10); // Tối đa 10 ảnh

@@ -9,9 +9,11 @@ export const productCardStyles = StyleSheet.create({
         marginBottom: 12,
         overflow: "hidden",
         width: "48%", // Default cho grid layout
+        minHeight: 325,
     },
     horizontalCard: {
         width: "100%", // Override cho horizontal layout
+        minHeight: 325,
     },
     discountBadge: {
         position: "absolute",
@@ -27,7 +29,14 @@ export const productCardStyles = StyleSheet.create({
 
     image: { width: "100%", height: 160, resizeMode: "cover" },
 
-    info: { padding: 10 },
+    info: { 
+        padding: 10, 
+        flex: 1,
+        justifyContent: 'space-between'
+    },
+    mainContent: {
+        flex: 1,
+    },
     shopRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
     shopAvatar: { width: 24, height: 24, borderRadius: 12 },
     shopName: { fontSize: 12, fontWeight: "600" },
@@ -54,7 +63,14 @@ export const productCardStyles = StyleSheet.create({
         marginLeft: 4,
     },
 
-    productName: { fontSize: 14, fontWeight: "500", marginBottom: 4, lineHeight: 20 },
+    productName: { 
+        fontSize: 14, 
+        fontWeight: "500", 
+        marginBottom: 4, 
+        lineHeight: 20,
+        flex: 1, // Cho phép tên sản phẩm chiếm không gian linh hoạt
+        textAlignVertical: 'top' // Căn text lên trên
+    },
     tagline: { fontSize: 11, color: "gray", marginBottom: 4 },
 
     priceRow: { flexDirection: "row", alignItems: "center" },

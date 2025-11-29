@@ -17,6 +17,7 @@ import reviewRoutes from './routes/review';
 import storeRoutes from './routes/store';
 import supportRoutes from './routes/support';
 import userRoutes from './routes/user';
+import { setupSocket } from './socket/socket';
 
 // Type alias để tránh lỗi export
 type SocketInstance = Server;
@@ -94,28 +95,10 @@ process.on('SIGTERM', async () => {
 });
 
 const httpServer = http.createServer(app);
-
-// === THÊM CORS CHO SOCKET.IO ===
-const io = new Server(httpServer, {
-    cors: {
-        origin: [
-            "http://localhost:8081",
-            "http://localhost:19006",
-            "http://10.0.2.2:8081",
-            "http://127.0.0.1:8081",
-            "exp://10.143.19.127:8081",        // THAY IP MÁY BẠN
-            "http://10.143.19.127:8081",       // THAY IP MÁY BẠN
-            "http://192.168.1.x:8081",         // Mạng nhà
-        ],
-        methods: ["GET", "POST"],
-        credentials: true
-    },
-    path: "/socket.io",
-    transports: ["websocket", "polling"]
-});
+const io = setupSocket(httpServer);
 
 // Export socket instance
-export const getSocketInstance = () => io;
+export const getSocketInstance = (): SocketInstance => io;
 
 // Khởi động server
 httpServer.listen(PORT, () => {

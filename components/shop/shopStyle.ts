@@ -212,6 +212,99 @@ export default StyleSheet.create({
         fontWeight: "500",
         color: "#333",
     },
+    actionRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 6,
+    },
+    editButton: {
+        flex: 1,
+        backgroundColor: "#fff",
+        paddingVertical: 6,
+        borderRadius: 6,
+        marginRight: 5,
+        alignItems: "center",
+    },
+    deleteButton: {
+        flex: 1,
+        backgroundColor: "#FBBC05",
+        paddingVertical: 6,
+        borderRadius: 6,
+        marginLeft: 5,
+        alignItems: "center",
+    },
+    editButtonText: {
+        color: "#FBBC05",
+        fontWeight: "600",
+    },
 
+    deleteButtonText: {
+        color: "#fff",
+        fontWeight: "600",
+    },
+
+    searchOverlay: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 10,
+    },
+    searchPopup: {
+        width: "90%",
+        backgroundColor: "#fff",
+        borderRadius: 8,
+        padding: 10,
+        maxHeight: "70%",
+    },
+    searchInput: {
+        borderWidth: 1,
+        borderRadius: 6,
+        padding: 8,
+        marginBottom: 10,
+        borderColor: "#FBBC05",
+    },
+    searchProductRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 4,
+        padding: 10,
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: "#eee",
+    },
+
+    searchProductImage: {
+        width: 60,
+        height: 60,
+        borderRadius: 6,
+        marginRight: 10,
+    },
+
+    searchProductInfo: {
+        flex: 1,
+    },
+
+    searchProductTitle: {
+        fontSize: 14,
+        fontWeight: '500',
+        marginBottom: 4,
+    },
+
+    searchProductPrice: {
+        fontSize: 13,
+        fontWeight: 'bold',
+        color: '#E53935',
+    },
 
 });

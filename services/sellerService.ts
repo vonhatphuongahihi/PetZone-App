@@ -1,5 +1,5 @@
 // Seller Service
-const API_BASE_URL = 'http://10.0.173.60:3001/api';
+const API_BASE_URL = 'http://172.31.71.127:3001/api';
 
 export interface SellerProfile {
     store: {
@@ -27,6 +27,7 @@ export interface SellerProfile {
         email: string;
         role: string;
         createdAt: string;
+        avatarUrl?: string; 
     };
 }
 

@@ -15,12 +15,13 @@ interface Product {
     shop: string;
     shopImage: ImageSourcePropType;
     sold: number;
-    category?: string;
+    category: string;
     rating: number;
     image: ImageSourcePropType;
-    price: number | string;
-    oldPrice?: number | string;
-    discount?: string;
+    price: number;
+    oldPrice: number;
+    discount: string;
+    tag?: string;
 }
 
 interface ProductCardProps {
@@ -34,76 +35,69 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, layo
         ? [productCardStyles.card, productCardStyles.horizontalCard]
         : productCardStyles.card;
 
-    // Hàm format giá
-    const formatPrice = (price: number | string) => {
-        const num = typeof price === 'string' ? parseInt(price) : price;
-        return num.toLocaleString('vi-VN') + '₫';
-    };
-
     return (
         <TouchableOpacity
             style={cardStyle}
             onPress={() => onPress?.(product)}
         >
             {/* Badge giảm giá */}
-            {product.discount && (
-                <View style={productCardStyles.discountBadge}>
-                    <Text style={productCardStyles.discountText}>{product.discount}</Text>
-                </View>
-            )}
+            <View style={productCardStyles.discountBadge}>
+                <Text style={productCardStyles.discountText}>{product.discount}</Text>
+            </View>
 
             {/* Ảnh sản phẩm */}
             <Image source={product.image} style={productCardStyles.image} />
 
             {/* Thông tin sản phẩm */}
             <View style={productCardStyles.info}>
-                {/* Shop */}
-                <View style={productCardStyles.shopRow}>
-                    <Image
-                        source={product.shopImage}
-                        style={productCardStyles.shopAvatar}
-                    />
-                    <View style={{ marginLeft: 6 }}>
-                        <Text style={productCardStyles.shopName}>{product.shop}</Text>
-                        <Text style={productCardStyles.sold}>{product.sold} đã bán</Text>
+                {/* Phần content chính */}
+                <View style={productCardStyles.mainContent}>
+                    {/* Shop */}
+                    <View style={productCardStyles.shopRow}>
+                        <Image
+                            source={product.shopImage}
+                            style={productCardStyles.shopAvatar}
+                        />
+                        <View style={{ marginLeft: 6 }}>
+                            <Text style={productCardStyles.shopName}>{product.shop}</Text>
+                            <Text style={productCardStyles.sold}>{product.sold} đã bán</Text>
+                        </View>
                     </View>
-                </View>
 
-                {/* Danh mục + Rating */}
-                <View style={productCardStyles.metaRow}>
-                    <Text style={productCardStyles.categoryText}>{product.category}</Text>
-                    <View style={productCardStyles.ratingRow}>
-                        <FontAwesome5 name="star" size={10} color="#FFD700" solid/>
-                        <Text style={productCardStyles.ratingText}>{(Number(product.rating) || 0).toFixed(1)}</Text>
+                    {/* Danh mục + Rating */}
+                    <View style={productCardStyles.metaRow}>
+                        <Text style={productCardStyles.categoryText}>{product.category}</Text>
+                        <View style={productCardStyles.ratingRow}>
+                            <FontAwesome5 name="star" size={10} color="#FFD700" solid/>
+                            <Text style={productCardStyles.ratingText}>{(Number(product.rating) || 0).toFixed(1)}</Text>
+                        </View>
                     </View>
-                </View>
 
-                {/* Tên sản phẩm */}
-                <Text style={productCardStyles.productName} numberOfLines={2}>
-                    {product.name}
-                </Text>
-
-                {/* Tag sản phẩm - hiển thị dynamic */}
-                {product.tag && (
-                    <Text style={productCardStyles.tagline}>
-                        {product.tag === 'hot' && 'Hàng cực hot'}
-                        {product.tag === 'new' && 'Hàng mới'}
-                        {product.tag === 'bestseller' && 'Bán chạy'}
-                        {product.tag === 'sale' && 'Giảm giá'}
-                        {product.tag === 'normal' && 'Sản phẩm phổ biến'}
+                    {/* Tên sản phẩm */}
+                    <Text style={productCardStyles.productName} numberOfLines={2}>
+                        {product.name}
                     </Text>
-                )}
 
-                {/* Giá: Giá mới trước, giá cũ sau */}
-                <View style={productCardStyles.priceRow}>
-                    <Text style={[productCardStyles.price, { color: '#FF3B30', fontWeight: 'bold' }]}>
-                        {formatPrice(product.price)}
-                    </Text>
-                    {product.oldPrice && (
-                        <Text style={[productCardStyles.oldPrice, { textDecorationLine: 'line-through', color: '#999', marginLeft: 6 }]}>
-                            {formatPrice(product.oldPrice)}
+                    {/* Tag sản phẩm - hiển thị dynamic */}
+                    {product.tag && (
+                        <Text style={productCardStyles.tagline}>
+                            {product.tag === 'hot' && 'Hàng cực hot'}
+                            {product.tag === 'new' && 'Hàng mới'}
+                            {product.tag === 'bestseller' && 'Bán chạy'}
+                            {product.tag === 'sale' && 'Giảm giá'}
+                            {product.tag === 'normal' && 'Sản phẩm phổ biến'}
                         </Text>
                     )}
+                </View>
+
+                {/* Giá */}
+                <View style={productCardStyles.priceRow}>
+                    <Text style={productCardStyles.price}>
+                        {(Number(product.price) || 0).toLocaleString("vi-VN")}đ
+                    </Text>
+                    <Text style={productCardStyles.oldPrice}>
+                        {(Number(product.oldPrice) || 0).toLocaleString("vi-VN")}đ
+                    </Text>
                 </View>
             </View>
         </TouchableOpacity>
