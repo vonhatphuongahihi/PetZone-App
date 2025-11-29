@@ -15,32 +15,9 @@ import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
-
-// Helper: lấy string đầu tiên nếu param là string | string[]
-const getFirstString = (param: string | string[] | undefined) =>
-    Array.isArray(param) ? param[0] : param;
-
 export default function ProductListScreen() {
-    const params = useLocalSearchParams();
+    const { categoryId, categoryName, type, title } = useLocalSearchParams();
     const router = useRouter();
-
-    // Extract params
-    const categoryId = getFirstString(params.categoryId);
-    const categoryName = getFirstString(params.categoryName);
-    const typeParam = getFirstString(params.type);
-
-    // Map type sang tiếng Việt
-    const title = categoryName || (
-        typeParam
-            ? {
-                today: 'Gợi ý hôm nay',
-                new: 'Sản phẩm mới',
-                hot: 'Khuyến mãi HOT',
-            }[typeParam] || 'Sản phẩm'
-            : 'Sản phẩm'
-    );
-
-    // State
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -48,14 +25,16 @@ export default function ProductListScreen() {
     useEffect(() => {
         if (categoryId) {
             fetchProducts();
+        } else if (type) {
+            fetchProductsByType();
         }
-    }, [categoryId]);
+    }, [categoryId, type]);
 
     const fetchProducts = async () => {
         try {
             setLoading(true);
             const token = await tokenService.getToken();
-            
+
             if (!token) {
                 Alert.alert('Lỗi', 'Vui lòng đăng nhập để xem sản phẩm');
                 return;
@@ -67,10 +46,10 @@ export default function ProductListScreen() {
             }
 
             const response = await productService.getProductsByCategory(
-                parseInt(categoryId as string), 
+                parseInt(categoryId as string),
                 token
             );
-            
+
             if (response.success) {
                 setProducts(response.data);
             } else {
@@ -83,6 +62,41 @@ export default function ProductListScreen() {
             setLoading(false);
         }
     };
+
+    const fetchProductsByType = async () => {
+        try {
+            setLoading(true);
+            const token = await tokenService.getToken();
+
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập');
+                return;
+            }
+
+            let apiCall;
+
+            if (type === "today") apiCall = productService.getTodayProducts;
+            else if (type === "new") apiCall = productService.getNewProducts;
+            else if (type === "hot") apiCall = productService.getHotProducts;
+            else return;
+
+            const response = await apiCall(token);
+
+            console.log('Products by type', response.data);
+
+            if (response.success) {
+                setProducts(response.data);
+            } else {
+                Alert.alert('Lỗi', 'Không thể tải sản phẩm');
+            }
+        } catch (e) {
+            console.error(e);
+            Alert.alert("Lỗi", "Không thể kết nối server");
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const handleProductPress = (product: Product) => {
         router.push(`/product?productId=${product.id}`);
@@ -118,7 +132,9 @@ export default function ProductListScreen() {
                         <TouchableOpacity onPress={() => router.back()}>
                             <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                         </TouchableOpacity>
-                        <Text style={productListStyles.headerTitle}>{title}</Text>
+                        <Text style={productListStyles.headerTitle}>
+                            {categoryName || title || "Danh sách sản phẩm"}
+                        </Text>
                     </View>
                     <View style={[productListStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                         <ActivityIndicator size="large" color="#FBBC05" />
@@ -133,18 +149,25 @@ export default function ProductListScreen() {
         <>
             <Stack.Screen options={{ headerShown: false }} />
             <SafeAreaView style={productListStyles.container}>
-                {/* Header */}
+                {/* Header luôn hiển thị */}
                 <View style={productListStyles.header}>
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
-                    <Text style={productListStyles.headerTitle}>{title}</Text>
+                    <Text style={productListStyles.headerTitle}>
+                        {categoryName || title || "Danh sách sản phẩm"}
+                    </Text>
                 </View>
 
-                {/* Danh sách sản phẩm */}
-                {products.length === 0 ? (
-                    <View style={[productListStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                        <Text style={{ fontSize: 16, color: '#666' }}>Không có sản phẩm nào trong danh mục này</Text>
+                {/* Nội dung thay đổi */}
+                {loading ? (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <ActivityIndicator size="large" color="#FBBC05" />
+                        <Text style={{ marginTop: 10 }}>Đang tải sản phẩm...</Text>
+                    </View>
+                ) : products.length === 0 ? (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 16, color: '#666' }}>Không có sản phẩm nào</Text>
                     </View>
                 ) : (
                     <FlatList

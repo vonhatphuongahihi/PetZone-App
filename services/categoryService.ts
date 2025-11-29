@@ -11,6 +11,7 @@ export interface Category {
   updatedAt: string;
   children?: Category[];
   parent?: Category;
+  storeId?: string;
 }
 
 export const categoryService = {

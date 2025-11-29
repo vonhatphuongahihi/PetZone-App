@@ -225,116 +225,131 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={homeStyles.container}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Header */}
-                <View style={homeStyles.header}>
+
+            <ScrollView showsVerticalScrollIndicator={false} >
+                <View style={homeStyles.fixedHeader}>
                     <View style={homeStyles.searchBarContainer}>
-                        <SearchBarWithPopup recentSearches={recentSearches} hotProducts={hotSearchProducts} />
+                        <SearchBarWithPopup
+                            recentSearches={recentSearches}
+                            hotProducts={hotSearchProducts}
+                        />
                     </View>
-                    <TouchableOpacity style={homeStyles.cartButton} onPress={() => router.push('/cart')}>
-                        <MaterialCommunityIcons name="cart" color="#FBBC05" size={30} />
+
+                    <TouchableOpacity
+                        style={homeStyles.cartButton}
+                        onPress={() => router.push('/cart')}
+                    >
+                        <MaterialCommunityIcons name="cart" color="#FBBC05" size={28} />
                     </TouchableOpacity>
                 </View>
 
-                {/* Banner */}
-                <View style={homeStyles.heroBanner}>
-                    <View style={homeStyles.heroContent}>
-                        <Image source={require("../../assets/images/banner.png")} style={homeStyles.heroBackgroundImage} />
-                        <View style={homeStyles.heroTextContainer}>
-                            <Text style={homeStyles.heroSubtitle}>
-                                Những sản phẩm tốt nhất{'\n'}cho thú cưng của bạn
-                            </Text>
-                            <TouchableOpacity style={homeStyles.heroButton} onPress={() => router.push('/categories')}>
-                                <Text style={homeStyles.heroButtonText}>Mua ngay</Text>
-                            </TouchableOpacity>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentInsetAdjustmentBehavior="automatic"
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ paddingTop: 0 }}
+                >
+                </ScrollView>
+
+                    {/* Banner */}
+                    <View style={homeStyles.heroBanner}>
+                        <View style={homeStyles.heroContent}>
+                            <Image source={require("../../assets/images/banner.png")} style={homeStyles.heroBackgroundImage} />
+                            <View style={homeStyles.heroTextContainer}>
+                                <Text style={homeStyles.heroSubtitle}>
+                                    Những sản phẩm tốt nhất{'\n'}cho thú cưng của bạn
+                                </Text>
+                                <TouchableOpacity style={homeStyles.heroButton} onPress={() => router.push('/categories')}>
+                                    <Text style={homeStyles.heroButtonText}>Mua ngay</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
-                </View>
 
-                {/* Danh mục */}
-                <View style={homeStyles.section}>
-                    <View style={homeStyles.sectionHeader}>
-                        <Text style={homeStyles.sectionTitle}>Danh mục</Text>
+                    {/* Danh mục */}
+                    <View style={homeStyles.section}>
+                        <View style={homeStyles.sectionHeader}>
+                            <Text style={homeStyles.sectionTitle}>Danh mục</Text>
+                        </View>
+                        <FlatList
+                            data={categories}
+                            renderItem={renderCategoryItem}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item) => item.id.toString()}
+                            contentContainerStyle={homeStyles.categoriesList}
+                        />
                     </View>
-                    <FlatList
-                        data={categories}
-                        renderItem={renderCategoryItem}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        keyExtractor={(item) => item.id.toString()}
-                        contentContainerStyle={homeStyles.categoriesList}
-                    />
-                </View>
 
-                {/* Gợi ý hôm nay */}
-                <View style={homeStyles.section}>
-                    <View style={homeStyles.sectionHeader}>
-                        <Text style={homeStyles.sectionTitle}>Gợi ý hôm nay</Text>
-                        <TouchableOpacity onPress={() => router.push({ pathname: '/product-list', params: { title: 'Gợi ý hôm nay', type: 'today' } })}>
-                            <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
-                        </TouchableOpacity>
+                    {/* Gợi ý hôm nay */}
+                    <View style={homeStyles.section}>
+                        <View style={homeStyles.sectionHeader}>
+                            <Text style={homeStyles.sectionTitle}>Gợi ý hôm nay</Text>
+                            <TouchableOpacity onPress={() => router.push({ pathname: '/product-list', params: { title: 'Gợi ý hôm nay', type: 'today' } })}>
+                                <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <FlatList
+                            data={todayProducts}
+                            renderItem={renderProductItem}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item) => item.id.toString()}
+                            contentContainerStyle={homeStyles.productsList}
+                        />
                     </View>
-                    <FlatList
-                        data={todayProducts}
-                        renderItem={renderProductItem}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        keyExtractor={(item) => item.id.toString()}
-                        contentContainerStyle={homeStyles.productsList}
-                    />
-                </View>
 
-                {/* Sản phẩm mới */}
-                <View style={homeStyles.section}>
-                    <View style={homeStyles.sectionHeader}>
-                        <Text style={homeStyles.sectionTitle}>Sản phẩm mới</Text>
-                        <TouchableOpacity onPress={() => router.push({ pathname: '/product-list', params: { title: 'Sản phẩm mới', type: 'new' } })}>
-                            <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
-                        </TouchableOpacity>
+                    {/* Sản phẩm mới */}
+                    <View style={homeStyles.section}>
+                        <View style={homeStyles.sectionHeader}>
+                            <Text style={homeStyles.sectionTitle}>Sản phẩm mới</Text>
+                            <TouchableOpacity onPress={() => router.push({ pathname: '/product-list', params: { title: 'Sản phẩm mới', type: 'new' } })}>
+                                <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <FlatList
+                            data={newProducts}
+                            renderItem={renderProductItem}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item) => item.id.toString()}
+                            contentContainerStyle={homeStyles.productsList}
+                        />
                     </View>
-                    <FlatList
-                        data={newProducts}
-                        renderItem={renderProductItem}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        keyExtractor={(item) => item.id.toString()}
-                        contentContainerStyle={homeStyles.productsList}
-                    />
-                </View>
 
-                {/* Khuyến mãi HOT */}
-                <View style={homeStyles.section}>
-                    <View style={homeStyles.sectionHeader}>
-                        <Text style={homeStyles.sectionTitle}>Khuyến mãi HOT</Text>
-                        <TouchableOpacity onPress={() => router.push({ pathname: '/product-list', params: { title: 'Khuyến mãi HOT', type: 'hot' } })}>
-                            <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
-                        </TouchableOpacity>
+                    {/* Khuyến mãi HOT */}
+                    <View style={homeStyles.section}>
+                        <View style={homeStyles.sectionHeader}>
+                            <Text style={homeStyles.sectionTitle}>Khuyến mãi HOT</Text>
+                            <TouchableOpacity onPress={() => router.push({ pathname: '/product-list', params: { title: 'Khuyến mãi HOT', type: 'hot' } })}>
+                                <Text style={homeStyles.viewAllText}>Xem tất cả</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <FlatList
+                            data={hotProducts}
+                            renderItem={renderProductItem}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item) => item.id.toString()}
+                            contentContainerStyle={homeStyles.productsList}
+                        />
                     </View>
-                    <FlatList
-                        data={hotProducts}
-                        renderItem={renderProductItem}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        keyExtractor={(item) => item.id.toString()}
-                        contentContainerStyle={homeStyles.productsList}
-                    />
-                </View>
 
-                {/* Cửa hàng nổi bật */}
-                <View style={homeStyles.section}>
-                    <View style={homeStyles.sectionHeader}>
-                        <Text style={homeStyles.sectionTitle}>Cửa hàng nổi bật</Text>
+                    {/* Cửa hàng nổi bật */}
+                    <View style={homeStyles.section}>
+                        <View style={homeStyles.sectionHeader}>
+                            <Text style={homeStyles.sectionTitle}>Cửa hàng nổi bật</Text>
+                        </View>
+                        <FlatList
+                            data={topStores}
+                            renderItem={renderStoreItem}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item) => item.id}
+                            contentContainerStyle={{ paddingLeft: 16, paddingBottom: 8 }}
+                        />
                     </View>
-                    <FlatList
-                        data={topStores}
-                        renderItem={renderStoreItem}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={{ paddingLeft: 16, paddingBottom: 8 }}
-                    />
-                </View>
-            </ScrollView>
+                </ScrollView>
         </SafeAreaView>
     );
 }

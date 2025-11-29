@@ -107,7 +107,7 @@ export const productService = {
         if (data.description) formData.append('description', data.description);
         formData.append('price', data.price.toString());
         if (data.oldPrice) formData.append('oldPrice', data.oldPrice.toString());
-        
+
         if (data.images && data.images.length > 0) {
             data.images.forEach((image, index) => {
                 formData.append('images', image);
@@ -188,7 +188,7 @@ export const productService = {
         if (data.description !== undefined) formData.append('description', data.description);
         if (data.price) formData.append('price', data.price.toString());
         if (data.oldPrice !== undefined) formData.append('oldPrice', data.oldPrice.toString());
-        
+
         if (data.images && data.images.length > 0) {
             data.images.forEach((image, index) => {
                 formData.append('images', image);
@@ -211,9 +211,39 @@ export const productService = {
         return response.json();
     },
 
-    deleteProduct: async (id: number, token: string): Promise<{ success: boolean; message: string }> => {
-        const response = await fetch(`${API_BASE_URL}/product/${id}`, {
-            method: 'DELETE',
+    deleteProduct: async (id: number, token: string) => {
+        console.log("Preparing to delete product");
+        console.log("Product ID:", id);
+        console.log("Token:", token);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            console.log("Response status:", response.status);
+
+            const text = await response.text();
+            console.log("Response text:", text);
+
+            if (response.ok || response.status === 204) {
+                console.log("Delete success");
+                return { success: true };
+            }
+
+            throw new Error(text || "Delete failed");
+        } catch (err) {
+            console.error("DeleteProduct error:", err);
+            throw err;
+        }
+    },
+    // --- LẤY SẢN PHẨM TRONG NGÀY ---
+    getTodayProducts: async (token: string): Promise<{ success: boolean; data: Product[] }> => {
+        const response = await fetch(`${API_BASE_URL}/products/today`, {
+            method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
@@ -222,9 +252,46 @@ export const productService = {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Xóa sản phẩm thất bại');
+            throw new Error(errorData.message || 'Không thể tải sản phẩm hôm nay');
         }
 
         return response.json();
     },
+
+    // --- LẤY SẢN PHẨM MỚI ---
+    getNewProducts: async (token: string): Promise<{ success: boolean; data: Product[] }> => {
+        const response = await fetch(`${API_BASE_URL}/products/new`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Không thể tải sản phẩm mới');
+        }
+
+        return response.json();
+    },
+
+    // --- LẤY SẢN PHẨM HOT ---
+    getHotProducts: async (token: string): Promise<{ success: boolean; data: Product[] }> => {
+        const response = await fetch(`${API_BASE_URL}/products/hot`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Không thể tải sản phẩm hot');
+        }
+
+        return response.json();
+    },
+
 };

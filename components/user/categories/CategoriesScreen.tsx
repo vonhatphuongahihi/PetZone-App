@@ -91,7 +91,7 @@ export default function CategoriesScreen() {
                                         key={child.id}
                                         style={categoriesStyles.childCard}
                                         onPress={() => {
-                                            router.push(`/product-list?categoryId=${child.id}&categoryName=${encodeURIComponent(child.name)}`);
+                                            router.push(`/product-list?categoryId=${child.id}&categoryName=${encodeURIComponent(child.name)}&storeId=${child.storeId}`);
                                         }}
                                     >
                                         {child.image ? (

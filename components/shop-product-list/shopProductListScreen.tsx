@@ -1,15 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Dimensions,
   FlatList,
   Image,
   Platform,
+  Pressable,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { API_BASE_URL } from "../../config/api";
 import { styles } from "./shopProductListStyle";
 
 // === DỮ LIỆU GIỮ NGUYÊN ===
@@ -25,6 +29,7 @@ interface Product {
   categoryId: string;
   rating: number;
   stock: number;
+  storeId?: string;
 }
 
 const products: Product[] = [
@@ -45,17 +50,51 @@ const products: Product[] = [
 ];
 
 export default function ShopProductListScreen() {
-  const { categoryName, categoryId } = useLocalSearchParams();
+  const { categoryName, categoryId, storeId } = useLocalSearchParams();
 
   // TÍNH CARD_WIDTH RESPONSIVE
   const { width } = Dimensions.get('window');
   const CARD_WIDTH = (width - 48) / 2; // 2 cột, padding 12 mỗi bên
 
-  const filteredProducts = useMemo(() => {
-    if (categoryId) return products.filter(p => p.categoryId === categoryId);
-    if (categoryName) return products.filter(p => p.category === categoryName);
-    return products;
-  }, [categoryId, categoryName]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  console.log("Filtered products:", filteredProducts);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const token = await AsyncStorage.getItem("jwt_token");
+        if (!token) {
+          Alert.alert("Lỗi", "Bạn chưa đăng nhập");
+          setLoading(false);
+          return;
+        }
+
+        const catIdParam = categoryId ? `categoryId=${categoryId}` : '';
+        const storeParam = storeId ? `&storeId=${storeId}` : '';
+        const res = await fetch(`${API_BASE_URL}/products?${catIdParam}${storeParam}`, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        });
+
+        const json = await res.json();
+
+        if (json.success) {
+          const filtered = json.data.filter((p: Product) => {
+            return (!categoryId || (!categoryId || String(p.categoryId) === String(categoryId))) &&
+              (!storeId || p.storeId === storeId);
+          });
+          setFilteredProducts(filtered);
+        }
+      } catch (err) {
+        console.error("Lỗi tải sản phẩm:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [categoryId, storeId]);
+
 
   const handleBack = () => {
     if (Platform.OS === "web" && window.history.length > 1) {
@@ -65,27 +104,71 @@ export default function ShopProductListScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: Product }) => (
-    <TouchableOpacity style={[styles.productCard, { width: CARD_WIDTH }]}>
-      <View style={styles.imageWrapper}>
-        <Image source={item.image} style={styles.productImage} />
-        <View style={styles.stockTag}>
-          <Text style={styles.stockTagText}>Còn lại {item.stock}</Text>
-        </View>
-      </View>
-      <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-      <View style={styles.priceRow}>
-        <Text style={styles.productPrice}>{item.price.toLocaleString()}đ</Text>
-        {item.oldPrice && <Text style={styles.oldPrice}>{item.oldPrice.toLocaleString()}đ</Text>}
-        {item.discount && <Text style={styles.discount}>{item.discount}</Text>}
-      </View>
-      <View style={styles.metaRow}>
-        <Text style={styles.soldLabel}>Đã bán {item.sold}</Text>
-        <Text style={styles.rating}>★ {item.rating}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }: { item: any }) => {
+    // Ảnh
+    const imageSource = item.images?.[0]?.url
+      ? { uri: item.images[0].url }
+      : item.image || require("../../assets/images/cat.png");
 
+    // Số lượng tồn
+    const stock = item.quantity !== undefined ? item.quantity : item.stock ?? 0;
+
+    // Tên sản phẩm
+    const productName = item.title || item.name || "Sản phẩm";
+
+    // Giá cũ & discount 
+    const oldPrice = item.oldPrice || item.old_price;
+    const discount = item.discount;
+
+    // Đã bán & rating
+    const sold = item.sold || item.totalReviews || 0;
+    const rating = item.avgRating || item.rating || 0;
+
+    return (
+      <Pressable
+        style={({ pressed }) => [
+          styles.productCard,
+          { width: CARD_WIDTH },
+          pressed && { opacity: 0.7 },
+        ]}
+        onPress={() => {
+          console.log('Pressed', item.id);
+          router.push(`/product?productId=${item.id}`);
+        }}
+      >
+        <View style={styles.imageWrapper}>
+          <Image source={imageSource} style={styles.productImage} />
+
+          <View style={[styles.stockTag, { zIndex: 10 }]}>
+            <Text style={styles.stockTagText}>Còn lại {stock}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.productName} numberOfLines={2}>
+          {productName}
+        </Text>
+
+        <View style={styles.priceRow}>
+          <Text style={styles.productPrice}>
+            {Number(item.price).toLocaleString()}đ
+          </Text>
+          {oldPrice && (
+            <Text style={styles.oldPrice}>
+              {Number(oldPrice).toLocaleString()}đ
+            </Text>
+          )}
+          {discount && <Text style={styles.discount}>{discount}</Text>}
+        </View>
+
+        <View style={styles.metaRow}>
+          <Text style={styles.soldLabel}>Đã bán {sold}</Text>
+          <Text style={styles.rating}>
+            ★ {Number(rating).toFixed(1)}
+          </Text>
+        </View>
+      </Pressable>
+    );
+  };
   return (
     <View style={styles.container}>
       {/* Header */}

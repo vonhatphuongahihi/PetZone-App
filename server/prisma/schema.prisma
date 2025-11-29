@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,100 +7,92 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User Model
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  username  String   @unique
-  password  String
-  avatarUrl String?  @map("avatar_url")
-  isActive  Boolean  @default(true)
-  role      String   @default("USER")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  stores    Store[]
-  addresses UserAddress[]
-  messages  Message[]                 @relation("UserMessages")
+  id                       String                    @id @default(cuid())
+  email                    String                    @unique
+  username                 String                    @unique
+  password                 String
+  isActive                 Boolean                   @default(true)
+  role                     String                    @default("USER")
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  avatarUrl                String?                   @map("avatar_url")
+  dateofBirth              String?
+  cartItems                CartItem[]
   conversationParticipants ConversationParticipant[] @relation("UserParticipants")
-  cartItems CartItem[]
-  orders    Order[]
+  messages                 Message[]                 @relation("UserMessages")
+  orders                   Order[]
+  reviews                  reviews[]
+  store_follows            store_follows[]
+  stores                   Store[]
+  addresses                UserAddress[]
 
   @@map("users")
 }
 
-// Store Model
 model Store {
-  id              String    @id @default(cuid())
-  userId          String    @map("user_id")
-  storeName       String    @map("store_name")
-  slug            String    @unique
-  description     String?
-  avatarUrl       String?   @map("avatar_url")
-  phoneNumber     String?   @map("phone_number")
-  email           String?
-  address         String?
-  rating          Decimal   @default(0.00) @db.Decimal(3, 2)
-  revenue         Decimal   @default(0.00) @db.Decimal(12, 2)
-  totalOrders     Int       @default(0) @map("total_orders")
-  totalReviews    Int       @default(0) @map("total_reviews")
-  totalProducts   Int       @default(0) @map("total_products")
-  followersCount  Int       @default(0) @map("followers_count")
-  isActive        Boolean   @default(true) @map("is_active")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  deletedAt       DateTime? @map("deleted_at")
+  id             String          @id @default(cuid())
+  userId         String          @map("user_id")
+  storeName      String          @map("store_name")
+  slug           String          @unique
+  description    String?
+  avatarUrl      String?         @map("avatar_url")
+  rating         Decimal         @default(0.00) @db.Decimal(3, 2)
+  revenue        Decimal         @default(0.00) @db.Decimal(12, 2)
+  totalOrders    Int             @default(0) @map("total_orders")
+  totalReviews   Int             @default(0) @map("total_reviews")
+  totalProducts  Int             @default(0) @map("total_products")
+  followersCount Int             @default(0) @map("followers_count")
+  isActive       Boolean         @default(true) @map("is_active")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  deletedAt      DateTime?       @map("deleted_at")
+  address        String?
+  email          String?
+  phoneNumber    String?         @map("phone_number")
+  orders         Order[]
+  products       Product[]
+  store_follows  store_follows[]
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-
-
-  // Relations
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products        Product[] 
-  orders          Order[]
   @@map("stores")
 }
 
-
-//Product Model
-  model Product {
-  id            Int              @id @default(autoincrement())
-  storeId       String           @map("store_id")          // sửa từ Int → String
-  categoryId    Int?             @map("category_id")
-  title         String
-  slug          String           @unique
-  description   String?
-  price         Decimal          @db.Decimal(12, 2)
-  oldPrice      Decimal?         @db.Decimal(12, 2)
-  status        String           @default("draft")
-  featured      Boolean          @default(false)
-  quantity      Int              @default(0)
-  tag           String?          @default("normal")        // "hot", "new", "bestseller", "sale", "normal"
-  avgRating     Decimal          @default(0.00) @db.Decimal(3, 2)
-  totalReviews  Int              @default(0)
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
-
-  store         Store            @relation(fields: [storeId], references: [id])
-  category      Category?        @relation(fields: [categoryId], references: [id])
-  images        ProductImage[]
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
+model Product {
+  id           Int            @id @default(autoincrement())
+  storeId      String         @map("store_id")
+  categoryId   Int?           @map("category_id")
+  title        String
+  slug         String         @unique
+  description  String?
+  price        Decimal        @db.Decimal(12, 2)
+  oldPrice     Decimal?       @db.Decimal(12, 2)
+  status       String         @default("draft")
+  featured     Boolean        @default(false)
+  quantity     Int            @default(0)
+  avgRating    Decimal        @default(0.00) @db.Decimal(3, 2)
+  totalReviews Int            @default(0)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  tag          String?        @default("normal")
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+  images       ProductImage[]
+  category     Category?      @relation(fields: [categoryId], references: [id])
+  store        Store          @relation(fields: [storeId], references: [id])
+  reviews      reviews[]
 
   @@map("products")
 }
 
-//ProducImage Model
 model ProductImage {
-  id         Int      @id @default(autoincrement())
-  productId  Int      @map("product_id")
-  url        String
-  alt        String?
-  position   Int?
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  product    Product  @relation(fields: [productId], references: [id])
+  id        Int      @id @default(autoincrement())
+  productId Int      @map("product_id")
+  url       String
+  alt       String?
+  position  Int?
+  createdAt DateTime @default(now()) @map("created_at")
+  product   Product  @relation(fields: [productId], references: [id])
 
   @@map("product_images")
 }
@@ -113,28 +102,24 @@ model Category {
   name        String     @unique
   slug        String     @unique
   description String?
-  image       String?    // <-- thêm field image
   parentId    Int?       @map("parent_id")
-
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  image       String?
   parent      Category?  @relation("CategoryToParent", fields: [parentId], references: [id])
   children    Category[] @relation("CategoryToParent")
   products    Product[]
 
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-
   @@map("categories")
 }
 
-// Chat Models
-
 model Conversation {
-  id         Int                         @id @default(autoincrement())
-  theme      String?                     @default("#0ED3AF")
-  createdAt  DateTime                    @default(now()) @map("created_at")
-  updatedAt  DateTime?                   @default(now()) @map("updated_at")
-  messages   Message[]
+  id           Int                       @id @default(autoincrement())
+  createdAt    DateTime                  @default(now()) @map("created_at")
+  updatedAt    DateTime?                 @default(now()) @map("updated_at")
+  theme        String?                   @default("#0ED3AF")
   participants ConversationParticipant[]
+  messages     Message[]
 
   @@map("conversations")
 }
@@ -144,10 +129,9 @@ model Message {
   conversationId Int          @map("conversation_id")
   senderId       String       @map("sender_id")
   body           String?
-  imageUrl       String?      @map("image_url")
   readAt         DateTime?    @map("read_at")
   createdAt      DateTime     @default(now()) @map("created_at")
-
+  imageUrl       String?      @map("image_url")
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   sender         User         @relation("UserMessages", fields: [senderId], references: [id])
 
@@ -157,39 +141,34 @@ model Message {
 }
 
 model ConversationParticipant {
-  id             Int           @id @default(autoincrement())
-  conversationId Int           @map("conversation_id")
-  userId         String        @map("user_id")
-  lastReadAt     DateTime?     @map("last_read_at")
-
-  conversation   Conversation  @relation(fields: [conversationId], references: [id])
-  user           User          @relation("UserParticipants", fields: [userId], references: [id])
+  id             Int          @id @default(autoincrement())
+  conversationId Int          @map("conversation_id")
+  userId         String       @map("user_id")
+  lastReadAt     DateTime?    @map("last_read_at")
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  user           User         @relation("UserParticipants", fields: [userId], references: [id])
 
   @@unique([conversationId, userId])
   @@index([userId])
   @@map("conversation_participants")
 }
 
-// User Address Model
 model UserAddress {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
-  name        String   // Họ và tên người nhận
+  name        String
   phoneNumber String   @map("phone_number")
-  province    String   // Tỉnh/Thành phố, Quận/Huyện, Phường/Xã
-  street      String   // Tên đường, Tòa nhà, Số nhà
-  type        String   @default("Nhà riêng") // "Nhà riêng", "Văn phòng"
+  province    String
+  street      String
+  type        String   @default("Nhà riêng")
   isDefault   Boolean  @default(false) @map("is_default")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relations
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_addresses")
 }
 
-// Cart Model
 model CartItem {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
@@ -197,41 +176,37 @@ model CartItem {
   quantity  Int      @default(1)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@index([userId])
   @@map("cart_items")
 }
 
-// Order Model
 model Order {
-  id            String      @id @default(cuid())
-  orderNumber   String      @unique @map("order_number")
-  userId        String      @map("user_id")
-  storeId       String?     @map("store_id")
-  status        String      @default("pending") // pending | confirmed | shipped | cancelled
-  subtotal      Decimal     @default(0) @db.Decimal(12, 2)
-  shippingFee   Decimal     @default(0) @db.Decimal(12, 2)
-  total         Decimal     @default(0) @db.Decimal(12, 2)
-  paymentMethod String?     @map("payment_method")
-  paymentStatus String      @default("unpaid") @map("payment_status") // unpaid | paid | refunded
-  shippedAt     DateTime?   @map("shipped_at")
-  deliveredAt   DateTime?   @map("delivered_at")
-  cancelledAt  DateTime?   @map("cancelled_at")
-  estimatedDeliveryDate DateTime? @map("estimated_delivery_date")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
-  deletedAt     DateTime?   @map("deleted_at")
-
-  // Relations
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  store         Store?      @relation(fields: [storeId], references: [id], onDelete: SetNull)
-  orderItems    OrderItem[]
-  payments      Payment[]
+  id                    String      @id @default(cuid())
+  orderNumber           String      @unique @map("order_number")
+  userId                String      @map("user_id")
+  storeId               String?     @map("store_id")
+  status                String      @default("pending")
+  subtotal              Decimal     @default(0) @db.Decimal(12, 2)
+  shippingFee           Decimal     @default(0) @db.Decimal(12, 2)
+  total                 Decimal     @default(0) @db.Decimal(12, 2)
+  paymentMethod         String?     @map("payment_method")
+  paymentStatus         String      @default("unpaid") @map("payment_status")
+  shippedAt             DateTime?   @map("shipped_at")
+  deliveredAt           DateTime?   @map("delivered_at")
+  cancelledAt           DateTime?   @map("cancelled_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+  deletedAt             DateTime?   @map("deleted_at")
+  estimatedDeliveryDate DateTime?   @map("estimated_delivery_date")
+  orderItems            OrderItem[]
+  store                 Store?      @relation(fields: [storeId], references: [id])
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments              Payment[]
+  reviews               reviews[]
 
   @@index([userId])
   @@index([storeId])
@@ -239,7 +214,6 @@ model Order {
   @@map("orders")
 }
 
-// Order Item Model
 model OrderItem {
   id         Int      @id @default(autoincrement())
   orderId    String   @map("order_id")
@@ -247,35 +221,62 @@ model OrderItem {
   title      String   @db.VarChar(512)
   sku        String?  @db.VarChar(128)
   quantity   Int      @default(1)
-  unitPrice  Decimal  @db.Decimal(12, 2) @map("unit_price")
-  totalPrice Decimal  @db.Decimal(12, 2) @map("total_price")
+  unitPrice  Decimal  @map("unit_price") @db.Decimal(12, 2)
+  totalPrice Decimal  @map("total_price") @db.Decimal(12, 2)
   createdAt  DateTime @default(now()) @map("created_at")
-
-  // Relations
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product    Product? @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@map("order_items")
 }
 
-// Payment Model
 model Payment {
-  id               String   @id @default(cuid())
-  orderId          String   @map("order_id")
-  paymentProvider  String   @map("payment_provider") @db.VarChar(100) // stripe, vnpay, momo, cod...
-  providerPaymentId String? @map("provider_payment_id") @db.VarChar(255)
-  amount           Decimal  @db.Decimal(12, 2)
-  currency         String   @default("VND") @db.VarChar(10)
-  method           String?  @db.VarChar(50)
-  status           String   @default("initiated") // initiated | succeeded | failed | refunded
-  paidAt           DateTime? @map("paid_at")
-  createdAt        DateTime @default(now()) @map("created_at")
-  metadata         Json?
-
-  // Relations
-  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  orderId           String    @map("order_id")
+  paymentProvider   String    @map("payment_provider") @db.VarChar(100)
+  providerPaymentId String?   @map("provider_payment_id") @db.VarChar(255)
+  amount            Decimal   @db.Decimal(12, 2)
+  currency          String    @default("VND") @db.VarChar(10)
+  method            String?   @db.VarChar(50)
+  status            String    @default("initiated")
+  paidAt            DateTime? @map("paid_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  metadata          Json?
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@map("payments")
+}
+
+model reviews {
+  id         String   @id
+  user_id    String
+  product_id Int
+  order_id   String?
+  rating     Int
+  content    String?
+  images     String[]
+  created_at DateTime @default(now())
+  updated_at DateTime
+  orders     Order?   @relation(fields: [order_id], references: [id])
+  products   Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  users      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id])
+  @@index([product_id])
+  @@index([user_id])
+}
+
+model store_follows {
+  id         String   @id
+  user_id    String
+  store_id   String
+  created_at DateTime @default(now())
+  stores     Store    @relation(fields: [store_id], references: [id], onDelete: Cascade)
+  users      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, store_id])
+  @@index([store_id])
+  @@index([user_id])
 }

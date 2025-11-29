@@ -12,9 +12,24 @@ export const homeStyles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
     },
+
+    fixedHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingTop: 12,       
+        paddingBottom: 12,
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#EEEEEE',
+        zIndex: 1000,
+        elevation: 8,          
+    },
     searchBarContainer: {
         flex: 1,
-        marginRight: 16,
+        marginRight: 12,
+        zIndex: 1001,
+        elevation: 20,
     },
     cartButton: {
         width: 40,
