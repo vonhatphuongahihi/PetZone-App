@@ -1,5 +1,5 @@
 // Seller Service
-import { API_BASE_URL } from '../config/api';
+const API_BASE_URL = 'http://172.31.71.127:3001/api';
 
 export interface SellerProfile {
     store: {

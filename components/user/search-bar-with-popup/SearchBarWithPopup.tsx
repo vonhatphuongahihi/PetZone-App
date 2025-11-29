@@ -1,6 +1,9 @@
 import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
+    ActivityIndicator,
     Image,
     Text,
     TextInput,
@@ -8,36 +11,121 @@ import {
     TouchableWithoutFeedback,
     View
 } from "react-native";
+import { API_BASE_URL } from "../../../config/api";
 import { SearchBarWithPopupStyles } from './searchBarWithPopupStyles';
 
 interface Props {
-  recentSearches: string[];
-  hotProducts: {
-    id: number;
-    name: string;
-    price: number;
-    oldPrice: number;
-    image: any;
-  }[];
+    recentSearches?: string[];   // optional
+    hotProducts?: any[];
 }
 
-export default function SearchBarWithPopup({ recentSearches, hotProducts }: Props) {
+export default function SearchBarWithPopup() {
+    const router = useRouter();
     const [visible, setVisible] = useState(false);
     const [query, setQuery] = useState("");
+    const [results, setResults] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [searchHistory, setSearchHistory] = useState<string[]>([]);
+    const inputRef = useRef<TextInput>(null);
+
+    // Tìm kiếm khi nhập
+    useEffect(() => {
+        if (!query.trim() || query.trim().length < 2) {
+            setResults([]);
+            setLoading(false);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setLoading(true);
+            try {
+                const token = await AsyncStorage.getItem("jwt_token");
+                if (!token) {
+                    setResults([]);
+                    setLoading(false);
+                    return;
+                }
+
+                const params = new URLSearchParams({
+                    q: query.trim(),
+                    limit: "10",
+                });
+
+                const res = await fetch(`${API_BASE_URL}/products/search?${params}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (res.ok) {
+                    const json = await res.json();
+                    setResults(json.success ? json.data : []);
+                } else {
+                    setResults([]);
+                }
+            } catch (err) {
+                console.log("Search error:", err);
+                setResults([]);
+            } finally {
+                setLoading(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [query]);
+
+    // Load lịch sử khi mở search
+    const loadHistory = async () => {
+        const json = await AsyncStorage.getItem("searchHistory");
+        setSearchHistory(json ? JSON.parse(json) : []);
+    };
+
+    // Xử lý tìm kiếm (Enter hoặc nút search)
+    const handleSearch = async (keywordParam?: string) => {
+        const keyword = (keywordParam ?? query).trim();
+        if (!keyword) return;
+
+        setVisible(false);
+        inputRef.current?.blur();
+
+        // Lưu lịch sử
+        try {
+            let history = [...searchHistory];
+            history = history.filter(item => item !== keyword);
+            history.unshift(keyword);
+            history = history.slice(0, 3);
+            await AsyncStorage.setItem("searchHistory", JSON.stringify(history));
+            setSearchHistory(history);
+        } catch (err) {
+            console.log("Save history error:", err);
+        }
+
+        router.push({
+            pathname: "/search-result",
+            params: { q: keyword }
+        } as any);
+
+    };
 
     return (
         <View style={SearchBarWithPopupStyles.container}>
             {/* Thanh tìm kiếm */}
             <View style={SearchBarWithPopupStyles.Searchcontainer}>
                 <TextInput
+                    ref={inputRef}
                     style={SearchBarWithPopupStyles.input}
                     placeholder="Tìm kiếm sản phẩm..."
                     value={query}
-                    onFocus={() => setVisible(true)}
+                    onFocus={() => {
+                        setVisible(true);
+                        loadHistory();
+                    }}
                     onChangeText={setQuery}
+                    onSubmitEditing={() => handleSearch()}
                     placeholderTextColor="#999"
                 />
-                <TouchableOpacity onPress={() => {}}>
+                <TouchableOpacity onPress={() => handleSearch()}>
                     <FontAwesome5 name="search" size={16} color="#999" style={SearchBarWithPopupStyles.searchIcon} />
                 </TouchableOpacity>
             </View>
@@ -46,43 +134,86 @@ export default function SearchBarWithPopup({ recentSearches, hotProducts }: Prop
             {visible && (
                 <TouchableWithoutFeedback onPress={() => setVisible(false)}>
                     <View style={SearchBarWithPopupStyles.overlay}>
-                        <TouchableWithoutFeedback onPress={() => {}}>
+                        <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
                             <View style={SearchBarWithPopupStyles.popup}>
-                                {/* Lịch sử tìm kiếm */}
-                                <Text style={SearchBarWithPopupStyles.sectionTitle}>Tìm kiếm gần đây</Text>
-                                    {recentSearches.map((item, index) => (
-                                    <View key={index} style={SearchBarWithPopupStyles.recentRow}>
-                                        <TouchableOpacity>
-                                            <Text style={SearchBarWithPopupStyles.recentText}>{item}</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity>
-                                            <AntDesign name="close" style={SearchBarWithPopupStyles.removeIcon} />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
 
-                                {/* Sản phẩm hot */}
-                                <Text style={[SearchBarWithPopupStyles.sectionTitle, { marginTop: 16 }]}>
-                                    Sản phẩm hot
-                                </Text>
-                                {hotProducts.map((item) => (
-                                    <TouchableOpacity key={item.id.toString()} style={SearchBarWithPopupStyles.productRow}>
-                                        <Image source={item.image} style={SearchBarWithPopupStyles.productImage} />
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={SearchBarWithPopupStyles.productName} numberOfLines={2}>
-                                                {item.name}
+                                {/* Nếu đang nhập → show kết quả */}
+                                {query.trim().length >= 2 ? (
+                                    <>
+                                        {loading ? (
+                                            <ActivityIndicator size="small" color="#FBBC05" style={{ padding: 20 }} />
+                                        ) : results.length > 0 ? (
+                                            results.map((item) => (
+                                                <TouchableOpacity
+                                                    key={item.id.toString()}
+                                                    style={SearchBarWithPopupStyles.productRow}
+                                                    onPress={() => {
+                                                        setVisible(false);
+                                                        inputRef.current?.blur();
+                                                        router.push({
+                                                            pathname: "/product",
+                                                            params: { productId: item.id.toString() }
+                                                        } as any);
+                                                    }}
+                                                >
+                                                    <Image
+                                                        source={{ uri: item.images[0]?.url || "https://via.placeholder.com/60" }}
+                                                        style={SearchBarWithPopupStyles.productImage}
+                                                    />
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={SearchBarWithPopupStyles.productName} numberOfLines={2}>
+                                                            {item.name}
+                                                        </Text>
+                                                        <View style={SearchBarWithPopupStyles.priceRow}>
+                                                            <Text style={SearchBarWithPopupStyles.productPrice}>
+                                                                {item.price.toLocaleString("vi-VN")}đ
+                                                            </Text>
+                                                            {item.oldPrice && (
+                                                                <Text style={SearchBarWithPopupStyles.oldPrice}>
+                                                                    {item.oldPrice.toLocaleString("vi-VN")}đ
+                                                                </Text>
+                                                            )}
+                                                        </View>
+                                                        <Text style={{ fontSize: 12, color: "#666" }}>
+                                                            {item.store.storeName}
+                                                        </Text>
+                                                    </View>
+                                                </TouchableOpacity>
+                                            ))
+                                        ) : (
+                                            <Text style={{ padding: 20, textAlign: "center", color: "#999" }}>
+                                                Không tìm thấy sản phẩm
                                             </Text>
-                                            <View style={SearchBarWithPopupStyles.priceRow}>
-                                                <Text style={SearchBarWithPopupStyles.productPrice}>
-                                                    {item.price.toLocaleString("vi-VN")}đ
-                                                </Text>
-                                                <Text style={SearchBarWithPopupStyles.oldPrice}>
-                                                    {item.oldPrice.toLocaleString("vi-VN")}đ
-                                                </Text>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* lịch sử tìm kiếm */}
+                                        <Text style={SearchBarWithPopupStyles.sectionTitle}>
+                                            Tìm kiếm gần đây
+                                        </Text>
+
+                                        {searchHistory.length > 0 ? searchHistory.map((item, index) => (
+                                            <View key={index} style={SearchBarWithPopupStyles.recentRow}>
+                                                <TouchableOpacity onPress={() => handleSearch(item)}>
+                                                    <Text style={SearchBarWithPopupStyles.recentText}>{item}</Text>
+                                                </TouchableOpacity>
+
+                                                {/* nút xoá một lịch sử */}
+                                                <TouchableOpacity onPress={async () => {
+                                                    const newHistory = searchHistory.filter(h => h !== item);
+                                                    await AsyncStorage.setItem("searchHistory", JSON.stringify(newHistory));
+                                                    setSearchHistory(newHistory);
+                                                }}>
+                                                    <AntDesign name="close" style={SearchBarWithPopupStyles.removeIcon} />
+                                                </TouchableOpacity>
                                             </View>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))}
+                                        )) : (
+                                            <Text style={{ padding: 10, color: "#999" }}>Chưa có lịch sử tìm kiếm</Text>
+                                        )}
+                                    </>
+                                )}
+
                             </View>
                         </TouchableWithoutFeedback>
                     </View>

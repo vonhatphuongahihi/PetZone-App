@@ -1,4 +1,5 @@
-import { API_BASE_URL } from '../config/api';
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://172.31.71.127:3001/api';
 
 export interface CreateStoreData {
     storeName: string;

@@ -1,13 +1,16 @@
 import SearchBarWithPopup from "@/components/user/search-bar-with-popup/SearchBarWithPopup";
+import { API_BASE_URL } from "@/config/api";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router";
-import React from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     FlatList,
     Image,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SearchResultsStyles } from './searchResultsStyles';
@@ -87,6 +90,55 @@ const hotProducts = [
 
 export default function SearchResultsScreen() {
     const router = useRouter();
+    const { q } = useLocalSearchParams();
+
+    const [products, setProducts] = useState<any[]>([]);
+    const [hotProducts, setHotProducts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true)
+
+    // === TÌM KIẾM THEO TỪ KHÓA ===
+    useEffect(() => {
+        const fetchSearchResults = async () => {
+            if (!q || q === "") {
+                setProducts([]);
+                setLoading(false);
+                return;
+            }
+
+            setLoading(true);
+            try {
+                const token = await AsyncStorage.getItem("accessToken");
+                const res = await fetch(`${API_BASE_URL}/api/products/search?q=${q}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                setProducts(data.success ? data.data : []);
+            } catch (error) {
+                console.error("Error fetching search results:", error);
+                setProducts([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSearchResults();
+    }, [q]);
+
+    // === LẤY SẢN PHẨM HOT CHO SEARCH BAR ===
+    useEffect(() => {
+        const fetchHotProducts = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/products/hot`);
+                const data = await res.json();
+                if (data.success) setHotProducts(data.data);
+            } catch (error) {
+                console.error("Error fetching hot products:", error);
+            }
+        };
+
+        fetchHotProducts();
+    }, []);
+
 
     const renderProduct = ({ item }: { item: typeof products[0] }) => (
         <TouchableOpacity
@@ -160,14 +212,27 @@ export default function SearchResultsScreen() {
                 </View>
 
                 {/* Danh sách sản phẩm */}
-                <FlatList
-                    data={products}
-                    renderItem={renderProduct}
-                    keyExtractor={(item) => item.id}
-                    numColumns={2}
-                    columnWrapperStyle={{ justifyContent: "space-between" }}
-                    contentContainerStyle={{ padding: 12 }}
-                />
+                {loading ? (
+                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                        <ActivityIndicator size="large" color="#FBBC05" />
+                        <Text style={{ marginTop: 10 }}>Đang tìm kiếm...</Text>
+                    </View>
+                ) : products.length === 0 ? (
+                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                        <Text style={{ fontSize: 16, color: "#666" }}>
+                            Không tìm thấy sản phẩm nào cho "{q}"
+                        </Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={products}
+                        renderItem={renderProduct}
+                        keyExtractor={(item) => item.id.toString()}
+                        numColumns={2}
+                        columnWrapperStyle={{ justifyContent: "space-between" }}
+                        contentContainerStyle={{ padding: 12 }}
+                    />
+                )}
             </SafeAreaView>
         </>
     );
