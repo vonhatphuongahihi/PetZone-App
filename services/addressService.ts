@@ -1,5 +1,6 @@
 // Address Service
-import { API_BASE_URL } from '../config/api';
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.3.40:3001/api';
 
 export interface UserAddress {
     id: string;

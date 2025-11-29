@@ -1,4 +1,5 @@
-import { API_BASE_URL } from '../config/api';
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.3.40:3001/api';
 
 export interface ProductImage {
     id: number;
@@ -51,8 +52,9 @@ export interface StoreDetail {
     id: string;
     storeName: string;
     avatarUrl?: string;
-    rating: number;
+    rating: number | string;
     totalProducts: number;
+    totalReviews: number;
     followersCount: number;
 }
 

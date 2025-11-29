@@ -1,5 +1,5 @@
 // Seller Service
-const API_BASE_URL = 'http://172.31.71.127:3001/api';
+import { API_BASE_URL } from '../config/api';
 
 export interface SellerProfile {
     store: {
@@ -27,7 +27,7 @@ export interface SellerProfile {
         email: string;
         role: string;
         createdAt: string;
-        avatarUrl?: string; 
+        avatarUrl?: string;
     };
 }
 
@@ -56,7 +56,7 @@ export const sellerService = {
         try {
             console.log('Calling API:', `${API_BASE_URL}/store/profile`);
             console.log('With token:', token);
-            
+
             const response = await fetch(`${API_BASE_URL}/store/profile`, {
                 method: 'GET',
                 headers: {
@@ -70,7 +70,7 @@ export const sellerService = {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 console.error('Error response:', errorData);
-                
+
                 // Provide specific error messages
                 if (response.status === 404) {
                     throw new Error('Store not found - Bạn chưa tạo cửa hàng');
@@ -86,12 +86,12 @@ export const sellerService = {
             return data;
         } catch (error: any) {
             console.error('getProfile error:', error);
-            
+
             // Handle network errors
             if (error.message === 'Network request failed' || error.name === 'TypeError') {
                 throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
             }
-            
+
             throw error;
         }
     },

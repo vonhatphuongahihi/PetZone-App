@@ -31,7 +31,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, layout = 'grid' }) => {
-    const cardStyle = layout === 'horizontal' 
+    const cardStyle = layout === 'horizontal'
         ? [productCardStyles.card, productCardStyles.horizontalCard]
         : productCardStyles.card;
 
@@ -68,7 +68,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, layo
                     <View style={productCardStyles.metaRow}>
                         <Text style={productCardStyles.categoryText}>{product.category}</Text>
                         <View style={productCardStyles.ratingRow}>
-                            <FontAwesome5 name="star" size={10} color="#FFD700" solid/>
+                            <FontAwesome5 name="star" size={10} color="#FFD700" solid />
                             <Text style={productCardStyles.ratingText}>{(Number(product.rating) || 0).toFixed(1)}</Text>
                         </View>
                     </View>

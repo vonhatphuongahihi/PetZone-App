@@ -15,6 +15,13 @@ import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.3.40:3001/api';
+
+// Helper: lấy string đầu tiên nếu param là string | string[]
+const getFirstString = (param: string | string[] | undefined) =>
+    Array.isArray(param) ? param[0] : param;
+
 export default function ProductListScreen() {
     const { categoryId, categoryName, type, title } = useLocalSearchParams();
     const router = useRouter();

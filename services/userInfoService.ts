@@ -1,5 +1,6 @@
 // User Info Service
-import { API_BASE_URL } from '../config/api';
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.3.40:3001/api';
 
 export interface UserInfo {
     id: string;
@@ -59,7 +60,7 @@ export const userInfoService = {
     // Update user avatar
     updateUserAvatar: async (imageUri: string, token: string, platform: 'web' | 'mobile' = 'mobile'): Promise<{ success: boolean; data: { avatarUrl: string; user: UserInfo } }> => {
         const formData = new FormData();
-        
+
         if (platform === 'web') {
             // Web platform - convert URI to File
             const response = await fetch(imageUri);
@@ -71,7 +72,7 @@ export const userInfoService = {
             const filename = imageUri.split('/').pop() || 'avatar.jpg';
             const match = /\.(\w+)$/.exec(filename);
             const type = match ? `image/${match[1]}` : 'image/jpeg';
-            
+
             formData.append('avatar', {
                 uri: imageUri,
                 name: filename,

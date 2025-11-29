@@ -3,6 +3,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { io, Socket } from 'socket.io-client';
 import { SocketEventEmitter } from './socketEventEmitter';
 
+// === IP của backend server ===
+const SERVER_BASE_URL = 'http://10.0.3.40:3001';
+
 let socket: Socket | null = null;
 let listenersSetup = false;
 
@@ -19,7 +22,7 @@ export async function getSocket(): Promise<Socket> {
     }
 
     const token = await AsyncStorage.getItem('jwt_token');
-    const base = API_BASE_URL.replace(/\/api$/, '');
+    const base = SERVER_BASE_URL;
 
     console.log('[Socket Client] Connecting to:', base);
 

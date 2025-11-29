@@ -1,4 +1,3 @@
-import { API_BASE_URL } from '@/services/authService';
 import { chatService, Message } from '@/services/chatService';
 import { getSocket } from '@/services/socket';
 import { SocketEventEmitter } from '@/services/socketEventEmitter';
@@ -7,6 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, FlatList } from 'react-native';
+import { API_BASE_URL } from '../config/api';
 
 export function useChatLogic(conversationId: number) {
     const router = useRouter();
