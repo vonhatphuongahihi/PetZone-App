@@ -50,42 +50,45 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, layo
 
             {/* Thông tin sản phẩm */}
             <View style={productCardStyles.info}>
-                {/* Shop */}
-                <View style={productCardStyles.shopRow}>
-                    <Image
-                        source={product.shopImage}
-                        style={productCardStyles.shopAvatar}
-                    />
-                    <View style={{ marginLeft: 6 }}>
-                        <Text style={productCardStyles.shopName}>{product.shop}</Text>
-                        <Text style={productCardStyles.sold}>{product.sold} đã bán</Text>
+                {/* Phần content chính */}
+                <View style={productCardStyles.mainContent}>
+                    {/* Shop */}
+                    <View style={productCardStyles.shopRow}>
+                        <Image
+                            source={product.shopImage}
+                            style={productCardStyles.shopAvatar}
+                        />
+                        <View style={{ marginLeft: 6 }}>
+                            <Text style={productCardStyles.shopName}>{product.shop}</Text>
+                            <Text style={productCardStyles.sold}>{product.sold} đã bán</Text>
+                        </View>
                     </View>
-                </View>
 
-                {/* Danh mục + Rating */}
-                <View style={productCardStyles.metaRow}>
-                    <Text style={productCardStyles.categoryText}>{product.category}</Text>
-                    <View style={productCardStyles.ratingRow}>
-                        <FontAwesome5 name="star" size={10} color="#FFD700" solid/>
-                        <Text style={productCardStyles.ratingText}>{(Number(product.rating) || 0).toFixed(1)}</Text>
+                    {/* Danh mục + Rating */}
+                    <View style={productCardStyles.metaRow}>
+                        <Text style={productCardStyles.categoryText}>{product.category}</Text>
+                        <View style={productCardStyles.ratingRow}>
+                            <FontAwesome5 name="star" size={10} color="#FFD700" solid/>
+                            <Text style={productCardStyles.ratingText}>{(Number(product.rating) || 0).toFixed(1)}</Text>
+                        </View>
                     </View>
-                </View>
 
-                {/* Tên sản phẩm */}
-                <Text style={productCardStyles.productName} numberOfLines={2}>
-                    {product.name}
-                </Text>
-
-                {/* Tag sản phẩm - hiển thị dynamic */}
-                {product.tag && (
-                    <Text style={productCardStyles.tagline}>
-                        {product.tag === 'hot' && 'Hàng cực hot'}
-                        {product.tag === 'new' && 'Hàng mới'}
-                        {product.tag === 'bestseller' && 'Bán chạy'}
-                        {product.tag === 'sale' && 'Giảm giá'}
-                        {product.tag === 'normal' && 'Sản phẩm phổ biến'}
+                    {/* Tên sản phẩm */}
+                    <Text style={productCardStyles.productName} numberOfLines={2}>
+                        {product.name}
                     </Text>
-                )}
+
+                    {/* Tag sản phẩm - hiển thị dynamic */}
+                    {product.tag && (
+                        <Text style={productCardStyles.tagline}>
+                            {product.tag === 'hot' && 'Hàng cực hot'}
+                            {product.tag === 'new' && 'Hàng mới'}
+                            {product.tag === 'bestseller' && 'Bán chạy'}
+                            {product.tag === 'sale' && 'Giảm giá'}
+                            {product.tag === 'normal' && 'Sản phẩm phổ biến'}
+                        </Text>
+                    )}
+                </View>
 
                 {/* Giá */}
                 <View style={productCardStyles.priceRow}>

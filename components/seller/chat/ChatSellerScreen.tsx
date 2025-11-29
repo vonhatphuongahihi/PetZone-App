@@ -51,6 +51,7 @@ export default function ChatSellerScreen() {
         isPeerOnline,
         myUserId,
         peerName,
+        avatarUrl,
         isLoadingMore,
         chatTheme,
         listRef,
@@ -215,7 +216,10 @@ export default function ChatSellerScreen() {
                             <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" style={{ marginRight: 4 }} />
                         </TouchableOpacity>
                         <View>
-                            <Image source={require("../../../assets/images/shop.png")} style={chatSellerStyles.avatar} />
+                            <Image
+                                source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.png")}
+                                style={chatSellerStyles.avatar} 
+                            />
                             {isPeerOnline ? <View style={chatSellerStyles.onlineDot} /> : null}
                         </View>
                         <View>

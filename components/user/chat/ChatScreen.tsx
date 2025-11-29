@@ -51,6 +51,7 @@ export default function ChatScreen() {
         isPeerOnline,
         myUserId,
         peerName,
+        avatarUrl,
         isLoadingMore,
         chatTheme,
         listRef,
@@ -215,7 +216,10 @@ export default function ChatScreen() {
                             <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" style={{ marginRight: 4 }} />
                         </TouchableOpacity>
                         <View>
-                            <Image source={require("../../../assets/images/shop.png")} style={chatStyles.avatar} />
+                            <Image 
+                                source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.png")} 
+                                style={chatStyles.avatar}
+                            />
                             {isPeerOnline ? <View style={chatStyles.onlineDot} /> : null}
                         </View>
                         <View>

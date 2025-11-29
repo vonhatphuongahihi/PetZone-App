@@ -21,6 +21,7 @@ export function useChatLogic(conversationId: number) {
     const hasJoinedRef = useRef<boolean>(false); // Prevent multiple joins
     const [lastReadAt] = useState<string | null>(null);
     const [peerName, setPeerName] = useState<string>('');
+    const [avatarUrl, setAvatarUrl] = useState<string>('');
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMoreMessages, setHasMoreMessages] = useState(true);
     const [chatTheme, setChatTheme] = useState('#0ED3AF');
@@ -203,6 +204,12 @@ export function useChatLogic(conversationId: number) {
                 const name = other?.user?.username || other?.user?.email || '';
                 if (name) setPeerName(name);
 
+                if (other?.user?.avatarUrl) {
+                    setAvatarUrl(other.user.avatarUrl);
+                } else {
+                    setAvatarUrl('');
+                }
+
                 // Check if peer is online from API
                 if (other?.userId) {
                     try {
@@ -372,6 +379,7 @@ export function useChatLogic(conversationId: number) {
         myUserId,
         lastReadAt,
         peerName,
+        avatarUrl,
         isLoadingMore,
         hasMoreMessages,
         chatTheme,
