@@ -199,8 +199,13 @@ export const getProductById = async (req: Request, res: Response) => {
         category: true,
         store: {
           select: {
+            id: true,
             storeName: true,
-            avatarUrl: true
+            avatarUrl: true,
+            rating: true,
+            totalProducts: true,
+            totalReviews: true,
+            followersCount: true
           }
         }
       },

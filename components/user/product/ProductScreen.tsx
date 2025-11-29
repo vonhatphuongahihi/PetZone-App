@@ -1,4 +1,4 @@
-import { FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { FontAwesome, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -17,49 +17,33 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Product, ProductDetail, productService } from '../../../services/productService';
+import { Review, reviewService } from '../../../services/reviewService';
 import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productStyles } from './productStyles';
 
 const { width } = Dimensions.get('window');
 
-interface Review {
-    id: string;
-    userName: string;
-    userAvatar: string;
-    rating: number;
-    content: string;
-    date: string;
-    images?: string[];
-}
-
 export default function ProductScreen() {
-    const { productId } = useLocalSearchParams();
+    const { productId, orderId, rating, tab } = useLocalSearchParams();
     const router = useRouter();
     const [product, setProduct] = useState<ProductDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
-    const [activeTab, setActiveTab] = useState<'info' | 'reviews'>('info');
+    const [activeTab, setActiveTab] = useState<'info' | 'reviews'>(tab === 'reviews' ? 'reviews' : 'info');
     const [addingToCart, setAddingToCart] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const imageCarouselRef = useRef<FlatList>(null);
     const [otherProducts, setOtherProducts] = useState<Product[]>([]);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [loadingReviews, setLoadingReviews] = useState(false);
 
-    // Mock reviews data
-    const [reviews] = useState<Review[]>([
-        {
-            id: '1',
-            userName: 'Lê Thiên Phúc',
-            userAvatar: 'https://i.pravatar.cc/150?img=1',
-            rating: 5,
-            content: 'Hàng xịn nha, mèo nhà mình rất thích',
-            date: '17/10/2024',
-            images: ['https://picsum.photos/200/200?random=1', 'https://picsum.photos/200/200?random=2']
-        },
-        // Add more mock reviews if needed
-    ]);
+    // Review form state (khi có orderId và rating từ params)
+    const [userRating, setUserRating] = useState<number>(0);
+    const [reviewContent, setReviewContent] = useState('');
+    const [submittingReview, setSubmittingReview] = useState(false);
 
     const fetchProduct = useCallback(async () => {
         try {
@@ -157,11 +141,78 @@ export default function ProductScreen() {
         }
     }, [productId, fetchProduct]);
 
+    const fetchReviews = useCallback(async () => {
+        if (!productId) return;
+
+        try {
+            setLoadingReviews(true);
+            const response = await reviewService.getProductReviews(parseInt(productId as string));
+            if (response.success) {
+                setReviews(response.data || []);
+            }
+        } catch (error: any) {
+            console.error('Error fetching reviews:', error);
+        } finally {
+            setLoadingReviews(false);
+        }
+    }, [productId]);
+
     useEffect(() => {
         if (product) {
             fetchOtherProducts();
+            fetchReviews();
         }
-    }, [product, fetchOtherProducts]);
+    }, [product, fetchOtherProducts, fetchReviews]);
+
+    // Set initial rating nếu có từ params
+    useEffect(() => {
+        if (rating) {
+            setUserRating(parseInt(rating as string));
+        }
+    }, [rating]);
+
+    const handleSubmitReview = async () => {
+        if (!productId || !orderId || userRating === 0) {
+            Alert.alert('Lỗi', 'Vui lòng chọn số sao đánh giá');
+            return;
+        }
+
+        try {
+            setSubmittingReview(true);
+            const token = await AsyncStorage.getItem('jwt_token');
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập');
+                router.replace('/login');
+                return;
+            }
+
+            await reviewService.createReview({
+                productId: parseInt(productId as string),
+                orderId: orderId as string,
+                rating: userRating,
+                content: reviewContent.trim() || undefined,
+                images: [] // Có thể thêm upload ảnh sau
+            }, token);
+
+            // Reload reviews và product để cập nhật avgRating
+            await fetchReviews();
+            await fetchProduct();
+
+            // Reset form
+            setUserRating(0);
+            setReviewContent('');
+
+            // Remove params từ URL
+            router.replace(`/product?productId=${productId}&tab=reviews`);
+
+            Alert.alert('Thành công', 'Đánh giá của bạn đã được gửi!');
+        } catch (error: any) {
+            console.error('Error submitting review:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể gửi đánh giá');
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
 
     const handleAddToCart = async () => {
         if (addingToCart) return;
@@ -273,28 +324,62 @@ export default function ProductScreen() {
         return stars;
     };
 
-    const renderReviewItem = ({ item }: { item: Review }) => (
-        <View style={productStyles.reviewItem}>
-            <View style={productStyles.reviewHeader}>
-                <Image source={{ uri: item.userAvatar }} style={productStyles.reviewUserAvatar} />
-                <View style={productStyles.reviewUserInfo}>
-                    <Text style={productStyles.reviewUserName}>{item.userName}</Text>
-                    <View style={productStyles.reviewRating}>
-                        {renderStars(item.rating)}
-                        <Text style={productStyles.reviewDate}>{item.date}</Text>
+    const renderReviewItem = ({ item }: { item: Review }) => {
+        const formatDate = (dateString: string) => {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        };
+
+        return (
+            <View style={productStyles.reviewItem}>
+                <View style={productStyles.reviewHeader}>
+                    <Image
+                        source={
+                            item.user?.avatarUrl
+                                ? { uri: item.user.avatarUrl }
+                                : require('../../../assets/images/icon.png')
+                        }
+                        style={productStyles.reviewUserAvatar}
+                    />
+                    <View style={productStyles.reviewUserInfo}>
+                        <Text style={productStyles.reviewUserName}>{item.user?.username || 'Người dùng'}</Text>
+                        <View style={productStyles.reviewRating}>
+                            {renderStars(item.rating)}
+                            <Text style={productStyles.reviewDate}>{formatDate(item.createdAt)}</Text>
+                        </View>
                     </View>
                 </View>
+                {item.content && <Text style={productStyles.reviewContent}>{item.content}</Text>}
+                {item.images && item.images.length > 0 && (
+                    <View style={productStyles.reviewImages}>
+                        {item.images.map((image, index) => (
+                            <Image key={index} source={{ uri: image }} style={productStyles.reviewImage} />
+                        ))}
+                    </View>
+                )}
             </View>
-            <Text style={productStyles.reviewContent}>{item.content}</Text>
-            {item.images && item.images.length > 0 && (
-                <View style={productStyles.reviewImages}>
-                    {item.images.map((image, index) => (
-                        <Image key={index} source={{ uri: image }} style={productStyles.reviewImage} />
-                    ))}
-                </View>
-            )}
-        </View>
-    );
+        );
+    };
+
+    const renderRatingStars = (rating: number, size: number = 20, onPress?: (rating: number) => void) => {
+        return (
+            <View style={{ flexDirection: 'row', gap: 4 }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                        key={star}
+                        onPress={() => onPress && onPress(star)}
+                        disabled={!onPress}
+                    >
+                        <FontAwesome
+                            name={star <= rating ? 'star' : 'star-o'}
+                            size={size}
+                            color="#FBBC05"
+                        />
+                    </TouchableOpacity>
+                ))}
+            </View>
+        );
+    };
 
     const renderOtherProductItem = ({ item }: { item: Product }) => (
         <View style={productStyles.productWrapper}>
@@ -462,6 +547,18 @@ export default function ProductScreen() {
                                     accessible={true}
                                     accessibilityLabel="Xem shop"
                                     accessibilityRole="button"
+                                    onPress={() => {
+                                        // Sử dụng store.id nếu có, nếu không thì dùng storeId từ product
+                                        const storeIdToNavigate = product.store?.id || product.storeId;
+                                        if (storeIdToNavigate) {
+                                            router.push({
+                                                pathname: "/shop",
+                                                params: { storeId: storeIdToNavigate }
+                                            });
+                                        } else {
+                                            Alert.alert("Lỗi", "Không thể tìm thấy thông tin cửa hàng");
+                                        }
+                                    }}
                                 >
                                     <Text style={productStyles.followButtonText}>Xem shop</Text>
                                 </TouchableOpacity>
@@ -651,14 +748,65 @@ export default function ProductScreen() {
                                     </Text>
                                 </View>
 
-                                <FlatList
-                                    data={reviews}
-                                    renderItem={renderReviewItem}
-                                    keyExtractor={(item) => item.id}
-                                    scrollEnabled={false}
-                                    accessible={true}
-                                    accessibilityLabel={`Danh sách ${reviews.length} đánh giá sản phẩm`}
-                                />
+                                {/* Review Form - Hiển thị nếu có orderId và rating từ params */}
+                                {orderId && rating && (
+                                    <View style={productStyles.reviewFormContainer}>
+                                        <Text style={productStyles.reviewFormTitle}>Đánh giá sản phẩm của bạn</Text>
+
+                                        <View style={productStyles.reviewFormRating}>
+                                            <Text style={productStyles.reviewFormLabel}>Số sao:</Text>
+                                            {renderRatingStars(userRating, 28, setUserRating)}
+                                        </View>
+
+                                        <Text style={productStyles.reviewFormLabel}>Nhận xét:</Text>
+                                        <TextInput
+                                            style={productStyles.reviewFormInput}
+                                            placeholder="Hãy chia sẻ những điều bạn thích về sản phẩm..."
+                                            placeholderTextColor="#999"
+                                            multiline
+                                            numberOfLines={4}
+                                            value={reviewContent}
+                                            onChangeText={setReviewContent}
+                                            textAlignVertical="top"
+                                        />
+
+                                        <TouchableOpacity
+                                            style={[
+                                                productStyles.reviewFormSubmitButton,
+                                                (userRating === 0 || submittingReview) && productStyles.reviewFormSubmitButtonDisabled
+                                            ]}
+                                            onPress={handleSubmitReview}
+                                            disabled={userRating === 0 || submittingReview}
+                                        >
+                                            {submittingReview ? (
+                                                <ActivityIndicator size="small" color="#fff" />
+                                            ) : (
+                                                <Text style={productStyles.reviewFormSubmitText}>Gửi đánh giá</Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+
+                                {/* Reviews List */}
+                                {loadingReviews ? (
+                                    <View style={{ padding: 20, alignItems: 'center' }}>
+                                        <ActivityIndicator size="small" color="#FBBC05" />
+                                        <Text style={{ marginTop: 8, color: '#666' }}>Đang tải đánh giá...</Text>
+                                    </View>
+                                ) : reviews.length === 0 ? (
+                                    <View style={{ padding: 20, alignItems: 'center' }}>
+                                        <Text style={{ color: '#999' }}>Chưa có đánh giá nào</Text>
+                                    </View>
+                                ) : (
+                                    <FlatList
+                                        data={reviews}
+                                        renderItem={renderReviewItem}
+                                        keyExtractor={(item) => item.id}
+                                        scrollEnabled={false}
+                                        accessible={true}
+                                        accessibilityLabel={`Danh sách ${reviews.length} đánh giá sản phẩm`}
+                                    />
+                                )}
                             </View>
                         )}
                     </View>

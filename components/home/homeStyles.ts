@@ -37,7 +37,6 @@ export const homeStyles = StyleSheet.create({
         right: 0,
         bottom: 0,
         width: "100%",
-        resizeMode: "cover",
     },
     heroTextContainer: {
         position: "absolute",
@@ -122,7 +121,6 @@ export const homeStyles = StyleSheet.create({
     categoryIcon: {
         width: 36,
         height: 36,
-        resizeMode: "contain",
         marginBottom: 8,
     },
     categoryText: {

@@ -61,6 +61,44 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     }
 };
 
+export const optionalAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+
+        if (!token) {
+            // No token provided, continue without user
+            return next();
+        }
+
+        const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
+        const decoded = jwt.verify(token, jwtSecret) as any;
+
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            select: {
+                id: true,
+                email: true,
+                role: true,
+                isActive: true
+            }
+        });
+
+        if (user && user.isActive) {
+            req.user = {
+                id: user.id,
+                email: user.email,
+                role: user.role
+            };
+        }
+
+        next();
+    } catch (error) {
+        // Token invalid, but continue without user (public endpoint)
+        console.error('Optional auth middleware error:', error);
+        next();
+    }
+};
+
 export const sellerMiddleware = (req: Request, res: Response, next: NextFunction) => {
     if (req.user?.role !== 'SELLER') {
         return res.status(403).json({

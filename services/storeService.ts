@@ -1,5 +1,4 @@
-// === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.0.143.27:3001/api';
+import { API_BASE_URL } from '../config/api';
 
 export interface CreateStoreData {
     storeName: string;
@@ -30,6 +29,7 @@ export interface Store {
     createdAt: string;
     updatedAt: string;
     deletedAt?: string;
+    isFollowing?: boolean;
     user: {
         id: string;
         username: string;
@@ -154,6 +154,124 @@ export const storeService = {
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || 'Lấy sản phẩm bán chạy thất bại');
+        }
+
+        return response.json();
+    },
+
+    // Follow/Unfollow store (toggle)
+    followStore: async (storeId: string, token: string): Promise<{ success: boolean; message: string; isFollowing?: boolean }> => {
+        const response = await fetch(`${API_BASE_URL}/store/follow/${storeId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Theo dõi cửa hàng thất bại');
+        }
+
+        return response.json();
+    },
+
+    // Unfollow store
+    unfollowStore: async (storeId: string, token: string): Promise<{ success: boolean; message: string }> => {
+        const response = await fetch(`${API_BASE_URL}/store/follow/${storeId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Bỏ theo dõi cửa hàng thất bại');
+        }
+
+        return response.json();
+    },
+
+    // Check follow status
+    checkFollowStatus: async (storeId: string, token: string): Promise<{ success: boolean; data: { isFollowing: boolean } }> => {
+        const response = await fetch(`${API_BASE_URL}/store/follow/${storeId}/status`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Kiểm tra trạng thái theo dõi thất bại');
+        }
+
+        return response.json();
+    },
+
+    // Get followed stores
+    getFollowedStores: async (token: string): Promise<{ success: boolean; data: Store[] }> => {
+        const response = await fetch(`${API_BASE_URL}/store/followed`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Lấy danh sách cửa hàng đã theo dõi thất bại');
+        }
+
+        return response.json();
+    },
+
+    // Get store by ID (public - no token required, but can pass token to get follow status)
+    getStoreById: async (storeId: string, token?: string): Promise<{ success: boolean; data: Store & { isFollowing?: boolean } }> => {
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/store/${storeId}`, {
+            method: 'GET',
+            headers,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Lấy thông tin cửa hàng thất bại');
+        }
+
+        return response.json();
+    },
+
+    // Get top stores (public - no token required, but can pass token to get follow status)
+    getTopStores: async (token?: string, limit: number = 10): Promise<{ success: boolean; data: Array<Store & { isFollowing?: boolean }> }> => {
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/store/top?limit=${limit}`, {
+            method: 'GET',
+            headers,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Lấy danh sách cửa hàng nổi bật thất bại');
         }
 
         return response.json();

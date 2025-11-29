@@ -1,10 +1,11 @@
-import { MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Modal,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -18,6 +19,10 @@ export default function DeliveryScreen() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [rating, setRating] = useState(0);
 
   useEffect(() => {
     loadOrders();
@@ -57,6 +62,57 @@ export default function DeliveryScreen() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleCloseRatingModal = async () => {
+    // Cập nhật status mà không đánh giá
+    if (selectedOrder) {
+      try {
+        const token = await AsyncStorage.getItem('jwt_token');
+        if (!token) {
+          router.replace('/login');
+          return;
+        }
+        await orderService.updateOrderStatus(selectedOrder.id, 'shipped', token);
+        loadOrders();
+      } catch (error: any) {
+        console.error('Error confirming received:', error);
+      }
+    }
+    setShowRatingModal(false);
+    setSelectedOrder(null);
+    setSelectedProduct(null);
+    setRating(0);
+  };
+
+  const handleRateProduct = async () => {
+    if (!selectedProduct || !selectedOrder || rating === 0) return;
+
+    try {
+      const token = await AsyncStorage.getItem('jwt_token');
+      if (!token) {
+        router.replace('/login');
+        return;
+      }
+
+      // Cập nhật status trước
+      await orderService.updateOrderStatus(selectedOrder.id, 'shipped', token);
+
+      // Đóng modal và chuyển đến trang đánh giá sản phẩm
+      setShowRatingModal(false);
+      const productId = selectedProduct.productId || selectedProduct.product?.id;
+      if (productId) {
+        router.push(`/product?productId=${productId}&orderId=${selectedOrder.id}&rating=${rating}&tab=reviews`);
+      } else {
+        loadOrders();
+      }
+    } catch (error: any) {
+      console.error('Error rating product:', error);
+    } finally {
+      setSelectedOrder(null);
+      setSelectedProduct(null);
+      setRating(0);
+    }
   };
 
   return (
@@ -159,17 +215,13 @@ export default function DeliveryScreen() {
               {/* Confirm Received Button */}
               <TouchableOpacity
                 style={styles.receivedButton}
-                onPress={async () => {
-                  try {
-                    const token = await AsyncStorage.getItem('jwt_token');
-                    if (!token) {
-                      router.replace('/login');
-                      return;
-                    }
-                    await orderService.updateOrderStatus(order.id, 'shipped', token);
-                    loadOrders();
-                  } catch (error: any) {
-                    console.error('Error confirming received:', error);
+                onPress={() => {
+                  // Hiển thị popup đánh giá cho sản phẩm đầu tiên trong đơn hàng
+                  if (order.orderItems && order.orderItems.length > 0) {
+                    setSelectedOrder(order);
+                    setSelectedProduct(order.orderItems[0]);
+                    setRating(0);
+                    setShowRatingModal(true);
                   }
                 }}
               >
@@ -180,6 +232,82 @@ export default function DeliveryScreen() {
           ))}
         </ScrollView>
       )}
+
+      {/* Rating Modal */}
+      <Modal
+        visible={showRatingModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRatingModal(false)}
+      >
+        <View style={styles.ratingModalOverlay}>
+          <View style={styles.ratingModalContainer}>
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.ratingModalClose}
+              onPress={() => {
+                handleCloseRatingModal();
+              }}
+            >
+              <MaterialIcons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+
+            {/* Success Icon */}
+            <View style={styles.ratingModalIcon}>
+              <MaterialIcons name="check-circle" size={50} color="#4CAF50" />
+            </View>
+
+            {/* Question */}
+            <Text style={styles.ratingModalTitle}>
+              Bạn có hài lòng với đơn hàng?
+            </Text>
+
+            {/* Stars */}
+            <View style={styles.ratingStarsContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => setRating(star)}
+                  style={styles.ratingStarButton}
+                >
+                  <FontAwesome
+                    name={star <= rating ? 'star' : 'star-o'}
+                    size={32}
+                    color="#FBBC05"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.ratingModalActions}>
+              <TouchableOpacity
+                style={[styles.ratingModalButton, styles.ratingModalButtonSecondary]}
+                onPress={() => {
+                  handleCloseRatingModal();
+                }}
+              >
+                <Text style={styles.ratingModalButtonTextSecondary}>Bỏ qua</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.ratingModalButton,
+                  styles.ratingModalButtonPrimary,
+                  rating === 0 && styles.ratingModalButtonDisabled
+                ]}
+                onPress={() => {
+                  if (rating > 0) {
+                    handleRateProduct();
+                  }
+                }}
+                disabled={rating === 0}
+              >
+                <Text style={styles.ratingModalButtonTextPrimary}>Đánh giá</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
