@@ -216,7 +216,6 @@ export const getProductById = async (req: Request, res: Response) => {
 
     const product = await prisma.product.findUnique({
       where: { id },
-<<<<<<< HEAD
       include: {
         images: true,
         category: true,

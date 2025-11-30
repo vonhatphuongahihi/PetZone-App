@@ -15,6 +15,7 @@ export function useChatLogic(conversationId: number) {
     const listRef = useRef<FlatList<Message>>(null);
     const [isTyping, setIsTyping] = useState(false);
     const [isPeerOnline, setIsPeerOnline] = useState<boolean>(false);
+    const [onlineStatusLoaded, setOnlineStatusLoaded] = useState<boolean>(false);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [myUserId, setMyUserId] = useState<string | null>(null);
     const myUserIdRef = useRef<string | null>(null);
@@ -115,6 +116,10 @@ export function useChatLogic(conversationId: number) {
                 const { userId } = data;
                 if (userId !== myUserIdRef.current) {
                     setIsPeerOnline(true);
+                    // Mark as loaded when we receive real-time events
+                    if (!onlineStatusLoaded) {
+                        setOnlineStatusLoaded(true);
+                    }
                 }
             };
 
@@ -223,13 +228,14 @@ export function useChatLogic(conversationId: number) {
                                 const onlineUsers = data.onlineUsers || [];
                                 const isOnline = onlineUsers.includes(other.userId);
                                 setIsPeerOnline(isOnline);
+                                setOnlineStatusLoaded(true); // Mark as loaded
                                 console.log('🔌 [useChatLogic] Initial peer online status:', isOnline, 'for user:', other.userId);
                             }
                         }
                     } catch (error) {
                         console.error('🔌 [useChatLogic] Error checking initial online status:', error);
-                        // Fallback: assume online if we can't check
-                        setIsPeerOnline(true);
+                        // Mark as loaded even on error to avoid stuck state
+                        setOnlineStatusLoaded(true);
                     }
                 }
             } catch (error) {
@@ -376,6 +382,7 @@ export function useChatLogic(conversationId: number) {
         text,
         isTyping,
         isPeerOnline,
+        onlineStatusLoaded,
         myUserId,
         lastReadAt,
         peerName,
