@@ -123,6 +123,9 @@ export const updateProduct = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: "ID không hợp lệ." });
 
+    console.log("req.body:", req.body);
+    console.log("req.files:", req.files);
+
     const { storeId, categoryId, title, description, price, oldPrice, quantity } = req.body;
     const files = req.files as Express.Multer.File[];
     const imageUrls: { url: string; alt: string | null }[] = [];
@@ -213,7 +216,21 @@ export const getProductById = async (req: Request, res: Response) => {
 
     const product = await prisma.product.findUnique({
       where: { id },
-      include: { images: true, category: true, store: true },
+      include: {
+        images: true,
+        category: true,
+        store: {
+          select: {
+            id: true,
+            storeName: true,
+            avatarUrl: true,
+            rating: true,
+            totalProducts: true,
+            totalReviews: true,
+            followersCount: true
+          }
+        }
+      },
     });
 
     if (!product) {
@@ -254,7 +271,16 @@ export const getTodayProducts = async (req: Request, res: Response) => {
           { oldPrice: { not: null } },
         ],
       },
-      include: { images: true, category: true },
+      include: {
+        images: true,
+        category: true,
+        store: {
+          select: {
+            storeName: true,
+            avatarUrl: true
+          }
+        }
+      },
       orderBy: { createdAt: "desc" },
       take: 10,
     });
@@ -274,7 +300,16 @@ export const getNewProducts = async (req: Request, res: Response) => {
 
     const products = await prisma.product.findMany({
       where: { createdAt: { gte: sevenDaysAgo } },
-      include: { images: true, category: true },
+      include: {
+        images: true,
+        category: true,
+        store: {
+          select: {
+            storeName: true,
+            avatarUrl: true
+          }
+        }
+      },
       orderBy: { createdAt: "desc" },
       take: 10,
     });
@@ -291,7 +326,16 @@ export const getHotProducts = async (req: Request, res: Response) => {
   try {
     const products = await prisma.product.findMany({
       where: { oldPrice: { not: null } },
-      include: { images: true, category: true },
+      include: {
+        images: true,
+        category: true,
+        store: {
+          select: {
+            storeName: true,
+            avatarUrl: true
+          }
+        }
+      },
       take: 50,
     });
 
@@ -311,6 +355,103 @@ export const getHotProducts = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: "Lỗi server." });
   }
 };
+
+// === SEARCH PRODUCTS ===
+interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
+
+export const searchProducts = async (req: Request, res: Response) => {
+  try {
+    const query = (req.query.q as string)?.trim();
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const offset = (page - 1) * limit;
+
+    console.log("Search query:", query);
+    console.log("Limit:", limit, "Page:", page, "Offset:", offset);
+
+    if (!query) {
+      console.warn("Search query missing");
+      return res.status(400).json({
+        success: false,
+        message: "Search query (q) is required",
+      });
+    }
+
+    // Lấy thông tin user nếu có đăng nhập
+    const user = (req as any).user;
+    console.log("Authenticated user:", user);
+
+    const isSeller = user?.role === "SELLER";
+
+    const where: any = {
+      OR: [
+        { title: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } }
+      ]
+    };
+
+    // Nếu là SELLER → chỉ tìm sản phẩm của cửa hàng mình
+    if (isSeller) {
+      const sellerStore = await prisma.store.findFirst({
+        where: { userId: user.id },
+        select: { id: true },
+      });
+
+      console.log("Seller store:", sellerStore);
+
+      if (!sellerStore) {
+        return res.status(400).json({
+          success: false,
+          message: "Seller has no store",
+        });
+      }
+
+      where.storeId = sellerStore.id;
+    }
+
+    console.log("Prisma where filter:", where);
+
+    const products = await prisma.product.findMany({
+      where,
+      skip: offset,
+      take: limit,
+      include: {
+        store: {
+          select: { id: true, storeName: true, avatarUrl: true }
+        },
+        images: {
+          select: { url: true }
+        },
+      }
+    });
+
+    console.log("Found products count:", products.length);
+
+    return res.status(200).json({
+      success: true,
+      data: products,
+      pagination: {
+        page,
+        limit,
+      },
+    });
+
+  } catch (error) {
+    console.error("Search error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error searching products",
+    });
+  }
+};
+
+
 
 // === MULTER MIDDLEWARE ===
 export const uploadImages = upload.array("images", 10); // Tối đa 10 ảnh

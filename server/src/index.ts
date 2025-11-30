@@ -13,6 +13,7 @@ import categoryRoutes from './routes/category';
 import chatRoutes from './routes/chat';
 import orderRoutes from './routes/order';
 import productRoutes from './routes/product';
+import reviewRoutes from './routes/review';
 import storeRoutes from './routes/store';
 import supportRoutes from './routes/support';
 import userRoutes from './routes/user';
@@ -39,10 +40,30 @@ app.use(cors({
             'http://127.0.0.1:8081',
             'http://127.0.0.1:8082',
         ];
+
+        // Allow requests with no origin (mobile apps, Postman, etc.)
         if (!origin) return callback(null, true);
-        if (allowed.some((o) => origin.startsWith(o)) || /http:\/\/\d+\.\d+\.\d+\.\d+:(8081|8082|19006|19000)/.test(origin)) {
+
+        // Check if origin is in allowed list
+        if (allowed.some((o) => origin.startsWith(o))) {
             return callback(null, true);
         }
+
+        // Allow local network IPs (10.x.x.x, 172.16-31.x.x, 192.168.x.x) with common ports
+        const localNetworkRegex = /^http:\/\/(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+):(3001|8081|8082|19006|19000|19001)$/;
+
+        // Allow any localhost or 127.0.0.1 with any port
+        const localhostRegex = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
+
+        if (localNetworkRegex.test(origin) || localhostRegex.test(origin)) {
+            return callback(null, true);
+        }
+
+        // In development, allow all origins (remove in production)
+        if (process.env.NODE_ENV !== 'production') {
+            return callback(null, true);
+        }
+
         return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
@@ -65,6 +86,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);

@@ -27,7 +27,7 @@ export const productCardStyles = StyleSheet.create({
     },
     discountText: { color: "#fff", fontSize: 12, fontWeight: "700" },
 
-    image: { width: "100%", height: 160, resizeMode: "cover" },
+    image: { width: "100%", height: 160 },
 
     info: { 
         padding: 10, 

@@ -37,6 +37,7 @@ export default function UserInfoScreen() {
     // Form data
     const [formData, setFormData] = useState({
         username: '',
+        dateofBirth: '',
     });
 
     useEffect(() => {
@@ -57,6 +58,7 @@ export default function UserInfoScreen() {
             setUserInfo(response.user);
             setFormData({
                 username: response.user.username,
+                dateofBirth: response.user.dateofBirth || '',
             });
         } catch (error: any) {
             console.error('Load user info error:', error);
@@ -76,7 +78,7 @@ export default function UserInfoScreen() {
             }
 
             // Kiểm tra xem có thay đổi gì không
-            if (!userInfo || formData.username === userInfo.username) {
+            if (!userInfo || (formData.username === userInfo.username && formData.dateofBirth === (userInfo.dateofBirth || ''))) {
                 setIsEditing(false);
                 return;
             }
@@ -99,6 +101,7 @@ export default function UserInfoScreen() {
         // Reset form data
         setFormData({
             username: userInfo.username,
+            dateofBirth: userInfo.dateofBirth || '',
         });
         setIsEditing(false);
     };
@@ -480,6 +483,24 @@ export default function UserInfoScreen() {
                                 {userInfo.isActive ? "Hoạt động" : "Tạm khóa"}
                             </Text>
                         </View>
+                    </View>
+
+                    {/* Date of Birth */}
+                    <View style={userInfoStyles.inputGroup}>
+                        <Text style={userInfoStyles.label}>Ngày sinh</Text>
+                        <TextInput
+                            style={[
+                                userInfoStyles.input,
+                                focusedInput === 'dateofBirth' && userInfoStyles.inputFocused,
+                                !isEditing && userInfoStyles.disabledInput
+                            ]}
+                            value={formData.dateofBirth}
+                            onChangeText={(text) => setFormData({...formData, dateofBirth: text})}
+                            onFocus={() => setFocusedInput('dateofBirth')}
+                            onBlur={() => setFocusedInput(null)}
+                            editable={isEditing}
+                            placeholder="Nhập ngày sinh (VD: 01/01/2000)"
+                        />
                     </View>
 
                     {/* Created Date */}

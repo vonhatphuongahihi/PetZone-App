@@ -6,9 +6,11 @@ import {
   FlatList,
   Image,
   Platform,
+  Pressable,
   Text,
+  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { Category as ApiCategory, categoryService } from "../../services/categoryService";
 import { Product as ApiProduct, productService } from "../../services/productService";
@@ -24,6 +26,31 @@ export default function ShopScreen() {
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false); // Ngăn nhấn nút khi đang tải
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ApiProduct[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  const handleSearchInShop = async () => {
+    if (!searchQuery.trim()) return;
+
+    setSearchLoading(true);
+    try {
+      const token = await tokenService.getToken();
+      if (!token) throw new Error("Không có token");
+
+      const filtered = products.filter((p) =>
+        p.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      setSearchResults(filtered);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
 
   const { refresh } = useLocalSearchParams();
 
@@ -93,34 +120,127 @@ export default function ShopScreen() {
 
   // Render sản phẩm
   const renderProductItem = ({ item }: { item: ApiProduct }) => (
-    <View style={styles.card}>
-      <View style={styles.imageWrapper}>
-        <Image
-          source={item.images?.length ? { uri: item.images[0].url } : require("../../assets/images/cat.png")}
-          style={styles.productImage}
-        />
-        <View style={styles.stockTag}>
-          <Text style={styles.stockTagText}>Còn lại {item.quantity}</Text>
+    <Pressable
+      onPress={() => {
+        router.push(`/product?productId=${item.id}`);
+      }}
+      style={{ flex: 1, marginHorizontal: 6, marginBottom: 12 }} // ← quan trọng: flex + margin
+    >
+      <View style={styles.card}>
+        {/* Ảnh sản phẩm */}
+        <View style={styles.imageWrapper}>
+          <Image
+            source={
+              item.images?.length
+                ? { uri: item.images[0].url }
+                : require("../../assets/images/cat.png")
+            }
+            style={styles.productImage}
+          />
+          <View style={styles.stockTag}>
+            <Text style={styles.stockTagText}>Còn lại {item.quantity}</Text>
+          </View>
+        </View>
+
+        {/* Tên sản phẩm */}
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.title}
+        </Text>
+
+        {/* Giá */}
+        <View style={styles.priceRow}>
+          <Text style={styles.productPrice}>
+            {Number(item.price).toLocaleString()}đ
+          </Text>
+          {item.oldPrice && (
+            <>
+              <Text style={styles.oldPrice}>
+                {Number(item.oldPrice).toLocaleString()}đ
+              </Text>
+              <Text style={styles.discount}>
+                -{Math.round((1 - Number(item.price) / Number(item.oldPrice)) * 100)}%
+              </Text>
+            </>
+          )}
+        </View>
+
+        {/* Meta */}
+        <View style={styles.metaRow}>
+          <Text style={styles.soldLabel}>Đã bán {item.totalReviews}</Text>
+          <Text style={styles.rating}>★ {Number(item.avgRating).toFixed(1)}</Text>
+        </View>
+
+        {/* Nút Sửa + Xóa – CÓ stopPropagation ĐỂ KHÔNG BỊ NHẢY TRANG CHI TIẾT */}
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={(e) => {
+              e.stopPropagation(); // ← BẮT BUỘC: ngăn Pressable cha bắt sự kiện
+              router.push({
+                pathname: "/seller/shopUpdateProduct",
+                params: { product: JSON.stringify(item), storeId: store?.id },
+              });
+            }}
+          >
+            <Text style={styles.editButtonText}>Sửa</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={(e) => {
+              e.stopPropagation(); // ← BẮT BUỘC
+              handleDeleteProduct(item.id);
+            }}
+          >
+            <Text style={styles.deleteButtonText}>Xóa</Text>
+          </TouchableOpacity>
         </View>
       </View>
-      <Text style={styles.productName} numberOfLines={2}>{item.title}</Text>
-      <View style={styles.priceRow}>
-        <Text style={styles.productPrice}>{Number(item.price).toLocaleString()}đ</Text>
-        {item.oldPrice && (
-          <>
-            <Text style={styles.oldPrice}>{Number(item.oldPrice).toLocaleString()}đ</Text>
-            <Text style={styles.discount}>
-              -{Math.round((1 - Number(item.price) / Number(item.oldPrice)) * 100)}%
-            </Text>
-          </>
-        )}
-      </View>
-      <View style={styles.metaRow}>
-        <Text style={styles.soldLabel}>Đã bán {item.totalReviews}</Text>
-        <Text style={styles.rating}>★ {Number(item.avgRating).toFixed(1)}</Text>
-      </View>
-    </View>
+    </Pressable>
   );
+  const handleConfirmDelete = (id: number) => {
+    confirmDelete(id);
+  };
+
+  const handleDeleteProduct = (productId: number) => {
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?");
+      if (confirmed) handleConfirmDelete(productId);
+    } else {
+      Alert.alert(
+        "Xóa sản phẩm",
+        "Bạn có chắc chắn muốn xóa?\nHành động này không thể hoàn tác.",
+        [
+          { text: "Hủy", style: "cancel" },
+          { text: "Xóa ngay", style: "destructive", onPress: () => handleConfirmDelete(productId) },
+        ],
+        { cancelable: true }
+      );
+    }
+  };
+
+  const confirmDelete = async (productId: number) => {
+    try {
+      setLoading(true);
+      const token = await tokenService.getToken();
+      if (!token) throw new Error("Không có token");
+
+      console.log("Đang xóa sản phẩm ID:", productId);
+      const res = await productService.deleteProduct(productId, token);
+      console.log("Delete API response:", res);
+      console.log("XÓA THÀNH CÔNG:", res);
+
+      // --- CẬP NHẬT NGAY STATE products ---
+      setProducts(prev => prev.filter(p => p.id !== productId));
+
+      Alert.alert("Thành công", "Đã xóa sản phẩm!");
+    } catch (err: any) {
+      console.error("Lỗi xóa:", err);
+      Alert.alert("Lỗi", err.message || "Xóa thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Render danh mục
   const renderCategoryItem = ({ item }: { item: ApiCategory }) => {
@@ -162,7 +282,13 @@ export default function ShopScreen() {
           <View style={styles.iconGroup}>
             <Ionicons name="notifications-outline" size={22} color="#fff" style={styles.icon} />
             <Ionicons name="chatbubble-ellipses-outline" size={22} color="#fff" style={styles.icon} />
-            <Ionicons name="search-outline" size={22} color="#fff" style={styles.icon} />
+            <Ionicons
+              name="search-outline"
+              size={22}
+              color="#fff"
+              style={styles.icon}
+              onPress={() => setSearchVisible(true)}
+            />
           </View>
         </View>
 
@@ -206,7 +332,7 @@ export default function ShopScreen() {
                 }
                 console.log("Navigating with storeId:", currentStore.id);
                 router.push({
-                  pathname: "/seller/shopAddProduct", 
+                  pathname: "/seller/shopAddProduct",
                   params: {
                     storeId: currentStore.id,
                     refresh: "true",
@@ -267,6 +393,7 @@ export default function ShopScreen() {
           renderItem={renderProductItem}
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
+          columnWrapperStyle={{ justifyContent: "space-between" }}
           contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 10 }}
           showsVerticalScrollIndicator={false}
         />
@@ -281,6 +408,46 @@ export default function ShopScreen() {
         />
       )}
 
+      {searchVisible && (
+        <Pressable style={styles.searchOverlay} onPress={() => setSearchVisible(false)}>
+          <Pressable style={styles.searchPopup} onPress={(e) => e.stopPropagation()}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Tìm sản phẩm..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={() => handleSearchInShop()}
+              autoFocus
+            />
+            {searchLoading && <Text>Đang tìm...</Text>}
+
+            {/* Đây là chỗ chèn FlatList */}
+            <FlatList
+              data={searchResults}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.searchProductRow}
+                  onPress={() => {
+                    setSearchVisible(false);
+                    router.push(`/product?productId=${item.id}`);
+                  }}
+                >
+                  <Image
+                    source={item.images?.[0]?.url ? { uri: item.images[0].url } : require('../../assets/images/cat.png')}
+                    style={styles.searchProductImage}
+                  />
+                  <View style={styles.searchProductInfo}>
+                    <Text style={styles.searchProductTitle} numberOfLines={2}>{item.title}</Text>
+                    <Text style={styles.searchProductPrice}>{Number(item.price).toLocaleString()}đ</Text>
+                  </View>
+                </Pressable>
+              )}
+            />
+            {/* Kết thúc FlatList */}
+          </Pressable>
+        </Pressable>
+      )}
       <SellerBottomNavigation />
     </View>
   );

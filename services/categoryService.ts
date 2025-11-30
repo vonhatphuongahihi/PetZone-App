@@ -1,4 +1,5 @@
-import { API_BASE_URL } from '../config/api';
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.3.40:3001/api';
 
 export interface Category {
   id: number;
@@ -11,6 +12,7 @@ export interface Category {
   updatedAt: string;
   children?: Category[];
   parent?: Category;
+  storeId?: string;
 }
 
 export const categoryService = {

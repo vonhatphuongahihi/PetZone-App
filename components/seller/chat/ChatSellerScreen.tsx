@@ -49,6 +49,7 @@ export default function ChatSellerScreen() {
         text,
         isTyping,
         isPeerOnline,
+        onlineStatusLoaded,
         myUserId,
         peerName,
         avatarUrl,
@@ -218,13 +219,15 @@ export default function ChatSellerScreen() {
                         <View>
                             <Image
                                 source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.png")}
-                                style={chatSellerStyles.avatar} 
+                                style={chatSellerStyles.avatar}
                             />
                             {isPeerOnline ? <View style={chatSellerStyles.onlineDot} /> : null}
                         </View>
                         <View>
                             <Text style={chatSellerStyles.name}>{peerName}</Text>
-                            <Text style={chatSellerStyles.status}>{isPeerOnline ? 'Đang hoạt động' : 'Ngoại tuyến'}</Text>
+                            <Text style={chatSellerStyles.status}>
+                                {onlineStatusLoaded ? (isPeerOnline ? 'Đang hoạt động' : 'Ngoại tuyến') : ''}
+                            </Text>
                         </View>
                     </View>
                     <TouchableOpacity onPress={() => setShowOptionsModal(true)}>

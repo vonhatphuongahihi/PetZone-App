@@ -1,5 +1,5 @@
-// import { API_BASE_URL } from '../config/api';
-export const API_BASE_URL = 'http://10.11.7.150:3001/api';
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.3.40:3001/api';
 
 export interface RegisterData {
     email: string;
@@ -11,6 +11,13 @@ export interface RegisterData {
 export interface LoginData {
     email: string;
     password: string;
+}
+
+// 1. Thêm interface cho dữ liệu đặt lại mật khẩu
+export interface ResetPasswordData {
+    email: string;
+    password: string;
+    otp?: string; // Tùy backend, có thể cần gửi kèm OTP để xác thực lần cuối
 }
 
 export interface AuthResponse {
@@ -100,6 +107,21 @@ export const authService = {
             const errorData = await response.json();
             throw new Error(errorData.message || 'Xác thực OTP thất bại');
         }
+        return response.json();
+    },
+
+    resetPassword: async (data: ResetPasswordData): Promise<{ message: string }> => {
+        const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Đặt lại mật khẩu thất bại');
+        }
+
         return response.json();
     },
 };

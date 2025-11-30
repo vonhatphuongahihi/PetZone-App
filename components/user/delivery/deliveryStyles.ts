@@ -193,4 +193,77 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  // Rating Modal Styles
+  ratingModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ratingModalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+    alignItems: 'center',
+  },
+  ratingModalClose: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 4,
+  },
+  ratingModalIcon: {
+    marginBottom: 16,
+  },
+  ratingModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  ratingStarsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    gap: 8,
+  },
+  ratingStarButton: {
+    padding: 4,
+  },
+  ratingModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  ratingModalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratingModalButtonPrimary: {
+    backgroundColor: '#FBBC05',
+  },
+  ratingModalButtonSecondary: {
+    backgroundColor: '#F5F5F5',
+  },
+  ratingModalButtonDisabled: {
+    opacity: 0.5,
+  },
+  ratingModalButtonTextPrimary: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  ratingModalButtonTextSecondary: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });

@@ -1,11 +1,12 @@
 // src/screens/HomeScreen.tsx
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    DeviceEventEmitter,
     FlatList,
     Image,
     ScrollView,
@@ -14,7 +15,8 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { API_BASE_URL } from "../../config/api";
+import { storeService } from "../../services/storeService";
+import { tokenService } from "../../services/tokenService";
 import { ProductCard } from "../user/product-card/ProductCard";
 import SearchBarWithPopup from "../user/search-bar-with-popup/SearchBarWithPopup";
 import { homeStyles } from './homeStyles';
@@ -25,39 +27,63 @@ const hotSearchProducts = [
     { id: 2, name: "Vòng cổ da thật", price: 120000, oldPrice: 150000, image: require("../../assets/images/cat.png") },
 ];
 
-const topStores = [
-    { id: "s1", name: "PetZone Store", avatar: require("../../assets/images/shop.png"), followerCount: 14, soldCount: 1000, isFollowed: true },
-    { id: "s2", name: "Pet Paradise Shop", avatar: require("../../assets/images/shop.png"), followerCount: 20, soldCount: 980, isFollowed: false },
-    { id: "s3", name: "Happy Pet Store", avatar: require("../../assets/images/shop.png"), followerCount: 50, soldCount: 756, isFollowed: false },
-    { id: "s4", name: "Pet Care Center", avatar: require("../../assets/images/shop.png"), followerCount: 25, soldCount: 642, isFollowed: true }
-];
+interface TopStore {
+    id: string;
+    storeName: string;
+    avatarUrl?: string;
+    followersCount: number;
+    totalOrders: number;
+    isFollowing?: boolean;
+}
 
 export default function HomeScreen() {
     const [categories, setCategories] = useState<any[]>([]);
     const [todayProducts, setTodayProducts] = useState<any[]>([]);
     const [newProducts, setNewProducts] = useState<any[]>([]);
     const [hotProducts, setHotProducts] = useState<any[]>([]);
+    const [topStores, setTopStores] = useState<TopStore[]>([]);
     const [loading, setLoading] = useState(true);
 
     const { refresh } = useLocalSearchParams();
 
-    const [storeFollowStates, setStoreFollowStates] = useState<{ [key: string]: boolean }>(() => {
-        const init: any = {};
-        topStores.forEach(s => init[s.id] = s.isFollowed);
-        return init;
-    });
+    const handleToggleFollow = async (storeId: string) => {
+        try {
+            const token = await tokenService.getToken();
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập để theo dõi cửa hàng');
+                return;
+            }
 
-    const handleToggleFollow = (storeId: string) => {
-        setStoreFollowStates(prev => ({
-            ...prev,
-            [storeId]: !prev[storeId],
-        }));
+            const store = topStores.find(s => s.id === storeId);
+            const isCurrentlyFollowing = store?.isFollowing || false;
+
+            // Use followStore endpoint which now toggles follow/unfollow
+            const response = await storeService.followStore(storeId, token);
+            const newFollowingState = (response as any).isFollowing !== undefined ? (response as any).isFollowing : !isCurrentlyFollowing;
+
+            // Update local state
+            setTopStores(prev => prev.map(s =>
+                s.id === storeId
+                    ? {
+                        ...s,
+                        isFollowing: newFollowingState,
+                        followersCount: newFollowingState
+                            ? s.followersCount + 1
+                            : Math.max(0, s.followersCount - 1)
+                    }
+                    : s
+            ));
+        } catch (error: any) {
+            console.error('Toggle follow error:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể thay đổi trạng thái theo dõi');
+        }
     };
 
     // 🔹 Fetch danh mục cha
     const fetchCategories = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+            const API_BASE_URL = 'http://10.0.3.40:3001/api';
             const res = await fetch(`${API_BASE_URL}/categories`, { headers });
 
             if (res.status === 401) {
@@ -80,6 +106,7 @@ export default function HomeScreen() {
     const fetchProducts = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+            const API_BASE_URL = 'http://10.0.3.40:3001/api';
             const [todayRes, newRes, hotRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/products/today`, { headers }),
                 fetch(`${API_BASE_URL}/products/new`, { headers }),
@@ -107,6 +134,46 @@ export default function HomeScreen() {
         }
     };
 
+    // 🔹 Fetch top stores
+    const fetchTopStores = async (token?: string, preserveFollowState: boolean = false) => {
+        try {
+            const result = await storeService.getTopStores(token, 10);
+            if (result.success) {
+                setTopStores(prevStores => {
+                    const newStores = result.data.map(store => {
+                        // Nếu preserveFollowState = true, giữ lại trạng thái follow hiện tại
+                        if (preserveFollowState) {
+                            const existingStore = prevStores.find(s => s.id === store.id);
+                            return {
+                                id: store.id,
+                                storeName: store.storeName,
+                                avatarUrl: store.avatarUrl,
+                                followersCount: store.followersCount,
+                                totalOrders: store.totalOrders,
+                                isFollowing: existingStore?.isFollowing !== undefined
+                                    ? existingStore.isFollowing
+                                    : (store.isFollowing !== undefined ? store.isFollowing : false)
+                            };
+                        }
+                        // Nếu không, dùng giá trị từ API (ưu tiên giá trị từ API, nếu undefined thì false)
+                        return {
+                            id: store.id,
+                            storeName: store.storeName,
+                            avatarUrl: store.avatarUrl,
+                            followersCount: store.followersCount,
+                            totalOrders: store.totalOrders,
+                            isFollowing: store.isFollowing !== undefined ? Boolean(store.isFollowing) : false
+                        };
+                    });
+                    return newStores;
+                });
+            }
+        } catch (error) {
+            console.error("Lỗi tải cửa hàng:", error);
+            // Không hiển thị alert để không làm gián đoạn trải nghiệm
+        }
+    };
+
     useEffect(() => {
         (async () => {
             setLoading(true);
@@ -120,10 +187,46 @@ export default function HomeScreen() {
                 return;
             }
 
-            await Promise.all([fetchCategories(token), fetchProducts(token)]);
+            await Promise.all([
+                fetchCategories(token),
+                fetchProducts(token),
+                fetchTopStores(token, false) // Lần đầu load, không preserve state
+            ]);
             setLoading(false);
         })();
     }, [refresh]);
+
+    // Listen for follow status changes from UserShopScreen
+    useEffect(() => {
+        const subscription = DeviceEventEmitter.addListener('store_follow_changed', (data: { storeId: string; isFollowing: boolean; followersCount: number }) => {
+            setTopStores(prev => prev.map(s =>
+                s.id === data.storeId
+                    ? {
+                        ...s,
+                        isFollowing: data.isFollowing,
+                        followersCount: data.followersCount
+                    }
+                    : s
+            ));
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, []);
+
+    // Refresh top stores when screen is focused, but preserve follow state
+    useFocusEffect(
+        React.useCallback(() => {
+            const refreshStores = async () => {
+                const token = await AsyncStorage.getItem("jwt_token");
+                if (token) {
+                    await fetchTopStores(token, true); // Preserve follow state when refreshing
+                }
+            };
+            refreshStores();
+        }, [])
+    );
 
     // 🔹 Render danh mục cha
     const renderCategoryItem = ({ item }: any) => (
@@ -142,6 +245,7 @@ export default function HomeScreen() {
                             : require("../../assets/images/food-icon.png") // <-- paste ảnh local mặc định
                     }
                     style={homeStyles.categoryIcon}
+                    resizeMode="contain"
                 />
             </View>
             <Text style={homeStyles.categoryText}>{item.name}</Text>
@@ -182,32 +286,48 @@ export default function HomeScreen() {
     };
 
     // 🔹 Render cửa hàng
-    const renderStoreItem = ({ item }: any) => {
-        const isFollowed = storeFollowStates[item.id];
+    const renderStoreItem = ({ item }: { item: TopStore }) => {
+        const isFollowed = item.isFollowing || false;
 
         return (
-            <TouchableOpacity style={homeStyles.storeItem}>
-                <Image source={item.avatar} style={homeStyles.storeAvatar} />
+            <TouchableOpacity
+                style={homeStyles.storeItem}
+                onPress={() => router.push({
+                    pathname: "/shop",
+                    params: {
+                        storeId: item.id,
+                        isFollowing: item.isFollowing ? "true" : "false"
+                    }
+                })}
+            >
+                <Image
+                    source={item.avatarUrl
+                        ? { uri: item.avatarUrl }
+                        : require("../../assets/images/shop.png")
+                    }
+                    style={homeStyles.storeAvatar}
+                    resizeMode="cover"
+                />
                 <View style={homeStyles.storeInfo}>
-                    <Text style={homeStyles.storeName} numberOfLines={2}>{item.name}</Text>
+                    <Text style={homeStyles.storeName} numberOfLines={2}>{item.storeName}</Text>
 
                     <TouchableOpacity
                         style={[homeStyles.followButton, { backgroundColor: isFollowed ? "#E0E0E0" : "#FBBC05" }]}
                         onPress={() => handleToggleFollow(item.id)}
                     >
                         <Text style={[homeStyles.followButtonText, { color: isFollowed ? "#666" : "#FFF" }]}>
-                            {isFollowed ? "Bỏ theo dõi" : "Theo dõi"}
+                            {isFollowed ? "Đã theo dõi" : "Theo dõi"}
                         </Text>
                     </TouchableOpacity>
 
                     <View style={homeStyles.storeStatRow}>
                         <Feather name="users" size={12} color="#7F8C8D" />
-                        <Text style={homeStyles.storeStatText}>{item.followerCount} người theo dõi</Text>
+                        <Text style={homeStyles.storeStatText}>{item.followersCount} người theo dõi</Text>
                     </View>
 
                     <View style={homeStyles.storeStatRow}>
                         <Feather name="shopping-bag" size={12} color="#7F8C8D" />
-                        <Text style={homeStyles.storeStatText}>{item.soldCount} đã bán</Text>
+                        <Text style={homeStyles.storeStatText}>{item.totalOrders} đơn hàng</Text>
                     </View>
                 </View>
             </TouchableOpacity>
@@ -225,21 +345,32 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={homeStyles.container}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Header */}
-                <View style={homeStyles.header}>
+
+            <ScrollView showsVerticalScrollIndicator={false} >
+                <View style={homeStyles.fixedHeader}>
                     <View style={homeStyles.searchBarContainer}>
-                        <SearchBarWithPopup recentSearches={recentSearches} hotProducts={hotSearchProducts} />
+                        <SearchBarWithPopup
+                            recentSearches={recentSearches}
+                            hotProducts={hotSearchProducts}
+                        />
                     </View>
-                    <TouchableOpacity style={homeStyles.cartButton} onPress={() => router.push('/cart')}>
-                        <MaterialCommunityIcons name="cart" color="#FBBC05" size={30} />
+
+                    <TouchableOpacity
+                        style={homeStyles.cartButton}
+                        onPress={() => router.push('/cart')}
+                    >
+                        <MaterialCommunityIcons name="cart" color="#FBBC05" size={28} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Banner */}
                 <View style={homeStyles.heroBanner}>
                     <View style={homeStyles.heroContent}>
-                        <Image source={require("../../assets/images/banner.png")} style={homeStyles.heroBackgroundImage} />
+                        <Image
+                            source={require("../../assets/images/banner.png")}
+                            style={homeStyles.heroBackgroundImage}
+                            resizeMode="cover"
+                        />
                         <View style={homeStyles.heroTextContainer}>
                             <Text style={homeStyles.heroSubtitle}>
                                 Những sản phẩm tốt nhất{'\n'}cho thú cưng của bạn

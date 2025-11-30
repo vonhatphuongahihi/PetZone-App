@@ -538,5 +538,421 @@ export const storeController = {
                 message: 'An error occurred while fetching best selling products'
             });
         }
+    },
+
+    // Follow/Unfollow store (toggle)
+    followStore: async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user?.id;
+            const { storeId } = req.params;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
+            }
+
+            if (!storeId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Store ID is required'
+                });
+            }
+
+            // Check if store exists
+            const store = await prisma.store.findUnique({
+                where: { id: storeId }
+            });
+
+            if (!store) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Store not found'
+                });
+            }
+
+            // Check if already following
+            const existingFollow = await prisma.storeFollow.findUnique({
+                where: {
+                    userId_storeId: {
+                        userId,
+                        storeId
+                    }
+                }
+            });
+
+            if (existingFollow) {
+                // Unfollow if already following
+                await prisma.storeFollow.delete({
+                    where: {
+                        userId_storeId: {
+                            userId,
+                            storeId
+                        }
+                    }
+                });
+
+                // Update followers count
+                await prisma.store.update({
+                    where: { id: storeId },
+                    data: {
+                        followersCount: {
+                            decrement: 1
+                        }
+                    }
+                });
+
+                return res.json({
+                    success: true,
+                    message: 'Store unfollowed successfully',
+                    isFollowing: false
+                });
+            } else {
+                // Create follow
+                await prisma.storeFollow.create({
+                    data: {
+                        userId,
+                        storeId
+                    }
+                });
+
+                // Update followers count
+                await prisma.store.update({
+                    where: { id: storeId },
+                    data: {
+                        followersCount: {
+                            increment: 1
+                        }
+                    }
+                });
+
+                return res.json({
+                    success: true,
+                    message: 'Store followed successfully',
+                    isFollowing: true
+                });
+            }
+        } catch (error) {
+            console.error('Follow/Unfollow store error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while following/unfollowing the store'
+            });
+        }
+    },
+
+    // Unfollow store
+    unfollowStore: async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user?.id;
+            const { storeId } = req.params;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
+            }
+
+            if (!storeId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Store ID is required'
+                });
+            }
+
+            // Check if following
+            const existingFollow = await prisma.storeFollow.findUnique({
+                where: {
+                    userId_storeId: {
+                        userId,
+                        storeId
+                    }
+                }
+            });
+
+            if (!existingFollow) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Not following this store'
+                });
+            }
+
+            // Delete follow
+            await prisma.storeFollow.delete({
+                where: {
+                    userId_storeId: {
+                        userId,
+                        storeId
+                    }
+                }
+            });
+
+            // Update followers count
+            await prisma.store.update({
+                where: { id: storeId },
+                data: {
+                    followersCount: {
+                        decrement: 1
+                    }
+                }
+            });
+
+            res.json({
+                success: true,
+                message: 'Store unfollowed successfully'
+            });
+        } catch (error) {
+            console.error('Unfollow store error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while unfollowing the store'
+            });
+        }
+    },
+
+    // Check if user is following a store
+    checkFollowStatus: async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user?.id;
+            const { storeId } = req.params;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
+            }
+
+            if (!storeId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Store ID is required'
+                });
+            }
+
+            const follow = await prisma.storeFollow.findUnique({
+                where: {
+                    userId_storeId: {
+                        userId,
+                        storeId
+                    }
+                }
+            });
+
+            res.json({
+                success: true,
+                data: {
+                    isFollowing: !!follow
+                }
+            });
+        } catch (error) {
+            console.error('Check follow status error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while checking follow status'
+            });
+        }
+    },
+
+    // Get user's followed stores
+    getFollowedStores: async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user?.id;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
+            }
+
+            const follows = await prisma.storeFollow.findMany({
+                where: { userId },
+                include: {
+                    store: {
+                        include: {
+                            user: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                    email: true
+                                }
+                            }
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+
+            const stores = follows.map((follow: any) => follow.store);
+
+            res.json({
+                success: true,
+                data: stores
+            });
+        } catch (error) {
+            console.error('Get followed stores error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching followed stores'
+            });
+        }
+    },
+
+    // Get store by ID (public endpoint - no auth required)
+    getStoreById: async (req: Request, res: Response) => {
+        try {
+            const { storeId } = req.params;
+            const userId = (req as any).user?.id || null; // Optional: to check follow status
+
+            if (!storeId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Store ID is required'
+                });
+            }
+
+            const store = await prisma.store.findUnique({
+                where: { id: storeId },
+                select: {
+                    id: true,
+                    userId: true,
+                    storeName: true,
+                    slug: true,
+                    description: true,
+                    avatarUrl: true,
+                    phoneNumber: true,
+                    email: true,
+                    address: true,
+                    rating: true,
+                    revenue: true,
+                    totalOrders: true,
+                    totalReviews: true,
+                    totalProducts: true,
+                    followersCount: true,
+                    isActive: true,
+                    deletedAt: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    user: {
+                        select: {
+                            id: true,
+                            username: true,
+                            email: true
+                        }
+                    }
+                }
+            });
+
+            if (!store || store.deletedAt || !store.isActive) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Store not found'
+                });
+            }
+
+            // Check follow status if user is logged in
+            let isFollowing = false;
+            if (userId) {
+                const follow = await prisma.storeFollow.findUnique({
+                    where: {
+                        userId_storeId: {
+                            userId,
+                            storeId
+                        }
+                    }
+                });
+                isFollowing = !!follow;
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    ...store,
+                    isFollowing
+                }
+            });
+        } catch (error) {
+            console.error('Get store by ID error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching the store'
+            });
+        }
+    },
+
+    // Get top stores (public endpoint - no auth required)
+    getTopStores: async (req: Request, res: Response) => {
+        try {
+            const limit = parseInt(req.query.limit as string) || 10;
+            // Get userId from request if authenticated (optional)
+            const userId = (req as any).user?.id || null;
+
+            // Get top stores by followers count
+            const stores = await prisma.store.findMany({
+                where: {
+                    deletedAt: null,
+                    isActive: true
+                },
+                select: {
+                    id: true,
+                    storeName: true,
+                    slug: true,
+                    avatarUrl: true,
+                    description: true,
+                    followersCount: true,
+                    totalOrders: true,
+                    rating: true,
+                    totalProducts: true,
+                    createdAt: true
+                },
+                orderBy: [
+                    { followersCount: 'desc' },
+                    { totalOrders: 'desc' }
+                ],
+                take: limit
+            });
+
+            // If user is logged in, check follow status for each store
+            let storesWithFollowStatus = stores;
+            if (userId) {
+                const storeIds = stores.map(s => s.id);
+                const follows = await prisma.storeFollow.findMany({
+                    where: {
+                        userId,
+                        storeId: { in: storeIds }
+                    },
+                    select: {
+                        storeId: true
+                    }
+                });
+
+                const followedStoreIds = new Set(follows.map((f: any) => f.storeId));
+                storesWithFollowStatus = stores.map(store => ({
+                    ...store,
+                    isFollowing: followedStoreIds.has(store.id)
+                }));
+            } else {
+                storesWithFollowStatus = stores.map(store => ({
+                    ...store,
+                    isFollowing: false
+                }));
+            }
+
+            res.json({
+                success: true,
+                data: storesWithFollowStatus
+            });
+        } catch (error) {
+            console.error('Get top stores error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching top stores'
+            });
+        }
     }
 };
