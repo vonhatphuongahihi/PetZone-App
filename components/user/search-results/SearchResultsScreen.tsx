@@ -7,12 +7,12 @@ import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
-    Image,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ProductCard } from "../../user/product-card/ProductCard";
 import { SearchResultsStyles } from './searchResultsStyles';
 
 // Mock data sản phẩm
@@ -107,8 +107,8 @@ export default function SearchResultsScreen() {
 
             setLoading(true);
             try {
-                const token = await AsyncStorage.getItem("accessToken");
-                const res = await fetch(`${API_BASE_URL}/api/products/search?q=${q}`, {
+                const token = await AsyncStorage.getItem("jwt_token");
+                const res = await fetch(`${API_BASE_URL}/products/search?q=${q}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();
@@ -128,7 +128,7 @@ export default function SearchResultsScreen() {
     useEffect(() => {
         const fetchHotProducts = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/products/hot`);
+                const res = await fetch(`${API_BASE_URL}/products/hot`);
                 const data = await res.json();
                 if (data.success) setHotProducts(data.data);
             } catch (error) {
@@ -139,63 +139,44 @@ export default function SearchResultsScreen() {
         fetchHotProducts();
     }, []);
 
+    const handleProductPress = (productId: number) => {
+        router.push({
+            pathname: "/product",
+            params: { id: productId.toString() },
+        });
+    };
+    const renderProduct = ({ item }: { item: any }) => {
+        const productForCard = {
+            id: item.id.toString(),
+            name: item.title || "Sản phẩm không tên",
+            price: Number(item.price) || 0,
+            oldPrice: item.oldPrice ? Number(item.oldPrice) : 0,
+            image: item.images?.[0]?.url
+                ? { uri: item.images[0].url }
+                : require("../../../assets/images/cat.png"),
+            shop: item.store?.storeName || "Pet Shop",
+            shopImage: item.store?.avatarUrl
+                ? { uri: item.store.avatarUrl }
+                : require("../../../assets/images/shop.png"),
+            sold: Math.floor(Math.random() * 800) + 100, 
+            rating: 5.0, 
+            discount: item.oldPrice
+                ? `-${Math.round(((Number(item.oldPrice) - Number(item.price)) / Number(item.oldPrice)) * 100)}%`
+                : "",
+            category: "Pet",
+            tag: "Hàng cực hot",
+        };
 
-    const renderProduct = ({ item }: { item: typeof products[0] }) => (
-        <TouchableOpacity
-            style={SearchResultsStyles.card}
-        //   onPress={() => router.push(`/product/${item.id}`)}
-        >
-            {/* Badge giảm giá */}
-            <View style={SearchResultsStyles.discountBadge}>
-                <Text style={SearchResultsStyles.discountText}>{item.discount}</Text>
+        return (
+            <View style={{ marginBottom: 16, width: "50%", paddingHorizontal: 8 }}>
+                <ProductCard
+                    product={productForCard}
+                    onPress={() => handleProductPress(item.id)}
+                    layout="horizontal" 
+                />
             </View>
-
-            {/* Ảnh sản phẩm */}
-            <Image source={item.image} style={SearchResultsStyles.image} />
-
-            {/* Thông tin sản phẩm */}
-            <View style={SearchResultsStyles.info}>
-                {/* Shop */}
-                <View style={SearchResultsStyles.shopRow}>
-                    <Image
-                        source={item.shopImage}
-                        style={SearchResultsStyles.shopAvatar}
-                    />
-                    <View style={{ marginLeft: 6 }}>
-                        <Text style={SearchResultsStyles.shopName}>{item.shop}</Text>
-                        <Text style={SearchResultsStyles.sold}>{item.sold} đã bán</Text>
-                    </View>
-                </View>
-
-                {/* Danh mục + Rating */}
-                <View style={SearchResultsStyles.metaRow}>
-                    <Text style={SearchResultsStyles.categoryText}>{item.category}</Text>
-                    <View style={SearchResultsStyles.ratingRow}>
-                        <FontAwesome5 name="star" size={10} color="#FFD700" solid />
-                        <Text style={SearchResultsStyles.ratingText}>{item.rating.toFixed(1)}</Text>
-                    </View>
-                </View>
-
-                {/* Tên sản phẩm */}
-                <Text style={SearchResultsStyles.productName} numberOfLines={2}>
-                    {item.name}
-                </Text>
-
-                <Text style={SearchResultsStyles.tagline}>Hàng cực hot</Text>
-
-                {/* Giá */}
-                <View style={SearchResultsStyles.priceRow}>
-                    <Text style={SearchResultsStyles.price}>
-                        {item.price.toLocaleString("vi-VN")}đ
-                    </Text>
-                    <Text style={SearchResultsStyles.oldPrice}>
-                        {item.oldPrice.toLocaleString("vi-VN")}đ
-                    </Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
-
+        );
+    };
     return (
         <>
             <Stack.Screen options={{ headerShown: false }} />

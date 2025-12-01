@@ -94,6 +94,7 @@ app.use('/api/support', supportRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/chat', chatRoutes);
 app.use('/api/users', userRoutes);
+// app.use('/reviews', review);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Global error handler:', err);
