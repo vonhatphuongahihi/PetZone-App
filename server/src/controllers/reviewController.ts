@@ -1,86 +1,186 @@
-// import { PrismaClient } from '@prisma/client';
-// import { Request, Response } from 'express';
-// import { redis } from '../utils/redisClient';
+import { Request, Response } from 'express';
+import { prisma } from '../index';
 
-// const prisma = new PrismaClient();
+export const reviewController = {
+    // Tạo review mới
+    createReview: async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
+            }
 
-// // ===== CUSTOMER: tạo review =====
-// export const createReview = async (req: Request, res: Response) => {
-//   try {
-//     const userId = req.user?.id;
-//     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+            const { productId, orderId, rating, content, images } = req.body;
 
-//     const { productId, orderId, rating, content, images } = req.body;
+            if (!productId || !rating || rating < 1 || rating > 5) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Product ID and rating (1-5) are required'
+                });
+            }
 
-//     const review = await prisma.reviews.create({
-//       data: {
-//         user_id: userId,
-//         product_id: Number(productId),
-//         order_id: orderId || null,
-//         rating: Number(rating),
-//         content,
-//         images: images || [],
-//         updated_at: new Date(),
-//       },
-//     });
+            // Kiểm tra xem user đã đánh giá sản phẩm này trong đơn hàng này chưa
+            if (orderId) {
+                const existingReview = await prisma.review.findFirst({
+                    where: {
+                        userId,
+                        productId: parseInt(productId),
+                        orderId
+                    }
+                });
 
-//     res.json({ success: true, review });
-//   } catch (err: any) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };
+                if (existingReview) {
+                    return res.status(409).json({
+                        success: false,
+                        message: 'Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi'
+                    });
+                }
+            }
 
-// // ===== SELLER: trả lời review (lưu vào Redis) =====
-// export const replyReview = async (req: Request, res: Response) => {
-//   try {
-//     const sellerId = req.user?.id;
-//     if (!sellerId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+            // Tạo review
+            const review = await prisma.review.create({
+                data: {
+                    userId,
+                    productId: parseInt(productId),
+                    orderId: orderId || null,
+                    rating: parseInt(rating),
+                    content: content || null,
+                    images: images || []
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            username: true,
+                            avatarUrl: true
+                        }
+                    },
+                    product: {
+                        select: {
+                            id: true,
+                            title: true,
+                            images: {
+                                take: 1
+                            }
+                        }
+                    }
+                }
+            });
 
-//     const { reviewId } = req.params;
-//     const { replyText } = req.body;
+            // Cập nhật avgRating và totalReviews của product
+            const productReviews = await prisma.review.findMany({
+                where: { productId: parseInt(productId) }
+            });
 
-//     // Kiểm tra review tồn tại
-//     const review = await prisma.reviews.findUnique({
-//       where: { id: reviewId },
-//       include: { products: true },
-//     });
-//     if (!review) return res.status(404).json({ success: false, message: 'Review not found' });
+            const totalReviews = productReviews.length;
+            const avgRating = totalReviews > 0
+                ? productReviews.reduce((sum: number, r) => sum + r.rating, 0) / totalReviews
+                : 0;
 
-//     // Kiểm tra sản phẩm thuộc seller
-//     if ((review.products as any).storeId !== sellerId) {
-//       return res.status(403).json({ success: false, message: 'Not allowed to reply this review' });
-//     }
+            await prisma.product.update({
+                where: { id: parseInt(productId) },
+                data: {
+                    avgRating: avgRating,
+                    totalReviews: totalReviews
+                }
+            });
 
-//     // Lưu reply vào Redis, key = reviewId
-//     await redis.set(`review:reply:${reviewId}`, replyText);
+            res.json({
+                success: true,
+                message: 'Đánh giá thành công',
+                data: review
+            });
+        } catch (error: any) {
+            console.error('Create review error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while creating review'
+            });
+        }
+    },
 
-//     res.json({ success: true, reviewId, replyText });
-//   } catch (err: any) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };
+    // Lấy tất cả reviews của user
+    getUserReviews: async (req: Request, res: Response) => {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
+            }
 
-// // ===== GET reviews theo product (kèm reply từ Redis) =====
-// export const getProductReviews = async (req: Request, res: Response) => {
-//   try {
-//     const { productId } = req.params;
+            const reviews = await prisma.review.findMany({
+                where: { userId },
+                include: {
+                    product: {
+                        include: {
+                            images: {
+                                take: 1
+                            }
+                        }
+                    },
+                    order: {
+                        select: {
+                            id: true,
+                            orderNumber: true,
+                            createdAt: true
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
 
-//     const reviews = await prisma.reviews.findMany({
-//       where: { product_id: Number(productId) },
-//       include: { users: true },
-//       orderBy: { created_at: 'desc' },
-//     });
+            res.json({
+                success: true,
+                data: reviews
+            });
+        } catch (error: any) {
+            console.error('Get user reviews error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching reviews'
+            });
+        }
+    },
 
-//     // Lấy reply từ Redis
-//     const reviewsWithReplies = await Promise.all(
-//       reviews.map(async r => {
-//         const replyText = await redis.get(`review:reply:${r.id}`);
-//         return { ...r, sellerReply: replyText || null };
-//       })
-//     );
+    // Lấy reviews của một sản phẩm
+    getProductReviews: async (req: Request, res: Response) => {
+        try {
+            const { productId } = req.params;
 
-//     res.json({ success: true, reviews: reviewsWithReplies });
-//   } catch (err: any) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };
+            const reviews = await prisma.review.findMany({
+                where: { productId: parseInt(productId) },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            username: true,
+                            avatarUrl: true
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+
+            res.json({
+                success: true,
+                data: reviews
+            });
+        } catch (error: any) {
+            console.error('Get product reviews error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching reviews'
+            });
+        }
+    }
+};
+

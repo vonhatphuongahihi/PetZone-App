@@ -23,10 +23,10 @@ model User {
   conversationParticipants ConversationParticipant[] @relation("UserParticipants")
   messages                 Message[]                 @relation("UserMessages")
   orders                   Order[]
-  reviews                  reviews[]
-  store_follows            store_follows[]
   stores                   Store[]
   addresses                UserAddress[]
+  reviews                  Review[]
+  storeFollows             StoreFollow[]
 
   @@map("users")
 }
@@ -79,9 +79,9 @@ model Product {
   cartItems    CartItem[]
   orderItems   OrderItem[]
   images       ProductImage[]
+  reviews      Review[]
   category     Category?      @relation(fields: [categoryId], references: [id])
   store        Store          @relation(fields: [storeId], references: [id])
-  reviews      reviews[]
 
   @@map("products")
 }
@@ -204,10 +204,10 @@ model Order {
   deletedAt             DateTime?   @map("deleted_at")
   estimatedDeliveryDate DateTime?   @map("estimated_delivery_date")
   orderItems            OrderItem[]
+  reviews               Review[]
   store                 Store?      @relation(fields: [storeId], references: [id])
   user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   payments              Payment[]
-  reviews               reviews[]
 
   @@index([userId])
   @@index([storeId])
@@ -250,36 +250,23 @@ model Payment {
   @@map("payments")
 }
 
-model reviews {
-  id         String   @id @default(uuid())
-  user_id    String
-  product_id Int
-  order_id   String?
-  rating     Int
-  content    String?
-  images     String[]
-  sellerReply  String?
-  replyAt      DateTime? 
-  created_at DateTime @default(now())
-  updated_at DateTime
-  orders     Order?   @relation(fields: [order_id], references: [id])
-  products   Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  users      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([order_id])
-  @@index([product_id])
-  @@index([user_id])
+  @@index([userId])
+  @@index([productId])
+  @@index([orderId])
+  @@map("reviews")
 }
 
-model store_follows {
-  id         String   @id
-  user_id    String
-  store_id   String
-  created_at DateTime @default(now())
-  stores     Store    @relation(fields: [store_id], references: [id], onDelete: Cascade)
-  users      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+model StoreFollow {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  storeId   String   @map("store_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
-  @@unique([user_id, store_id])
-  @@index([store_id])
-  @@index([user_id])
+  @@unique([userId, storeId])
+  @@index([userId])
+  @@index([storeId])
+  @@map("store_follows")
 }

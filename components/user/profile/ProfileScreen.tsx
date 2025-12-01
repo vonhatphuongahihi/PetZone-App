@@ -54,16 +54,16 @@ export default function ProfileScreen() {
       if (!token) return;
 
       // Load counts for each status
-      const [pendingRes, shippedRes, deliveredRes] = await Promise.all([
+      const [pendingRes, confirmedRes, shippedRes] = await Promise.all([
         orderService.getUserOrders(token, 'pending').catch(() => ({ data: [] })),
+        orderService.getUserOrders(token, 'confirmed').catch(() => ({ data: [] })),
         orderService.getUserOrders(token, 'shipped').catch(() => ({ data: [] })),
-        orderService.getUserOrders(token, 'delivered').catch(() => ({ data: [] })),
       ]);
 
       setOrderCounts({
         pending: pendingRes.data?.length || 0,
-        shipped: shippedRes.data?.length || 0,
-        delivered: deliveredRes.data?.length || 0,
+        shipped: confirmedRes.data?.length || 0, // "Giao hàng" = confirmed orders
+        delivered: shippedRes.data?.length || 0, // "Đánh giá" = shipped orders (đã nhận hàng)
       });
     } catch (error: any) {
       console.error('Error loading order counts:', error);
@@ -135,7 +135,7 @@ export default function ProfileScreen() {
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Đơn đã mua</Text>
             <TouchableOpacity onPress={() => router.push('/purchase-history')}>
-              <Text style={styles.link}>Xem tất cả &gt;</Text>
+              <Text style={styles.link}>Lịch sử mua hàng &gt;</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.row}>

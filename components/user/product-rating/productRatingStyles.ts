@@ -187,4 +187,19 @@ export const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#f5f5f5',
   },
+  viewProductButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  viewProductText: {
+    fontSize: 14,
+    color: '#FBBC05',
+    fontWeight: '600',
+    marginRight: 4,
+  },
 });

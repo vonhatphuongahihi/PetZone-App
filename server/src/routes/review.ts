@@ -1,16 +1,17 @@
-// import { Router } from 'express';
-// import { createReview, getProductReviews, replyReview } from '../controllers/reviewController';
-// import { authMiddleware } from '../middleware/auth';
+import express from 'express';
+import { reviewController } from '../controllers/reviewController';
+import { authMiddleware } from '../middleware/auth';
 
-// const router = Router();
+const router = express.Router();
 
-// // --- CUSTOMER: tạo review (auth required) ---
-// router.post('/', authMiddleware, createReview);
+// Tạo review
+router.post('/', authMiddleware, reviewController.createReview);
 
-// // --- SELLER: trả lời review (auth required) ---
-// router.post('/:reviewId/reply', authMiddleware, replyReview);
+// Lấy tất cả reviews của user
+router.get('/user', authMiddleware, reviewController.getUserReviews);
 
-// // --- GET reviews của 1 sản phẩm (public) ---
-// router.get('/product/:productId', getProductReviews);
+// Lấy reviews của một sản phẩm
+router.get('/product/:productId', reviewController.getProductReviews);
 
-// export default router;
+export default router;
+

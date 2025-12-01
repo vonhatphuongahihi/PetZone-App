@@ -1,5 +1,5 @@
-// import { API_BASE_URL } from '../config/api';
-export const API_BASE_URL = 'http://10.10.1.85:3001/api';
+// === IP / BASE_URL của backend ===
+const API_BASE_URL = 'http://10.0.3.40:3001/api';
 
 export interface RegisterData {
     email: string;

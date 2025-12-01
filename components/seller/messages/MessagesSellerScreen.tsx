@@ -18,6 +18,7 @@ export default function MessagesSellerScreen() {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const [onlineUsersLoaded, setOnlineUsersLoaded] = useState(false);
   const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
   const [typingUsers, setTypingUsers] = useState<Record<number, string[]>>({});
 
@@ -27,10 +28,18 @@ export default function MessagesSellerScreen() {
 
     // Listen for real-time online/offline events
     const handleUserOnline = (data: { userId: string }) => {
+      console.log('[MessagesSellerScreen] User online event received:', data.userId);
       setOnlineUsers(prev => {
         const newSet = new Set([...prev, data.userId]);
+        console.log('[MessagesSellerScreen] Updated online users:', Array.from(newSet));
         return newSet;
       });
+      // Mark as loaded when we receive real-time events
+      if (!onlineUsersLoaded) {
+        setOnlineUsersLoaded(true);
+      }
+      // Also refresh online users list to ensure consistency
+      loadOnlineUsers();
     };
 
     const handleUserOffline = (data: { userId: string }) => {
@@ -120,10 +129,13 @@ export default function MessagesSellerScreen() {
 
   const loadOnlineUsers = async () => {
     try {
+      setOnlineUsersLoaded(false); // Reset loading state
       const onlineUserIds = await getOnlineUsers(true);
       setOnlineUsers(new Set(onlineUserIds));
+      setOnlineUsersLoaded(true); // Mark as loaded
     } catch (error) {
       console.error('[MessagesSellerScreen] Error loading online users:', error);
+      setOnlineUsersLoaded(true); // Mark as loaded even on error to avoid stuck state
     }
   };
 
@@ -316,7 +328,8 @@ export default function MessagesSellerScreen() {
     const otherUser = getOtherUser(item);
     const lastMessage = getLastMessage(item);
     const time = item.updatedAt ? formatRelativeTime(item.updatedAt) : '';
-    const isOtherUserOnline = onlineUsers.has(otherUser.id);
+    // Only show online status if we've loaded the online users list
+    const isOtherUserOnline = onlineUsersLoaded && onlineUsers.has(otherUser.id);
     const avatarUrl = otherUser.avatarUrl;
 
     // Check if there are unread messages
@@ -357,8 +370,8 @@ export default function MessagesSellerScreen() {
             source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.png")}
             style={messagesSellerStyles.avatar}
           />
-          {/* Hiển thị nút xanh khi user thực sự online */}
-          {onlineUsers.has(otherUser.id) && <View style={messagesSellerStyles.onlineDot} />}
+          {/* Hiển thị nút xanh khi user thực sự online và đã load xong danh sách */}
+          {isOtherUserOnline && <View style={messagesSellerStyles.onlineDot} />}
         </View>
 
         {/* Nội dung tin nhắn */}
