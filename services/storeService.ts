@@ -1,5 +1,5 @@
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://172.31.71.127:3001/api';
+const API_BASE_URL = 'http://10.10.1.85:3001/api';
 
 export interface CreateStoreData {
     storeName: string;

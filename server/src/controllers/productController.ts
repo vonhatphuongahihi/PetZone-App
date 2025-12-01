@@ -353,91 +353,72 @@ interface AuthRequest extends Request {
 
 export const searchProducts = async (req: Request, res: Response) => {
   try {
-    const query = (req.query.q as string)?.trim();
+    let query = req.query.q as string;
+    if (typeof query === 'string') {
+      query = decodeURIComponent(query.replace(/\+/g, ' ')).trim();
+    } else {
+      query = '';
+    }
+
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu từ khóa tìm kiếm (q)",
+      });
+    }
+
+    const searchTerm = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const limit = Number(req.query.limit) || 10;
     const page = Number(req.query.page) || 1;
     const offset = (page - 1) * limit;
 
-    console.log("Search query:", query);
-    console.log("Limit:", limit, "Page:", page, "Offset:", offset);
-
-    if (!query) {
-      console.warn("Search query missing");
-      return res.status(400).json({
-        success: false,
-        message: "Search query (q) is required",
-      });
-    }
-
-    // Lấy thông tin user nếu có đăng nhập
     const user = (req as any).user;
-    console.log("Authenticated user:", user);
-
     const isSeller = user?.role === "SELLER";
 
     const where: any = {
       OR: [
-        { title: { contains: query, mode: "insensitive" } },
-        { description: { contains: query, mode: "insensitive" } }
-      ]
+        { title: { contains: searchTerm, mode: "insensitive" } },
+        { description: { contains: searchTerm, mode: "insensitive" } },
+      ],
     };
 
-    // Nếu là SELLER → chỉ tìm sản phẩm của cửa hàng mình
     if (isSeller) {
       const sellerStore = await prisma.store.findFirst({
         where: { userId: user.id },
         select: { id: true },
       });
-
-      console.log("Seller store:", sellerStore);
-
       if (!sellerStore) {
         return res.status(400).json({
           success: false,
           message: "Seller has no store",
         });
       }
-
       where.storeId = sellerStore.id;
     }
-
-    console.log("Prisma where filter:", where);
 
     const products = await prisma.product.findMany({
       where,
       skip: offset,
       take: limit,
       include: {
-        store: {
-          select: { id: true, storeName: true, avatarUrl: true }
-        },
-        images: {
-          select: { url: true }
-        },
-      }
+        store: { select: { id: true, storeName: true, avatarUrl: true } },
+        images: { select: { url: true } },
+      },
     });
-
-    console.log("Found products count:", products.length);
 
     return res.status(200).json({
       success: true,
       data: products,
-      pagination: {
-        page,
-        limit,
-      },
+      pagination: { page, limit, total: products.length },
     });
-
   } catch (error) {
     console.error("Search error:", error);
     return res.status(500).json({
       success: false,
-      message: "Error searching products",
+      message: "Lỗi tìm kiếm sản phẩm",
     });
   }
 };
-
-
-
 // === MULTER MIDDLEWARE ===
 export const uploadImages = upload.array("images", 10); // Tối đa 10 ảnh
