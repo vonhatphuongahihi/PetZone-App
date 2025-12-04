@@ -22,7 +22,6 @@ export const reviewController = {
                 });
             }
 
-            // Kiểm tra xem user đã đánh giá sản phẩm này trong đơn hàng này chưa
             if (orderId) {
                 const existingReview = await prisma.review.findFirst({
                     where: {
@@ -180,6 +179,43 @@ export const reviewController = {
                 success: false,
                 message: 'An error occurred while fetching reviews'
             });
+        }
+    },
+
+    //seller reply
+    replyToReview: async (req: Request, res: Response) => {
+        try {
+            const { reviewId } = req.params;
+            const { reply } = req.body;
+            const userId = (req as any).user?.id;
+
+            // Kiểm tra user là owner store của product
+            const review = await prisma.review.findUnique({
+                where: { id: reviewId },
+                include: { product: true },
+            });
+            if (!review) return res.status(404).json({ success: false, message: 'Review not found' });
+
+            const store = await prisma.store.findUnique({
+                where: { id: review.product.storeId },
+            });
+
+            if (store?.userId !== userId) {
+                return res.status(403).json({ success: false, message: 'Chỉ chủ cửa hàng mới trả lời được' });
+            }
+
+            const updatedReview = await prisma.review.update({
+                where: { id: reviewId },
+                data: {
+                    sellerReply: reply,
+                    replyAt: new Date(),
+                },
+            });
+
+            res.json({ success: true, data: updatedReview });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ success: false, message: 'Lỗi khi trả lời review' });
         }
     }
 };

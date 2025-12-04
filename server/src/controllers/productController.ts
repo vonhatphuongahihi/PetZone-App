@@ -222,6 +222,7 @@ export const getProductById = async (req: Request, res: Response) => {
         store: {
           select: {
             id: true,
+            userId: true,
             storeName: true,
             avatarUrl: true,
             rating: true,
