@@ -1,3 +1,4 @@
+import ReviewItem from "@/app/review-item";
 import { FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -145,6 +146,23 @@ export default function ProductScreen() {
             });
         }
     };
+
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [isStoreOwner, setIsStoreOwner] = useState(false);
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const userData = await tokenService.getUser();
+            if (!userData) return;
+
+            setCurrentUserId(userData.id);
+
+            if (product?.store?.userId === userData.id) {
+                setIsStoreOwner(true);
+            }
+        };
+        fetchCurrentUser();
+    }, [product]);
 
     // UseEffect hooks
     useEffect(() => {
@@ -367,6 +385,17 @@ export default function ProductScreen() {
                         {item.images.map((image, index) => (
                             <Image key={index} source={{ uri: image }} style={productStyles.reviewImage} />
                         ))}
+                    </View>
+                )}
+                {item.sellerReply && (
+                    <View style={productStyles.sellerReplyContainer}>
+                        <Text style={productStyles.sellerReplyTitle}>Trả lời từ cửa hàng:</Text>
+                        <Text style={productStyles.sellerReplyText}>{item.sellerReply}</Text>
+                        {item.replyAt && (
+                            <Text style={productStyles.sellerReplyDate}>
+                                {new Date(item.replyAt).toLocaleDateString('vi-VN')}
+                            </Text>
+                        )}
                     </View>
                 )}
             </View>
@@ -816,11 +845,20 @@ export default function ProductScreen() {
                                 ) : (
                                     <FlatList
                                         data={reviews}
-                                        renderItem={renderReviewItem}
-                                        keyExtractor={(item) => item.id}
+                                        renderItem={({ item }) => (
+                                            <ReviewItem
+                                                item={item}
+                                                isStoreOwner={isStoreOwner}
+                                                onReplySuccess={fetchReviews}
+                                            />
+                                        )}
+                                        keyExtractor={(item) => item.id.toString()}
                                         scrollEnabled={false}
-                                        accessible={true}
-                                        accessibilityLabel={`Danh sách ${reviews.length} đánh giá sản phẩm`}
+                                        ListEmptyComponent={
+                                            <View style={{ padding: 40, alignItems: 'center' }}>
+                                                <Text style={{ color: '#999', fontSize: 16 }}>Chưa có đánh giá nào</Text>
+                                            </View>
+                                        }
                                     />
                                 )}
                             </View>

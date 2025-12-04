@@ -187,8 +187,8 @@ export default function SearchResultsScreen() {
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
                     <SearchBarWithPopup
-                        recentSearches={["cỏ mèo", "cát vệ sinh trà xanh", "áo cho mèo", "dây dắt"]}
-                        hotProducts={hotProducts}
+                        //recentSearches={["cỏ mèo", "cát vệ sinh trà xanh", "áo cho mèo", "dây dắt"]}
+                        //hotProducts={hotProducts}
                     />
                 </View>
 

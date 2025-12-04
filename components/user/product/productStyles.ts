@@ -524,4 +524,66 @@ export const productStyles = StyleSheet.create({
         fontWeight: '600',
         color: '#fff',
     },
+    sellerReplyContainer: {
+        marginTop: 10,
+        padding: 12,
+        backgroundColor: '#FFF6D6', 
+        borderRadius: 10,
+        borderLeftWidth: 4,
+        borderLeftColor: '#FBBC05',
+    },
+
+    sellerReplyTitle: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#C79300', 
+        marginBottom: 4,
+    },
+
+    sellerReplyText: {
+        fontSize: 13,
+        color: '#444',
+        lineHeight: 18,
+    },
+
+    sellerReplyDate: {
+        marginTop: 6,
+        fontSize: 11,
+        color: '#777',
+        fontStyle: 'italic',
+    },
+
+    replyFormContainer: {
+        marginTop: 12,
+        padding: 12,
+        backgroundColor: '#FFFBEA',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#FBBC05',
+    },
+
+    replyInput: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#FBBC05',
+        borderRadius: 8,
+        padding: 10,
+        fontSize: 14,
+        height: 90,
+        textAlignVertical: 'top',
+        marginBottom: 10,
+    },
+
+    replyButton: {
+        backgroundColor: '#FBBC05',
+        paddingVertical: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+
+    replyButtonText: {
+        color: '#000',
+        fontWeight: '700',
+        fontSize: 14,
+    },
 });

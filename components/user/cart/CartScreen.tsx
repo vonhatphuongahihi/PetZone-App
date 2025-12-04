@@ -281,11 +281,18 @@ export default function CartScreen() {
         />
         <Text style={styles.shopName}>{item.title}</Text>
         <MaterialIcons
-          name="arrow-forward-ios"
-          size={13}
-          color="rgba(0,0,0,0.55)"
-          style={{ marginLeft: 4, marginTop: 1 }}
+          name="arrow-back-ios"
+          size={24}
+          color="#FBBC05"
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.push('/'); 
+            }
+          }}
         />
+
       </View>
 
       {/* Products */}
