@@ -83,7 +83,7 @@ export default function HomeScreen() {
     const fetchCategories = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://192.168.1.162:3001/api';
+            const API_BASE_URL = 'http://10.0.176.156:3001/api';
             const res = await fetch(`${API_BASE_URL}/categories`, { headers });
 
             if (res.status === 401) {
@@ -106,7 +106,7 @@ export default function HomeScreen() {
     const fetchProducts = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://192.168.1.162:3001/api';
+            const API_BASE_URL = 'http://10.0.176.156:3001/api';
             const [todayRes, newRes, hotRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/products/today`, { headers }),
                 fetch(`${API_BASE_URL}/products/new`, { headers }),
