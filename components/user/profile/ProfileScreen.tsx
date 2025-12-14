@@ -40,6 +40,8 @@ export default function ProfileScreen() {
 
       const response = await userInfoService.getUserInfo(token);
       setUserInfo(response.user);
+      console.log('User info loaded:', response.user);
+      console.log('Total spent:', response.user.totalSpent);
     } catch (error: any) {
       console.error('Load user info error:', error);
       router.replace('/login');
@@ -95,6 +97,20 @@ export default function ProfileScreen() {
     setShowLogoutModal(false);
   };
 
+  // Tính rank dựa trên totalSpent
+  const getUserRank = (totalSpent: number | null | undefined): string => {
+    const spent = totalSpent || 0;
+    if (spent >= 500001) {
+      return 'Hạng vàng';
+    } else if (spent >= 300100) {
+      return 'Hạng bạc';
+    } else if (spent >= 100100) {
+      return 'Hạng đồng';
+    } else {
+      return 'Thân thiết';
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -123,7 +139,7 @@ export default function ProfileScreen() {
             <Text style={styles.name}>
               {userInfo?.username || 'Đang tải...'}
             </Text>
-            <Text style={styles.rank}>Hạng bạc</Text>
+            <Text style={styles.rank}>{getUserRank(userInfo?.totalSpent)}</Text>
           </View>
           <View style={styles.pawCircle}>
             <FontAwesome5 name="paw" size={24} color="#fff" />
@@ -219,7 +235,7 @@ export default function ProfileScreen() {
           <View style={styles.modalContainer}>
             {/* Cat Image */}
             <Image
-              source={require("../../../assets/images/icon.png")}
+              source={require("../../../assets/images/dog-feet.png")}
               style={styles.modalCatImage}
             />
 

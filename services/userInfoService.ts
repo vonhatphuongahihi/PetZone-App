@@ -1,6 +1,6 @@
 // User Info Service
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.0.3.40:3001/api';
+const API_BASE_URL = 'http://10.20.1.55:3001/api';
 
 export interface UserInfo {
     id: string;
@@ -12,6 +12,7 @@ export interface UserInfo {
     createdAt: string;
     updatedAt: string;
     dateofBirth?: string;
+    totalSpent?: number;
 }
 
 export interface UpdateUserData {
@@ -28,6 +29,29 @@ export const userInfoService = {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Lấy thông tin user thất bại');
+        }
+
+        return response.json();
+    },
+
+    // Get user info by ID
+    getUserInfoById: async (userId: string, token?: string): Promise<{ user: UserInfo }> => {
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+            method: 'GET',
+            headers,
         });
 
         if (!response.ok) {
@@ -61,26 +85,22 @@ export const userInfoService = {
     updateUserAvatar: async (imageUri: string, token: string, platform: 'web' | 'mobile' = 'mobile'): Promise<{ success: boolean; data: { avatarUrl: string; user: UserInfo } }> => {
         const formData = new FormData();
 
-        if (platform === 'web') {
-            // Web platform - convert URI to File
+        try {
+            // Both web and mobile - convert URI to blob
             const response = await fetch(imageUri);
+            if (!response.ok) {
+                throw new Error('Failed to fetch image');
+            }
             const blob = await response.blob();
-            const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
-            formData.append('avatar', file);
-        } else {
-            // Mobile platform - create file object
             const filename = imageUri.split('/').pop() || 'avatar.jpg';
-            const match = /\.(\w+)$/.exec(filename);
-            const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-            formData.append('avatar', {
-                uri: imageUri,
-                name: filename,
-                type: type,
-            } as any);
+            const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+            formData.append('avatar', file);
+        } catch (error) {
+            console.error('Error processing image:', error);
+            throw new Error('Không thể xử lý tệp ảnh');
         }
 
-        const response = await fetch(`${API_BASE_URL}/users/avatar`, {
+        const uploadResponse = await fetch(`${API_BASE_URL}/users/avatar`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -88,9 +108,28 @@ export const userInfoService = {
             body: formData,
         });
 
+        if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            throw new Error(errorData.message || 'Cập nhật ảnh đại diện thất bại');
+        }
+
+        return uploadResponse.json();
+    },
+
+    // Update total spent
+    updateTotalSpent: async (totalSpent: number, token: string): Promise<{ success: boolean; message: string }> => {
+        const response = await fetch(`${API_BASE_URL}/users/total-spent`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ totalSpent }),
+        });
+
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Cập nhật ảnh đại diện thất bại');
+            throw new Error(errorData.message || 'Cập nhật tổng chi tiêu thất bại');
         }
 
         return response.json();

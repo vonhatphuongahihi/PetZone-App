@@ -1,10 +1,9 @@
-import { API_BASE_URL } from '@/services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { io, Socket } from 'socket.io-client';
 import { SocketEventEmitter } from './socketEventEmitter';
 
 // === IP của backend server ===
-const SERVER_BASE_URL = 'http://10.0.3.40:3001';
+const SERVER_BASE_URL = 'http://10.20.1.55:3001';
 
 let socket: Socket | null = null;
 let listenersSetup = false;

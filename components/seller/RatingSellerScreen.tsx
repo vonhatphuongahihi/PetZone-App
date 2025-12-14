@@ -72,13 +72,13 @@ export default function RatingSellerScreen() {
         const stars = [];
         for (let i = 1; i <= 5; i++) {
             stars.push(
-                <Text 
-                    key={i} 
+                <Text
+                    key={i}
                     style={[
-                        styles.star, 
-                        { 
-                            fontSize: size, 
-                            color: i <= rating ? '#FFB400' : '#E0E0E0' 
+                        styles.star,
+                        {
+                            fontSize: size,
+                            color: i <= rating ? '#FFB400' : '#E0E0E0'
                         }
                     ]}
                 >
@@ -108,50 +108,56 @@ export default function RatingSellerScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <SellerTopNavigation />
-            
-            {/* Store Rating Section */}
-            <View style={styles.ratingSection}>
-                <Text style={styles.sectionTitle}>Đánh Giá Cửa Hàng</Text>
-                <Text style={styles.sectionSubtitle}>
-                    Theo dõi đánh giá của khách hàng dành cho cửa hàng của bạn.
-                </Text>
-                
-                <View style={styles.ratingDisplay}>
-                    <Text style={styles.averageRating}>{averageRating}</Text>
-                    <Text style={styles.outOf}>trên 5</Text>
-                </View>
-                
-                <View style={styles.starsDisplay}>
-                    {renderStars(Math.floor(averageRating), 24)}
-                </View>
-            </View>
+            <ScrollView
+                style={{ flex: 1 }}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 80 }}
+            >
+                {/* Store Rating Section */}
+                <View style={styles.ratingSection}>
+                    <Text style={styles.sectionTitle}>Đánh Giá Cửa Hàng</Text>
+                    <Text style={styles.sectionSubtitle}>
+                        Theo dõi đánh giá của khách hàng dành cho cửa hàng của bạn.
+                    </Text>
 
-            {/* Star Filter Tabs */}
-            <View style={styles.filterTabs}>
-                {['all', '1', '2', '3', '4', '5'].map((star) => (
-                    <TouchableOpacity
-                        key={star}
-                        style={[
-                            styles.filterTab,
-                            selectedStarFilter === star && styles.filterTabActive
-                        ]}
-                        onPress={() => setSelectedStarFilter(star as any)}
-                    >
-                        <Text style={[
-                            styles.filterTabText,
-                            selectedStarFilter === star && styles.filterTabTextActive
-                        ]}>
-                            {star === 'all' ? 'All' : `${star} sao`}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-            
-            {/* Reviews List */}
-            <ScrollView style={styles.reviewsList} showsVerticalScrollIndicator={false}>
-                {getFilteredReviews().map(renderReviewItem)}
+                    <View style={styles.ratingDisplay}>
+                        <Text style={styles.averageRating}>{averageRating}</Text>
+                        <Text style={styles.outOf}>trên 5</Text>
+                    </View>
+
+                    <View style={styles.starsDisplay}>
+                        {renderStars(Math.floor(averageRating), 24)}
+                    </View>
+                </View>
+
+                {/* Star Filter Tabs */}
+                <View style={styles.filterTabs}>
+                    {['all', '1', '2', '3', '4', '5'].map((star) => (
+                        <TouchableOpacity
+                            key={star}
+                            style={[
+                                styles.filterTab,
+                                selectedStarFilter === star && styles.filterTabActive
+                            ]}
+                            onPress={() => setSelectedStarFilter(star as any)}
+                        >
+                            <Text
+                                style={[
+                                    styles.filterTabText,
+                                    selectedStarFilter === star && styles.filterTabTextActive
+                                ]}
+                            >
+                                {star === 'all' ? 'All' : `${star} sao`}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
+                {/* Reviews List */}
+                <View style={{ paddingHorizontal: 16 }}>
+                    {getFilteredReviews().map(renderReviewItem)}
+                </View>
             </ScrollView>
-            
             <SellerBottomNavigation />
         </SafeAreaView>
     );
@@ -162,8 +168,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F5F5F5',
     },
-    
-    // Rating Section
+
     ratingSection: {
         backgroundColor: '#FFF',
         margin: 16,
@@ -171,10 +176,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
         elevation: 5,
@@ -210,16 +212,14 @@ const styles = StyleSheet.create({
     starsDisplay: {
         marginBottom: 8,
     },
-    
-    // Stars
+
     starsContainer: {
         flexDirection: 'row',
     },
     star: {
         marginRight: 2,
     },
-    
-    // Filter Tabs
+
     filterTabs: {
         flexDirection: 'row',
         backgroundColor: '#FFF',
@@ -228,10 +228,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 4,
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
         elevation: 5,
@@ -255,8 +252,7 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontWeight: '600',
     },
-    
-    // Reviews List
+
     reviewsList: {
         flex: 1,
         paddingHorizontal: 16,
@@ -268,10 +264,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         borderRadius: 12,
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
         elevation: 5,

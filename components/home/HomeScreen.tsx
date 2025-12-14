@@ -353,8 +353,8 @@ export default function HomeScreen() {
                 <View style={homeStyles.fixedHeader}>
                     <View style={homeStyles.searchBarContainer}>
                         <SearchBarWithPopup
-                            recentSearches={recentSearches}
-                            hotProducts={hotSearchProducts}
+                            //recentSearches={recentSearches}
+                            //hotProducts={hotSearchProducts}
                         />
                     </View>
 

@@ -1,14 +1,15 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import type { ComponentProps } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import type { KeyboardTypeOptions } from 'react-native';
 import {
     ActivityIndicator,
-    Alert,
     Animated,
+    Dimensions,
     Image,
     Modal,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -17,11 +18,12 @@ import {
     View
 } from 'react-native';
 import { SellerProfile, sellerService } from '../../services/sellerService';
-// SỬA: Import service của user để update avatar cá nhân
 import { tokenService } from '../../services/tokenService';
 import { userInfoService } from '../../services/userInfoService';
 import { SellerBottomNavigation } from './SellerBottomNavigation';
 import { SellerTopNavigation } from './SellerTopNavigation';
+
+const { width } = Dimensions.get('window');
 
 export default function ProfileSellerScreen() {
     const router = useRouter();
@@ -35,8 +37,12 @@ export default function ProfileSellerScreen() {
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [showImagePickerModal, setShowImagePickerModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [modalOpacity] = useState(new Animated.Value(0));
-    const [modalScale] = useState(new Animated.Value(0.3));
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    
+    // Animations
+    const modalOpacity = useRef(new Animated.Value(0)).current;
+    const modalScale = useRef(new Animated.Value(0.3)).current;
+    const scrollY = useRef(new Animated.Value(0)).current; // For header parallax effect
 
     // Form data for editing
     const [formData, setFormData] = useState({
@@ -57,12 +63,10 @@ export default function ProfileSellerScreen() {
             setLoading(true);
             const token = await tokenService.getToken();
             if (!token) {
-                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
                 router.replace('/login');
                 return;
             }
 
-            // Gọi song song 2 API: Profile cửa hàng và Info cá nhân
             const [sellerResponse, userResponse] = await Promise.all([
                 sellerService.getProfile(token),
                 userInfoService.getUserInfo(token)
@@ -72,22 +76,17 @@ export default function ProfileSellerScreen() {
                 throw new Error('Profile data not found in response');
             }
 
-            // Lấy profile từ seller service
             const sellerProfileData = sellerResponse.profile;
-
-            // Gán đè avatarUrl từ user service (nơi chứa avatar chính xác nhất) vào seller profile
-            // Điều này đảm bảo khi reload, avatar vẫn hiển thị
             const mergedProfile = {
                 ...sellerProfileData,
                 user: {
                     ...sellerProfileData.user,
-                    avatarUrl: userResponse.user.avatarUrl // Lấy avatar từ UserInfo
+                    avatarUrl: userResponse.user.avatarUrl
                 }
             };
 
             setProfile(mergedProfile);
 
-            // Set form data
             setFormData({
                 storeName: sellerProfileData.store.storeName,
                 description: sellerProfileData.store.description || '',
@@ -99,11 +98,7 @@ export default function ProfileSellerScreen() {
         } catch (error: any) {
             console.error('Load profile error:', error);
             if (error.message?.includes('404')) {
-                Alert.alert('Chưa có cửa hàng', 'Vui lòng tạo cửa hàng trước.', [
-                    { text: 'Tạo cửa hàng', onPress: () => router.replace('/create-store') }
-                ]);
-            } else {
-                Alert.alert('Lỗi', error.message || 'Không thể tải thông tin profile');
+                router.replace('/create-store');
             }
         } finally {
             setLoading(false);
@@ -115,13 +110,13 @@ export default function ProfileSellerScreen() {
         Animated.parallel([
             Animated.timing(modalOpacity, {
                 toValue: 1,
-                duration: 300,
+                duration: 200,
                 useNativeDriver: true,
             }),
             Animated.spring(modalScale, {
                 toValue: 1,
-                tension: 100,
-                friction: 8,
+                tension: 50,
+                friction: 7,
                 useNativeDriver: true,
             }),
         ]).start();
@@ -131,12 +126,12 @@ export default function ProfileSellerScreen() {
         Animated.parallel([
             Animated.timing(modalOpacity, {
                 toValue: 0,
-                duration: 200,
+                duration: 150,
                 useNativeDriver: true,
             }),
             Animated.timing(modalScale, {
-                toValue: 0.3,
-                duration: 200,
+                toValue: 0.8,
+                duration: 150,
                 useNativeDriver: true,
             }),
         ]).start(() => {
@@ -148,21 +143,15 @@ export default function ProfileSellerScreen() {
     const handleAvatarPress = async () => {
         try {
             const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (permissionResult.granted === false) {
-                Alert.alert('Lỗi', 'Cần cấp quyền truy cập thư viện ảnh để chọn ảnh đại diện!');
-                return;
-            }
+            if (!permissionResult.granted) return;
             setShowImagePickerModal(true);
-            setTimeout(() => showModal(), 100);
+            setTimeout(() => showModal(), 50);
         } catch (error) {
             console.error('Avatar permission error:', error);
-            Alert.alert('Lỗi', 'Không thể truy cập thư viện ảnh');
         }
     };
 
-    const handleImagePickerClose = () => {
-        hideModal(() => setShowImagePickerModal(false));
-    };
+    const handleImagePickerClose = () => hideModal(() => setShowImagePickerModal(false));
 
     const handlePickFromLibrary = () => {
         handleImagePickerClose();
@@ -174,71 +163,59 @@ export default function ProfileSellerScreen() {
         setTimeout(() => takePicture(), 300);
     };
 
-    const handleSuccessModalClose = () => {
-        hideModal(() => setShowSuccessModal(false));
-    };
+    const handleSuccessModalClose = () => hideModal(() => setShowSuccessModal(false));
 
     const pickImageFromLibrary = async () => {
         try {
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: ['images'],
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,
             });
-
             if (!result.canceled && result.assets[0]) {
                 await uploadAvatar(result.assets[0].uri);
             }
         } catch (error) {
-            Alert.alert('Lỗi', 'Không thể chọn ảnh');
+            console.error('Pick image error:', error);
         }
     };
 
     const takePicture = async () => {
         try {
             const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-            if (permissionResult.granted === false) {
-                Alert.alert('Lỗi', 'Cần cấp quyền camera để chụp ảnh!');
-                return;
-            }
+            if (!permissionResult.granted) return;
             const result = await ImagePicker.launchCameraAsync({
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,
             });
-
             if (!result.canceled && result.assets[0]) {
                 await uploadAvatar(result.assets[0].uri);
             }
         } catch (error) {
-            Alert.alert('Lỗi', 'Không thể chụp ảnh');
+            console.error('Take picture error:', error);
         }
     };
 
-    // SỬA: Hàm upload avatar sử dụng logic của UserInfo (avatar cá nhân)
     const uploadAvatar = async (imageUri: string) => {
         try {
             setUploadingAvatar(true);
             const token = await tokenService.getToken();
             if (!token) {
-                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                router.replace('/login');
                 return;
             }
-
-            const platform = Platform.OS === 'web' ? 'web' : 'mobile';
-
-            // Gọi API update avatar của User
+            const platform = 'mobile';
             const response = await userInfoService.updateUserAvatar(imageUri, token, platform);
 
             if (response.success) {
-                // SỬA: Cập nhật state vào profile.user thay vì profile.store
                 if (profile) {
                     setProfile({
                         ...profile,
                         user: {
                             ...profile.user,
-                            avatarUrl: response.data.avatarUrl
+                            avatarUrl: response.data.avatarUrl 
                         }
                     });
                 }
@@ -247,7 +224,6 @@ export default function ProfileSellerScreen() {
             }
         } catch (error: any) {
             console.error('Upload avatar error:', error);
-            Alert.alert('Lỗi', error.message || 'Không thể cập nhật ảnh đại diện');
         } finally {
             setUploadingAvatar(false);
         }
@@ -258,20 +234,14 @@ export default function ProfileSellerScreen() {
             setSaving(true);
             const token = await tokenService.getToken();
             if (!token) {
-                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                router.replace('/login');
                 return;
             }
-
             await sellerService.updateProfile(formData, token);
-
-            // Reload profile to get updated data
             await loadProfile();
             setIsEditing(false);
-
-            Alert.alert('Thành công', 'Cập nhật thông tin thành công!');
         } catch (error: any) {
             console.error('Save profile error:', error);
-            Alert.alert('Lỗi', error.message || 'Không thể cập nhật thông tin');
         } finally {
             setSaving(false);
         }
@@ -279,8 +249,6 @@ export default function ProfileSellerScreen() {
 
     const handleCancel = () => {
         if (!profile) return;
-
-        // Reset form data to original values
         setFormData({
             storeName: profile.store.storeName,
             description: profile.store.description || '',
@@ -291,61 +259,78 @@ export default function ProfileSellerScreen() {
         setIsEditing(false);
     };
 
-    const handleLogout = async () => {
-        Alert.alert(
-            'Đăng xuất',
-            'Bạn có chắc chắn muốn đăng xuất?',
-            [
-                { text: 'Hủy', style: 'cancel' },
-                {
-                    text: 'Đăng xuất',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await tokenService.clearAuthData();
-                        router.replace('/login');
-                    }
-                }
-            ]
-        );
-    };
+    const handleLogout = () => setShowLogoutModal(true);
 
-    // --- Sub Components: Modals ---
+    // --- Components ---
+    interface InputFieldProps {
+        label: string;
+        value: string;
+        onChangeText: (text: string) => void;
+        icon: ComponentProps<typeof MaterialIcons>["name"];
+        editable?: boolean;
+        multiline?: boolean;
+        keyboardType?: KeyboardTypeOptions;
+        placeholder?: string;
+    }
+    const InputField = ({ 
+        label, 
+        value, 
+        onChangeText, 
+        icon, 
+        editable = true, 
+        multiline = false,
+        keyboardType = 'default',
+        placeholder = ''
+    }: InputFieldProps) => (
+        <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>{label}</Text>
+            <View style={[
+                styles.inputWrapper, 
+                !editable && styles.inputWrapperDisabled,
+                multiline && { alignItems: 'flex-start', paddingVertical: 12 }
+            ]}>
+                <MaterialIcons 
+                    name={icon} 
+                    size={22} 
+                    color={editable ? "#FFB400" : "#A0AEC0"} 
+                    style={[styles.inputIcon, multiline && { marginTop: 4 }]} 
+                />
+                <TextInput
+                    style={[styles.input, multiline && styles.inputMultiline]}
+                    value={value}
+                    onChangeText={onChangeText}
+                    editable={editable}
+                    multiline={multiline}
+                    numberOfLines={multiline ? 4 : 1}
+                    keyboardType={keyboardType}
+                    placeholder={placeholder}
+                    placeholderTextColor="#A0AEC0"
+                />
+            </View>
+        </View>
+    );
+
     const ImagePickerModal = () => (
-        <Modal
-            visible={showImagePickerModal}
-            transparent={true}
-            animationType="none"
-            statusBarTranslucent={true}
-        >
+        <Modal visible={showImagePickerModal} transparent animationType="none" statusBarTranslucent>
             <View style={styles.modalOverlay}>
-                <Animated.View
-                    style={[
-                        styles.imagePickerModal,
-                        {
-                            opacity: modalOpacity,
-                            transform: [{ scale: modalScale }]
-                        }
-                    ]}
-                >
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Đổi ảnh đại diện</Text>
-                        <Text style={styles.modalSubtitle}>Bạn muốn chọn ảnh từ đâu?</Text>
-                    </View>
-
-                    <View style={styles.modalButtonsRow}>
-                        <TouchableOpacity style={styles.modalButton} onPress={handlePickFromLibrary}>
-                            <MaterialIcons name="photo-library" size={24} color="#FFB400" />
-                            <Text style={styles.modalButtonText}>Thư viện ảnh</Text>
+                <Animated.View style={[styles.modalContent, { opacity: modalOpacity, transform: [{ scale: modalScale }] }]}>
+                    <Text style={styles.modalTitle}>Cập nhật ảnh đại diện</Text>
+                    <View style={styles.modalGrid}>
+                        <TouchableOpacity style={styles.modalOption} onPress={handlePickFromLibrary}>
+                            <View style={[styles.modalIconBox, { backgroundColor: '#E6FFFA' }]}>
+                                <MaterialIcons name="photo-library" size={28} color="#38B2AC" />
+                            </View>
+                            <Text style={styles.modalOptionText}>Thư viện</Text>
                         </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.modalButton} onPress={handleTakePicture}>
-                            <MaterialIcons name="camera-alt" size={24} color="#FFB400" />
-                            <Text style={styles.modalButtonText}>Chụp ảnh</Text>
+                        <TouchableOpacity style={styles.modalOption} onPress={handleTakePicture}>
+                            <View style={[styles.modalIconBox, { backgroundColor: '#FFF5F5' }]}>
+                                <MaterialIcons name="camera-alt" size={28} color="#E53E3E" />
+                            </View>
+                            <Text style={styles.modalOptionText}>Chụp ảnh</Text>
                         </TouchableOpacity>
                     </View>
-
-                    <TouchableOpacity style={styles.modalCancelButton} onPress={handleImagePickerClose}>
-                        <Text style={styles.modalCancelText}>Hủy</Text>
+                    <TouchableOpacity style={styles.modalCloseBtn} onPress={handleImagePickerClose}>
+                        <Text style={styles.modalCloseText}>Hủy bỏ</Text>
                     </TouchableOpacity>
                 </Animated.View>
             </View>
@@ -353,272 +338,199 @@ export default function ProfileSellerScreen() {
     );
 
     const SuccessModal = () => (
-        <Modal
-            visible={showSuccessModal}
-            transparent={true}
-            animationType="none"
-            statusBarTranslucent={true}
-        >
+        <Modal visible={showSuccessModal} transparent animationType="none" statusBarTranslucent>
             <View style={styles.modalOverlay}>
-                <Animated.View
-                    style={[
-                        styles.successModal,
-                        {
-                            opacity: modalOpacity,
-                            transform: [{ scale: modalScale }]
-                        }
-                    ]}
-                >
-                    <MaterialIcons name="check-circle" size={50} color="#28a745" style={{ marginBottom: 10 }} />
-                    <Text style={styles.successTitle}>Thành công</Text>
-                    <Text style={styles.successMessage}>Ảnh đại diện đã được cập nhật!</Text>
-
-                    <TouchableOpacity style={styles.successButton} onPress={handleSuccessModalClose}>
-                        <Text style={styles.successButtonText}>OK</Text>
+                <Animated.View style={[styles.modalContent, { opacity: modalOpacity, transform: [{ scale: modalScale }] }]}>
+                    <MaterialIcons name="check-circle" size={60} color="#38A169" />
+                    <Text style={styles.successTitle}>Thành công!</Text>
+                    <Text style={styles.successMessage}>Ảnh đại diện của bạn đã được cập nhật.</Text>
+                    <TouchableOpacity style={styles.successBtn} onPress={handleSuccessModalClose}>
+                        <Text style={styles.successBtnText}>Đóng</Text>
                     </TouchableOpacity>
                 </Animated.View>
             </View>
         </Modal>
     );
 
+    const LogoutConfirmModal = () => (
+        <Modal visible={showLogoutModal} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setShowLogoutModal(false)}>
+            <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                    <View style={styles.logoutIconBg}>
+                        <MaterialIcons name="logout" size={32} color="#E53E3E" />
+                    </View>
+                    <Text style={styles.modalTitle}>Đăng xuất</Text>
+                    <Text style={styles.modalText}>Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?</Text>
+                    <View style={styles.modalActionRow}>
+                        <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setShowLogoutModal(false)}>
+                            <Text style={styles.modalBtnCancelText}>Hủy</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.modalBtnDanger} onPress={async () => {
+                            setShowLogoutModal(false);
+                            await tokenService.clearAuthData();
+                            router.replace('/login');
+                        }}>
+                            <Text style={styles.modalBtnDangerText}>Đăng xuất</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+
     if (loading) {
         return (
-            <View style={styles.container}>
-                <SellerTopNavigation />
-                <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                    <ActivityIndicator size="large" color="#FFB400" />
-                    <Text style={{ marginTop: 10, color: '#666' }}>Đang tải thông tin...</Text>
-                </View>
-                <SellerBottomNavigation />
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FFB400" />
             </View>
         );
     }
 
-    if (!profile) {
-        return (
-            <View style={styles.container}>
-                <SellerTopNavigation />
-                <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                    <Text style={{ color: '#666', fontSize: 16 }}>Không thể tải thông tin profile</Text>
-                    <TouchableOpacity
-                        style={styles.retryButton}
-                        onPress={loadProfile}
-                    >
-                        <Text style={styles.retryButtonText}>Thử lại</Text>
-                    </TouchableOpacity>
-                </View>
-                <SellerBottomNavigation />
-            </View>
-        );
-    }
+    if (!profile) return null;
 
     return (
         <View style={styles.container}>
             <SellerTopNavigation />
             <ImagePickerModal />
             <SuccessModal />
+            <LogoutConfirmModal />
 
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                {/* Avatar Section */}
-                <View style={styles.avatarSection}>
-                    <TouchableOpacity
-                        style={styles.avatarWrapper}
-                        onPress={handleAvatarPress}
-                        disabled={uploadingAvatar}
-                    >
-                        {/* SỬA: Hiển thị avatar của User thay vì Store */}
-                        <Image
-                            source={
-                                profile.user.avatarUrl
-                                    ? { uri: profile.user.avatarUrl }
-                                    : require('@/assets/images/icon.png')
-                            }
-                            style={[
-                                styles.avatarImage,
-                                uploadingAvatar && { opacity: 0.5 }
-                            ]}
-                        />
-                        {/* Upload loading indicator */}
-                        {uploadingAvatar && (
-                            <View style={styles.uploadingOverlay}>
-                                <ActivityIndicator size="large" color="#FFB400" />
+            <ScrollView 
+                style={styles.scrollView} 
+                showsVerticalScrollIndicator={false}
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: false }
+                )}
+                scrollEventThrottle={16}
+            >
+                {/* Decorative Header Background */}
+                <View style={styles.headerBackground}>
+                    <View style={styles.headerCurve} />
+                </View>
+
+                {/* Profile Header Card */}
+                <View style={styles.profileHeaderContainer}>
+                        <TouchableOpacity onPress={handleAvatarPress} disabled={uploadingAvatar} activeOpacity={0.9}>
+                            <View style={styles.avatarWrapper}>
+                                <Image
+                                    source={profile.user.avatarUrl ? { uri: profile.user.avatarUrl } : require('@/assets/images/icon.png')}
+                                    style={styles.avatarImage}
+                                />
+                                {uploadingAvatar && (
+                                    <View style={styles.uploadingOverlay}>
+                                        <ActivityIndicator color="#FFF" />
+                                    </View>
+                                )}
+                                <View style={styles.editAvatarBadge}>
+                                    <MaterialIcons name="camera-alt" size={14} color="#FFF" />
+                                </View>
                             </View>
-                        )}
+                        </TouchableOpacity>
 
-                        {/* Camera icon overlay */}
-                        <View style={styles.cameraIconOverlay}>
-                            <MaterialIcons name="camera-alt" size={20} color="#fff" />
-                        </View>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Rating Section */}
-                <View style={styles.ratingSection}>
                     <Text style={styles.shopName}>{profile.store.storeName}</Text>
-                    <View style={styles.starsContainer}>
-                        {[...Array(5)].map((_, index) => (
-                            <Text
-                                key={index}
-                                style={[
-                                    styles.star,
-                                    { color: index < Math.floor(Number(profile.store.rating)) ? '#FFB400' : '#E0E0E0' }
-                                ]}
-                            >
-                                ★
-                            </Text>
-                        ))}
-                        <Text style={styles.ratingText}> ({profile.store.rating}/5)</Text>
-                    </View>
-                    <TouchableOpacity onPress={() => router.push('/seller/rating')}>
-                        <Text style={styles.reviewButton}>
-                            Xem đánh giá shop ({profile.store.totalReviews} đánh giá)
-                        </Text>
-                    </TouchableOpacity>
-                </View>
 
-                {/* Stats Section */}
-                <View style={styles.statsSection}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>{profile.store.totalProducts}</Text>
-                        <Text style={styles.statLabel}>Sản phẩm</Text>
+                    {/* Stats Card */}
+                    <View style={styles.statsCard}>
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{profile.store.totalProducts}</Text>
+                            <Text style={styles.statLabel}>Sản phẩm</Text>
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{profile.store.totalOrders}</Text>
+                            <Text style={styles.statLabel}>Đơn hàng</Text>
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{profile.store.followersCount}</Text>
+                            <Text style={styles.statLabel}>Theo dõi</Text>
+                        </View>
                     </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>{profile.store.totalOrders}</Text>
-                        <Text style={styles.statLabel}>Đơn hàng</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>{profile.store.followersCount}</Text>
-                        <Text style={styles.statLabel}>Theo dõi</Text>
-                    </View>
-                </View>
-
-                {/* Header Section */}
-                <View style={styles.headerSection}>
-                    <Text style={styles.sectionTitle}>Thông Tin Cửa Hàng</Text>
-                    <Text style={styles.sectionSubtitle}>
-                        Hãy cung cấp thông tin cơ bản về cửa hàng của bạn
-                    </Text>
                 </View>
 
                 {/* Form Section */}
                 <View style={styles.formSection}>
-                    {/* Owner Name */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Tên quản trị viên *</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={formData.ownerName}
-                            onChangeText={(text) => setFormData({ ...formData, ownerName: text })}
-                            editable={isEditing}
-                            placeholder="Tên của bạn"
-                        />
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Thông tin cửa hàng</Text>
+                        <TouchableOpacity onPress={() => !isEditing && setIsEditing(true)}>
+                            {!isEditing && <Text style={styles.editText}>Chỉnh sửa</Text>}
+                        </TouchableOpacity>
                     </View>
 
-                    {/* Store Name */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Tên cửa hàng *</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={formData.storeName}
-                            onChangeText={(text) => setFormData({ ...formData, storeName: text })}
-                            editable={isEditing}
-                        />
-                    </View>
+                    <InputField
+                        label="Tên quản trị viên"
+                        value={formData.ownerName}
+                        onChangeText={(t: string) => setFormData({...formData, ownerName: t})}
+                        icon="person"
+                        editable={isEditing}
+                    />
 
-                    {/* Description */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Mô tả cửa hàng</Text>
-                        <TextInput
-                            style={[styles.input, styles.textArea]}
-                            value={formData.description}
-                            onChangeText={(text) => setFormData({ ...formData, description: text })}
-                            multiline
-                            numberOfLines={6}
-                            textAlignVertical="top"
-                            editable={isEditing}
-                            placeholder="Mô tả về cửa hàng của bạn..."
-                        />
-                    </View>
+                    <InputField
+                        label="Tên cửa hàng"
+                        value={formData.storeName}
+                        onChangeText={(t: string) => setFormData({...formData, storeName: t})}
+                        icon="store"
+                        editable={isEditing}
+                    />
 
-                    {/* Phone Number */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Số điện thoại *</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={formData.phoneNumber}
-                            onChangeText={(text) => setFormData({ ...formData, phoneNumber: text })}
-                            keyboardType="phone-pad"
-                            editable={isEditing}
-                        />
-                    </View>
+                    <InputField
+                        label="Số điện thoại"
+                        value={formData.phoneNumber}
+                        onChangeText={(t: string) => setFormData({...formData, phoneNumber: t})}
+                        icon="phone"
+                        keyboardType="phone-pad"
+                        editable={isEditing}
+                    />
 
-                    {/* Email */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Email *</Text>
-                        <TextInput
-                            style={[styles.input, styles.disabledInput]}
-                            value={profile.store.email || profile.user.email}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            editable={false}
-                            placeholder="Email đã đăng ký không thể thay đổi"
-                        />
-                    </View>
+                    <InputField
+                        label="Email đăng ký"
+                        value={profile.store.email || profile.user.email}
+                        icon="email"
+                        editable={false}
+                        onChangeText={() => {}}
+                    />
 
-                    {/* Address */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Địa chỉ *</Text>
-                        <TextInput
-                            style={[styles.input, styles.addressInput]}
-                            value={formData.address}
-                            onChangeText={(text) => setFormData({ ...formData, address: text })}
-                            multiline
-                            numberOfLines={3}
-                            textAlignVertical="top"
-                            editable={isEditing}
-                        />
-                    </View>
+                    <InputField
+                        label="Địa chỉ"
+                        value={formData.address}
+                        onChangeText={(t: string) => setFormData({...formData, address: t})}
+                        icon="location-on"
+                        editable={isEditing}
+                        multiline
+                    />
+
+                    <InputField
+                        label="Giới thiệu cửa hàng"
+                        value={formData.description}
+                        onChangeText={(t: string) => setFormData({...formData, description: t})}
+                        icon="description"
+                        editable={isEditing}
+                        multiline
+                        placeholder="Hãy viết đôi lời giới thiệu về shop của bạn..."
+                    />
 
                     {/* Action Buttons */}
-                    <View style={styles.buttonContainer}>
-                        {!isEditing ? (
-                            <TouchableOpacity
-                                style={styles.editButton}
-                                onPress={() => setIsEditing(true)}
-                            >
-                                <Text style={styles.editButtonText}>Cập nhật</Text>
-                            </TouchableOpacity>
-                        ) : (
+                    <View style={styles.actionButtons}>
+                        {isEditing ? (
                             <>
-                                <TouchableOpacity
-                                    style={styles.cancelButton}
-                                    onPress={handleCancel}
-                                    disabled={saving}
-                                >
-                                    <Text style={styles.cancelButtonText}>Hủy</Text>
+                                <TouchableOpacity style={styles.btnCancel} onPress={handleCancel} disabled={saving}>
+                                    <Text style={styles.btnCancelText}>Hủy bỏ</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.saveButton, saving && styles.disabledButton]}
-                                    onPress={handleSave}
-                                    disabled={saving}
-                                >
-                                    {saving ? (
-                                        <ActivityIndicator size="small" color="#FFF" />
-                                    ) : (
-                                        <Text style={styles.saveButtonText}>Lưu thông tin</Text>
-                                    )}
+                                <TouchableOpacity style={styles.btnSave} onPress={handleSave} disabled={saving}>
+                                    {saving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnSaveText}>Lưu thay đổi</Text>}
                                 </TouchableOpacity>
                             </>
+                        ) : (
+                            <TouchableOpacity style={styles.btnLogout} onPress={handleLogout}>
+                                <MaterialIcons name="logout" size={20} color="#E53E3E" style={{marginRight: 8}} />
+                                <Text style={styles.btnLogoutText}>Đăng xuất</Text>
+                            </TouchableOpacity>
                         )}
                     </View>
-
-                    {/* Logout Button */}
-                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                        <Text style={styles.logoutButtonText}>Đăng xuất</Text>
-                    </TouchableOpacity>
                 </View>
+                <View style={{height: 40}} />
             </ScrollView>
-
             <SellerBottomNavigation />
         </View>
     );
@@ -627,366 +539,389 @@ export default function ProfileSellerScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F7FA', // Màu nền sáng và hiện đại hơn
+        backgroundColor: '#F7FAFC',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F7FAFC',
     },
     scrollView: {
         flex: 1,
-        paddingBottom: 100,
     },
-
-    // --- Avatar Section ---
-    avatarSection: {
+    
+    // Header Styling
+    headerBackground: {
+        height: 160,
+        backgroundColor: '#FFB400',
+        width: '100%',
+        position: 'absolute',
+        top: 0,
+        zIndex: 0,
+    },
+    headerCurve: {
+        position: 'absolute',
+        bottom: -25,
+        left: 0,
+        right: 0,
+        height: 50,
+        backgroundColor: '#F7FAFC',
+        borderTopLeftRadius: 50,
+        borderTopRightRadius: 50,
+    },
+    profileHeaderContainer: {
         alignItems: 'center',
-        paddingTop: 40,
-        paddingBottom: 30,
-        backgroundColor: '#FFF',
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-        marginBottom: 24,
+        paddingTop: 80, // Space for header
+        paddingHorizontal: 20,
+        marginBottom: 20,
         zIndex: 1,
     },
     avatarWrapper: {
         position: 'relative',
-        width: 130,
-        height: 130,
-        marginBottom: 10,
     },
     avatarImage: {
-        width: 130,
-        height: 130,
-        borderRadius: 65,
+        width: 110,
+        height: 110,
+        borderRadius: 55,
         borderWidth: 4,
-        borderColor: '#FFF', // Viền trắng tạo khoảng cách với nền
-        backgroundColor: '#F0F0F0',
+        borderColor: '#FFF',
+        backgroundColor: '#FFF',
     },
-    cameraIconOverlay: {
+    editAvatarBadge: {
         position: 'absolute',
         bottom: 5,
         right: 5,
-        backgroundColor: '#FFB400',
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        backgroundColor: '#2D3748',
+        width: 28,
+        height: 28,
+        borderRadius: 14,
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 3,
+        borderWidth: 2,
         borderColor: '#FFF',
     },
     uploadingOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderRadius: 65,
-        backgroundColor: 'rgba(255,255,255,0.8)',
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        borderRadius: 55,
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 10,
-    },
-
-    // --- Rating Section ---
-    ratingSection: {
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        marginBottom: 20,
     },
     shopName: {
-        fontSize: 24,
-        fontWeight: '800',
+        fontSize: 22,
+        fontWeight: 'bold',
         color: '#1A202C',
-        textAlign: 'center',
-        marginBottom: 8,
-        letterSpacing: 0.5,
+        marginBottom: 4,
     },
-    starsContainer: {
+    ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
-        backgroundColor: '#FFF9E6', // Nền vàng nhạt cho sao
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
+        marginBottom: 20,
     },
-    star: {
-        fontSize: 18,
-        color: '#FFB400',
-        marginHorizontal: 1,
+    stars: {
+        flexDirection: 'row',
+        marginRight: 6,
     },
     ratingText: {
+        fontWeight: 'bold',
+        color: '#2D3748',
         fontSize: 14,
-        fontWeight: '700',
-        color: '#B7791F',
-        marginLeft: 6,
     },
-    reviewButton: {
+    dotSeparator: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: '#CBD5E0',
+        marginHorizontal: 8,
+    },
+    reviewLink: {
+        color: '#718096',
         fontSize: 14,
-        color: '#FFB400',
-        fontWeight: '600',
         textDecorationLine: 'underline',
     },
 
-    // --- Stats Section ---
-    statsSection: {
+    // Stats Card
+    statsCard: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         backgroundColor: '#FFF',
-        marginHorizontal: 20,
-        marginTop: 10,
-        marginBottom: 24,
         borderRadius: 16,
-        paddingVertical: 24,
-        paddingHorizontal: 16,
+        paddingVertical: 16,
+        paddingHorizontal: 10,
+        width: '100%',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
     },
     statItem: {
-        alignItems: 'center',
         flex: 1,
+        alignItems: 'center',
     },
-    statNumber: {
-        fontSize: 22,
+    statDivider: {
+        width: 1,
+        height: '70%',
+        backgroundColor: '#E2E8F0',
+        alignSelf: 'center',
+    },
+    statValue: {
+        fontSize: 18,
         fontWeight: '800',
         color: '#2D3748',
-        marginBottom: 6,
+        marginBottom: 2,
     },
     statLabel: {
-        fontSize: 13,
+        fontSize: 12,
+        color: '#718096',
         fontWeight: '500',
-        color: '#718096',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
     },
 
-    // --- Header Section ---
-    headerSection: {
-        paddingHorizontal: 24,
-        marginBottom: 20,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#2D3748',
-        marginBottom: 6,
-    },
-    sectionSubtitle: {
-        fontSize: 15,
-        color: '#718096',
-        lineHeight: 22,
-    },
-
-    // --- Form Section ---
+    // Form Section
     formSection: {
         paddingHorizontal: 20,
     },
-    inputGroup: {
-        marginBottom: 24,
-    },
-    label: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#4A5568',
-        marginBottom: 8,
-        marginLeft: 4,
-    },
-    input: {
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        fontSize: 16,
-        color: '#2D3748',
-        minHeight: 52,
-    },
-    disabledInput: {
-        backgroundColor: '#EDF2F7',
-        borderColor: '#CBD5E0',
-        color: '#A0AEC0',
-    },
-    textArea: {
-        minHeight: 120,
-        textAlignVertical: 'top',
-        paddingTop: 16,
-    },
-    addressInput: {
-        minHeight: 90,
-        textAlignVertical: 'top',
-        paddingTop: 16,
-    },
-
-    // --- Buttons ---
-    buttonContainer: {
+    sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
         marginTop: 10,
-        marginBottom: 30,
-        gap: 16,
     },
-    editButton: {
-        flex: 1,
-        backgroundColor: '#FFB400',
-        borderRadius: 14,
-        paddingVertical: 16,
-        alignItems: 'center',
-    },
-    editButtonText: {
-        color: '#FFF',
-        fontSize: 16,
+    sectionTitle: {
+        fontSize: 18,
         fontWeight: '700',
-        letterSpacing: 0.5,
+        color: '#2D3748',
     },
-    cancelButton: {
-        flex: 1,
-        backgroundColor: '#FFF',
-        borderWidth: 1.5,
-        borderColor: '#E2E8F0',
-        borderRadius: 14,
-        paddingVertical: 16,
-        alignItems: 'center',
-    },
-    cancelButtonText: {
-        color: '#718096',
-        fontSize: 16,
+    editText: {
+        color: '#FFB400',
         fontWeight: '600',
-    },
-    saveButton: {
-        flex: 1,
-        backgroundColor: '#FFB400',
-        borderRadius: 14,
-        paddingVertical: 16,
-        alignItems: 'center',
-    },
-    saveButtonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    logoutButton: {
-        backgroundColor: '#FFF5F5', // Nền đỏ rất nhạt
-        borderRadius: 14,
-        paddingVertical: 16,
-        alignItems: 'center',
-        marginBottom: 40,
-        borderWidth: 1,
-        borderColor: '#FEB2B2',
-    },
-    logoutButtonText: {
-        color: '#E53E3E',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    disabledButton: {
-        opacity: 0.7,
-    },
-    retryButton: {
-        backgroundColor: '#FFB400',
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 30,
-        marginTop: 16,
-    },
-    retryButtonText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 15,
     },
 
-    // --- Modals ---
+    // Inputs
+    inputContainer: {
+        marginBottom: 16,
+    },
+    inputLabel: {
+        fontSize: 14,
+        color: '#4A5568',
+        marginBottom: 8,
+        fontWeight: '600',
+        marginLeft: 4,
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        paddingHorizontal: 12,
+        minHeight: 50,
+    },
+    inputWrapperDisabled: {
+        backgroundColor: '#EDF2F7',
+        borderColor: '#E2E8F0',
+    },
+    inputIcon: {
+        marginRight: 10,
+    },
+    input: {
+        flex: 1,
+        fontSize: 16,
+        color: '#2D3748',
+        paddingVertical: 8,
+    },
+    inputMultiline: {
+        height: 80,
+        textAlignVertical: 'top',
+    },
+
+    // Buttons
+    actionButtons: {
+        flexDirection: 'row',
+        marginTop: 20,
+        gap: 12,
+    },
+    btnCancel: {
+        flex: 1,
+        backgroundColor: '#FFF',
+        borderWidth: 1,
+        borderColor: '#CBD5E0',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+    },
+    btnCancelText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#718096',
+    },
+    btnSave: {
+        flex: 1,
+        backgroundColor: '#FFB400',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        shadowColor: "#FFB400",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    btnSaveText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#FFF',
+    },
+    btnLogout: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: '#FFF5F5',
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#FED7D7',
+        marginTop: 10,
+    },
+    btnLogoutText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#E53E3E',
+    },
+
+    // Modal Common Styles
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Tối hơn một chút để tập trung
+        backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',
+        padding: 20,
     },
-    imagePickerModal: {
-        backgroundColor: '#fff',
-        borderRadius: 24,
-        padding: 30,
-        width: '85%',
-        maxWidth: 360,
+    modalContent: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 24,
+        width: '100%',
+        maxWidth: 340,
         alignItems: 'center',
-    },
-    modalHeader: {
-        alignItems: 'center',
-        marginBottom: 30,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2,
+        shadowRadius: 20,
+        elevation: 10,
     },
     modalTitle: {
         fontSize: 20,
-        fontWeight: '800',
-        color: '#2D3748',
-        marginBottom: 8,
+        fontWeight: 'bold',
+        color: '#1A202C',
+        marginBottom: 12,
+        marginTop: 10,
     },
-    modalSubtitle: {
+    modalText: {
         fontSize: 15,
         color: '#718096',
         textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
     },
-    modalButtonsRow: {
+    
+    // Image Picker Modal Specific
+    modalGrid: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'space-around',
         width: '100%',
-        marginBottom: 30,
-        gap: 12,
+        marginVertical: 20,
     },
-    modalButton: {
-        flex: 1,
+    modalOption: {
         alignItems: 'center',
+    },
+    modalIconBox: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
         justifyContent: 'center',
-        paddingVertical: 20,
-        borderRadius: 16,
-        backgroundColor: '#FFFBF0', // Vàng rất nhạt
-        borderWidth: 1,
-        borderColor: '#FEEBC8',
-    },
-    modalButtonText: {
-        marginTop: 10,
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#D69E2E',
-    },
-    modalCancelButton: {
-        width: '100%',
-        paddingVertical: 14,
-        borderRadius: 12,
         alignItems: 'center',
+        marginBottom: 8,
     },
-    modalCancelText: {
-        fontSize: 16,
-        color: '#A0AEC0',
+    modalOptionText: {
+        fontSize: 14,
         fontWeight: '600',
+        color: '#4A5568',
+    },
+    modalCloseBtn: {
+        marginTop: 10,
+        padding: 10,
+    },
+    modalCloseText: {
+        color: '#718096',
+        fontSize: 16,
+        fontWeight: '500',
     },
 
-    // Success Modal
-    successModal: {
-        backgroundColor: '#fff',
-        borderRadius: 24,
-        padding: 40,
-        width: '80%',
-        maxWidth: 320,
-        alignItems: 'center',
-    },
+    // Success Modal Specific
     successTitle: {
         fontSize: 22,
-        fontWeight: '800',
+        fontWeight: 'bold',
         color: '#2D3748',
-        marginBottom: 12,
+        marginVertical: 10,
     },
     successMessage: {
-        fontSize: 16,
+        fontSize: 15,
         color: '#718096',
         textAlign: 'center',
-        marginBottom: 24,
-        lineHeight: 24,
+        marginBottom: 20,
     },
-    successButton: {
+    successBtn: {
         backgroundColor: '#38A169',
-        paddingHorizontal: 40,
-        paddingVertical: 14,
+        paddingHorizontal: 30,
+        paddingVertical: 12,
         borderRadius: 30,
     },
-    successButtonText: {
-        color: '#fff',
+    successBtnText: {
+        color: '#FFF',
+        fontWeight: 'bold',
         fontSize: 16,
-        fontWeight: '700',
+    },
+
+    // Logout Modal Specific
+    logoutIconBg: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#FFF5F5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    modalActionRow: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
+    },
+    modalBtnCancel: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 10,
+        backgroundColor: '#EDF2F7',
+        alignItems: 'center',
+    },
+    modalBtnCancelText: {
+        fontWeight: '600',
+        color: '#4A5568',
+    },
+    modalBtnDanger: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 10,
+        backgroundColor: '#E53E3E',
+        alignItems: 'center',
+    },
+    modalBtnDangerText: {
+        fontWeight: '600',
+        color: '#FFF',
     },
 });

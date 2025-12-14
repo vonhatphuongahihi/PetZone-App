@@ -1,3 +1,5 @@
+import ReviewItem from "@/app/review-item";
+import { userInfoService } from "@/services/userInfoService";
 import { FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -22,7 +24,6 @@ import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productStyles } from './productStyles';
 
-
 const { width } = Dimensions.get('window');
 
 export default function ProductScreen() {
@@ -40,6 +41,9 @@ export default function ProductScreen() {
     const [otherProducts, setOtherProducts] = useState<Product[]>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loadingReviews, setLoadingReviews] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
+
 
     // Review form state (khi có orderId và rating từ params)
     const [userRating, setUserRating] = useState<number>(0);
@@ -56,6 +60,11 @@ export default function ProductScreen() {
                 router.back();
                 return;
             }
+
+            // Fetch current user avatar
+             const userResponse = await userInfoService.getUserInfo(token);
+            setAvatarUrl(userResponse.user.avatarUrl || null);
+            setUserRole(userResponse.user.role || null);
 
             const response = await productService.getProductById(
                 parseInt(productId as string),
@@ -146,6 +155,22 @@ export default function ProductScreen() {
         }
     };
 
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [isStoreOwner, setIsStoreOwner] = useState(false);
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            const token = await tokenService.getToken();
+            if (!token) return;
+            const userResponse = await userInfoService.getUserInfo(token);
+            setCurrentUserId(userResponse.user.id);
+            if (product?.store?.userId === userResponse.user.id) {
+                setIsStoreOwner(true);
+            }
+        };
+        fetchCurrentUser();
+    }, [product]);
+
     // UseEffect hooks
     useEffect(() => {
         if (productId) {
@@ -153,6 +178,7 @@ export default function ProductScreen() {
         }
     }, [productId, fetchProduct]);
 
+    
     const fetchReviews = useCallback(async () => {
         if (!productId) return;
 
@@ -369,6 +395,17 @@ export default function ProductScreen() {
                         ))}
                     </View>
                 )}
+                {item.sellerReply && (
+                    <View style={productStyles.sellerReplyContainer}>
+                        <Text style={productStyles.sellerReplyTitle}>Trả lời từ cửa hàng:</Text>
+                        <Text style={productStyles.sellerReplyText}>{item.sellerReply}</Text>
+                        {item.replyAt && (
+                            <Text style={productStyles.sellerReplyDate}>
+                                {new Date(item.replyAt).toLocaleDateString('vi-VN')}
+                            </Text>
+                        )}
+                    </View>
+                )}
             </View>
         );
     };
@@ -550,7 +587,6 @@ export default function ProductScreen() {
                             )}
                         </View>
 
-                        {/* Store Info */}
                         <View style={productStyles.storeContainer}>
                             <View style={productStyles.storeHeader}>
                                 <Image
@@ -558,26 +594,28 @@ export default function ProductScreen() {
                                     style={productStyles.storeAvatar}
                                 />
                                 <Text style={productStyles.storeName}>{product.store?.storeName || product.storeId}</Text>
-                                <TouchableOpacity
-                                    style={productStyles.followButton}
-                                    accessible={true}
-                                    accessibilityLabel="Xem shop"
-                                    accessibilityRole="button"
-                                    onPress={() => {
-                                        // Sử dụng store.id nếu có, nếu không thì dùng storeId từ product
-                                        const storeIdToNavigate = product.store?.id || product.storeId;
-                                        if (storeIdToNavigate) {
-                                            router.push({
-                                                pathname: "/shop",
-                                                params: { storeId: storeIdToNavigate }
-                                            });
-                                        } else {
-                                            Alert.alert("Lỗi", "Không thể tìm thấy thông tin cửa hàng");
-                                        }
-                                    }}
-                                >
-                                    <Text style={productStyles.followButtonText}>Xem shop</Text>
-                                </TouchableOpacity>
+                                {userRole !== 'SELLER' && (
+                                    <TouchableOpacity
+                                        style={productStyles.followButton}
+                                        accessible={true}
+                                        accessibilityLabel="Xem shop"
+                                        accessibilityRole="button"
+                                        onPress={() => {
+                                            // Sử dụng store.id nếu có, nếu không thì dùng storeId từ product
+                                            const storeIdToNavigate = product.store?.id || product.storeId;
+                                            if (storeIdToNavigate) {
+                                                router.push({
+                                                    pathname: "/shop",
+                                                    params: { storeId: storeIdToNavigate }
+                                                });
+                                            } else {
+                                                Alert.alert("Lỗi", "Không thể tìm thấy thông tin cửa hàng");
+                                            }
+                                        }}
+                                    >
+                                        <Text style={productStyles.followButtonText}>Xem shop</Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
 
                             <View style={productStyles.storeInfo}>
@@ -767,7 +805,13 @@ export default function ProductScreen() {
                                 {/* Review Form - Hiển thị nếu có orderId và rating từ params */}
                                 {orderId && rating && (
                                     <View style={productStyles.reviewFormContainer}>
-                                        <Text style={productStyles.reviewFormTitle}>Đánh giá sản phẩm của bạn</Text>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                                            <Image
+                                                source={avatarUrl ? { uri: avatarUrl } : require('../../../assets/images/icon.png')}
+                                                style={{ width: 50, height: 50, borderRadius: 25, marginRight: 12 }}
+                                            />
+                                            <Text style={productStyles.reviewFormTitle}>Đánh giá sản phẩm của bạn</Text>
+                                        </View>
 
                                         <View style={productStyles.reviewFormRating}>
                                             <Text style={productStyles.reviewFormLabel}>Số sao:</Text>
@@ -816,11 +860,20 @@ export default function ProductScreen() {
                                 ) : (
                                     <FlatList
                                         data={reviews}
-                                        renderItem={renderReviewItem}
-                                        keyExtractor={(item) => item.id}
+                                        renderItem={({ item }) => (
+                                            <ReviewItem
+                                                item={item}
+                                                isStoreOwner={isStoreOwner}
+                                                onReplySuccess={fetchReviews}
+                                            />
+                                        )}
+                                        keyExtractor={(item) => item.id.toString()}
                                         scrollEnabled={false}
-                                        accessible={true}
-                                        accessibilityLabel={`Danh sách ${reviews.length} đánh giá sản phẩm`}
+                                        ListEmptyComponent={
+                                            <View style={{ padding: 40, alignItems: 'center' }}>
+                                                <Text style={{ color: '#999', fontSize: 16 }}>Chưa có đánh giá nào</Text>
+                                            </View>
+                                        }
                                     />
                                 )}
                             </View>

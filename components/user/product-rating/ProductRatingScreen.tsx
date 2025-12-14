@@ -102,6 +102,9 @@ export default function ProductRatingScreen() {
                   />
                   <View style={styles.reviewerInfo}>
                     <Text style={styles.reviewerName}>{review.product?.title || 'Sản phẩm'}</Text>
+                    {review.product?.store?.storeName && (
+                      <Text style={styles.shopName}>Shop: {review.product.store.storeName}</Text>
+                    )}
                     <Text style={styles.reviewDate}>{formatDate(review.createdAt)}</Text>
                     {renderStars(review.rating, 14)}
                   </View>

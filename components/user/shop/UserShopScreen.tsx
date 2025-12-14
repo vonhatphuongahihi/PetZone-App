@@ -282,6 +282,10 @@ export default function UserShopScreen() {
                 <ScrollView showsVerticalScrollIndicator={false}>
                     {/* Header */}
                     <View style={styles.header}>
+                        {/* Back button */}
+                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                            <Ionicons name="chevron-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
                         {/* Decorative circles */}
                         <View style={styles.headerDecoration} />
                         <View style={styles.headerDecoration2} />
