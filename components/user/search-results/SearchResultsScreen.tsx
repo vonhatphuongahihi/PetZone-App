@@ -155,8 +155,8 @@ export default function SearchResultsScreen() {
                 ? { uri: item.images[0].url }
                 : require("../../../assets/images/cat.png"),
             shop: item.store?.storeName || "Pet Shop",
-            shopImage: item.store?.avatarUrl
-                ? { uri: item.store.avatarUrl }
+            shopImage: item.store?.user?.avatarUrl
+                ? { uri: item.store.user.avatarUrl }
                 : require("../../../assets/images/shop.png"),
             sold: Math.floor(Math.random() * 800) + 100, 
             rating: 5.0, 
@@ -201,7 +201,7 @@ export default function SearchResultsScreen() {
                 ) : products.length === 0 ? (
                     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                         <Text style={{ fontSize: 16, color: "#666" }}>
-                            Không tìm thấy sản phẩm nào cho "{q}"
+                            Không tìm thấy sản phẩm nào cho &quot;{q}&quot;
                         </Text>
                     </View>
                 ) : (

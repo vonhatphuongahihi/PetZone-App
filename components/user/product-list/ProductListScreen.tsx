@@ -15,9 +15,6 @@ import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
-// === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.0.176.156:3001/api';
-
 // Helper: lấy string đầu tiên nếu param là string | string[]
 const getFirstString = (param: string | string[] | undefined) =>
     Array.isArray(param) ? param[0] : param;
@@ -116,8 +113,8 @@ export default function ProductListScreen() {
                 id: item.id.toString(),
                 name: item.title,
                 shop: item.store?.storeName || item.storeId,
-                shopImage: item.store?.avatarUrl ? { uri: item.store.avatarUrl } : require("../../../assets/images/shop.png"),
-                sold: Math.floor(Math.random() * 1000), // Tính toán từ dữ liệu bán hàng thực tế, sẽ hiển thị chính xác sau
+                shopImage: item.store?.user?.avatarUrl ? { uri: item.store.user.avatarUrl } : require("../../../assets/images/shop.png"),
+                sold: Math.floor(Math.random() * 1000), // Tính toán từ dữ liệu bản hàng thực tế, sẽ hiển thị chính xác sau
                 category: item.category?.name || 'Không có danh mục',
                 rating: Number(item.avgRating) || 0,
                 image: item.images?.[0]?.url ? { uri: item.images[0].url } : require("../../../assets/images/cat.png"),

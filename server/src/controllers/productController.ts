@@ -103,7 +103,9 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
-            avatarUrl: true
+            user: {
+              select: { avatarUrl: true }
+            }
           }
         }
       },
@@ -278,7 +280,9 @@ export const getTodayProducts = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
-            avatarUrl: true
+            user: {
+              select: { avatarUrl: true }
+            },
           }
         }
       },
@@ -307,7 +311,9 @@ export const getNewProducts = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
-            avatarUrl: true
+            user: {
+              select: { avatarUrl: true }
+            },
           }
         }
       },
@@ -333,7 +339,9 @@ export const getHotProducts = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
-            avatarUrl: true
+            user: {
+              select: { avatarUrl: true }
+            },
           }
         }
       },

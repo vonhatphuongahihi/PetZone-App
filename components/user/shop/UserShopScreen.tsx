@@ -282,6 +282,10 @@ export default function UserShopScreen() {
                 <ScrollView showsVerticalScrollIndicator={false}>
                     {/* Header */}
                     <View style={styles.header}>
+                        {/* Back button */}
+                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                            <Ionicons name="chevron-back" size={24} color="#FFF" />
+                        </TouchableOpacity>
                         {/* Decorative circles */}
                         <View style={styles.headerDecoration} />
                         <View style={styles.headerDecoration2} />
@@ -289,7 +293,7 @@ export default function UserShopScreen() {
                         <View style={styles.shopInfo}>
                             <View style={styles.avatarContainer}>
                                 <Image
-                                    source={store.avatarUrl ? { uri: store.avatarUrl } : require("../../../assets/images/shop.png")}
+                                    source={store.user?.avatarUrl ? { uri: store.user.avatarUrl } : require("../../../assets/images/shop.png")}
                                     style={styles.avatar}
                                     resizeMode="cover"
                                 />
