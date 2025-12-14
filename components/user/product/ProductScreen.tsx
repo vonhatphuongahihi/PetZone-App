@@ -1,4 +1,5 @@
 import ReviewItem from "@/app/review-item";
+import { userInfoService } from "@/services/userInfoService";
 import { FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -23,7 +24,6 @@ import { tokenService } from '../../../services/tokenService';
 import { ProductCard } from '../product-card/ProductCard';
 import { productStyles } from './productStyles';
 
-
 const { width } = Dimensions.get('window');
 
 export default function ProductScreen() {
@@ -41,6 +41,8 @@ export default function ProductScreen() {
     const [otherProducts, setOtherProducts] = useState<Product[]>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loadingReviews, setLoadingReviews] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
 
     // Review form state (khi có orderId và rating từ params)
     const [userRating, setUserRating] = useState<number>(0);
@@ -57,6 +59,10 @@ export default function ProductScreen() {
                 router.back();
                 return;
             }
+
+            // Fetch current user avatar
+             const userResponse = await userInfoService.getUserInfo(token);
+            setAvatarUrl(userResponse.user.avatarUrl || null);
 
             const response = await productService.getProductById(
                 parseInt(productId as string),
@@ -152,12 +158,11 @@ export default function ProductScreen() {
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
-            const userData = await tokenService.getUser();
-            if (!userData) return;
-
-            setCurrentUserId(userData.id);
-
-            if (product?.store?.userId === userData.id) {
+            const token = await tokenService.getToken();
+            if (!token) return;
+            const userResponse = await userInfoService.getUserInfo(token);
+            setCurrentUserId(userResponse.user.id);
+            if (product?.store?.userId === userResponse.user.id) {
                 setIsStoreOwner(true);
             }
         };
@@ -171,6 +176,7 @@ export default function ProductScreen() {
         }
     }, [productId, fetchProduct]);
 
+    
     const fetchReviews = useCallback(async () => {
         if (!productId) return;
 
@@ -429,7 +435,9 @@ export default function ProductScreen() {
                     id: item.id.toString(),
                     name: item.title,
                     shop: item.store?.storeName || item.storeId,
-                    shopImage: item.store?.avatarUrl ? { uri: item.store.avatarUrl } : require("../../../assets/images/shop.png"),
+                    shopImage: item.store?.avatarUrl
+                        ? { uri: item.store.avatarUrl }
+                        : require("../../../assets/images/shop.png"),
                     sold: Math.floor(Math.random() * 1000), // Tính toán từ dữ liệu bán hàng thực tế, sẽ hiển thị chính xác sau
                     category: item.category?.name || 'Không có danh mục',
                     rating: Number(item.avgRating) || 0,
@@ -579,11 +587,12 @@ export default function ProductScreen() {
                             )}
                         </View>
 
-                        {/* Store Info */}
                         <View style={productStyles.storeContainer}>
                             <View style={productStyles.storeHeader}>
                                 <Image
-                                    source={product.store?.avatarUrl ? { uri: product.store.avatarUrl } : require("../../../assets/images/shop.png")}
+                                    source={avatarUrl ? { uri: avatarUrl }
+                                            : require("../../../assets/images/shop.png")
+                                    }
                                     style={productStyles.storeAvatar}
                                 />
                                 <Text style={productStyles.storeName}>{product.store?.storeName || product.storeId}</Text>
@@ -796,7 +805,13 @@ export default function ProductScreen() {
                                 {/* Review Form - Hiển thị nếu có orderId và rating từ params */}
                                 {orderId && rating && (
                                     <View style={productStyles.reviewFormContainer}>
-                                        <Text style={productStyles.reviewFormTitle}>Đánh giá sản phẩm của bạn</Text>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                                            <Image
+                                                source={avatarUrl ? { uri: avatarUrl } : require('../../../assets/images/icon.png')}
+                                                style={{ width: 50, height: 50, borderRadius: 25, marginRight: 12 }}
+                                            />
+                                            <Text style={productStyles.reviewFormTitle}>Đánh giá sản phẩm của bạn</Text>
+                                        </View>
 
                                         <View style={productStyles.reviewFormRating}>
                                             <Text style={productStyles.reviewFormLabel}>Số sao:</Text>
