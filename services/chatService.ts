@@ -1,5 +1,5 @@
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.0.3.40:3001/api';
+const API_BASE_URL = 'http://10.0.176.156:3001/api';
 
 export interface User {
     id: string;
