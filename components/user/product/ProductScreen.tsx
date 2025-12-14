@@ -62,7 +62,7 @@ export default function ProductScreen() {
             }
 
             // Fetch current user avatar
-             const userResponse = await userInfoService.getUserInfo(token);
+            const userResponse = await userInfoService.getUserInfo(token);
             setAvatarUrl(userResponse.user.avatarUrl || null);
             setUserRole(userResponse.user.role || null);
 
@@ -438,7 +438,7 @@ export default function ProductScreen() {
                     name: item.title,
                     shop: item.store?.storeName || item.storeId,
                     shopImage: item.store?.user?.avatarUrl ? { uri: item.store.user.avatarUrl } : require("../../../assets/images/shop.png"),
-                    sold: Math.floor(Math.random() * 1000), // Tính toán từ dữ liệu bán hàng thực tế, sẽ hiển thị chính xác sau
+                    sold: item.soldCount || 0,
                     category: item.category?.name || 'Không có danh mục',
                     rating: Number(item.avgRating) || 0,
                     image: item.images?.[0]?.url ? { uri: item.images[0].url } : require("../../../assets/images/cat.png"),
@@ -590,7 +590,8 @@ export default function ProductScreen() {
                         <View style={productStyles.storeContainer}>
                             <View style={productStyles.storeHeader}>
                                 <Image
-                                    source={avatarUrl ? { uri: avatarUrl }
+                                    source={ product.store?.user?.avatarUrl
+                                        ? { uri: product.store.user.avatarUrl }
                                             : require("../../../assets/images/shop.png")
                                     }
                                     style={productStyles.storeAvatar}

@@ -198,7 +198,7 @@ export default function HomeScreen() {
 
     // Listen for follow status changes from UserShopScreen
     useEffect(() => {
-        const subscription = DeviceEventEmitter.addListener('store_follow_changed', (data: { storeId: string; isFollowing: boolean; followersCount: number }) => {
+        const followSubscription = DeviceEventEmitter.addListener('store_follow_changed', (data: { storeId: string; isFollowing: boolean; followersCount: number }) => {
             setTopStores(prev => prev.map(s =>
                 s.id === data.storeId
                     ? {
@@ -210,21 +210,34 @@ export default function HomeScreen() {
             ));
         });
 
+        // Listen for order status updates to refresh product data (soldCount)
+        const orderUpdateSubscription = DeviceEventEmitter.addListener('order_status_updated', async () => {
+            const token = await AsyncStorage.getItem("jwt_token");
+            if (token) {
+                await fetchProducts(token); // Refresh products to get updated soldCount
+            }
+        });
+
         return () => {
-            subscription.remove();
+            followSubscription.remove();
+            orderUpdateSubscription.remove();
         };
     }, []);
 
-    // Refresh top stores when screen is focused, but preserve follow state
+    // Refresh data when screen is focused to get updated soldCount
     useFocusEffect(
         React.useCallback(() => {
-            const refreshStores = async () => {
+            const refreshData = async () => {
                 const token = await AsyncStorage.getItem("jwt_token");
                 if (token) {
-                    await fetchTopStores(token, true); // Preserve follow state when refreshing
+                    // Refresh both products (to get updated soldCount) and stores
+                    await Promise.all([
+                        fetchProducts(token), // Refresh products to get updated soldCount
+                        fetchTopStores(token, true) // Preserve follow state when refreshing
+                    ]);
                 }
             };
-            refreshStores();
+            refreshData();
         }, [])
     );
 
@@ -267,7 +280,7 @@ export default function HomeScreen() {
                 ? { uri: item.store.user.avatarUrl }
                 : require("../../assets/images/shop.png"),
             sold: item.soldCount || 0,
-            rating: item.rating || 5,
+            rating: item.avgRating || 5,
             discount: item.oldPrice
                 ? `-${Math.round((item.oldPrice - item.price) / item.oldPrice * 100)}%`
                 : "",

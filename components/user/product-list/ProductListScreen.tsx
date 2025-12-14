@@ -114,7 +114,7 @@ export default function ProductListScreen() {
                 name: item.title,
                 shop: item.store?.storeName || item.storeId,
                 shopImage: item.store?.user?.avatarUrl ? { uri: item.store.user.avatarUrl } : require("../../../assets/images/shop.png"),
-                sold: Math.floor(Math.random() * 1000), // Tính toán từ dữ liệu bản hàng thực tế, sẽ hiển thị chính xác sau
+                sold: item.soldCount || 0,
                 category: item.category?.name || 'Không có danh mục',
                 rating: Number(item.avgRating) || 0,
                 image: item.images?.[0]?.url ? { uri: item.images[0].url } : require("../../../assets/images/cat.png"),
