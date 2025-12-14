@@ -159,7 +159,9 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
-            avatarUrl: true,
+            user: {
+              select: { avatarUrl: true }
+            },
           },
         },
         orderItems: true, // để tính sold
