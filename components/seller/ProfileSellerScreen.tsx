@@ -215,7 +215,7 @@ export default function ProfileSellerScreen() {
                         ...profile,
                         user: {
                             ...profile.user,
-                            avatarUrl: response.data.avatarUrl 
+                            avatarUrl: response.data.avatarUrl
                         }
                     });
                 }

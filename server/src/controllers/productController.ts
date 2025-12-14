@@ -78,13 +78,64 @@ export const getProductsByStore = async (req: Request, res: Response) => {
 
     const products = await prisma.product.findMany({
       where: { storeId },
-      include: { images: true, category: true },
+      include: {
+        images: true,
+        category: true,
+        orderItems: true, // để tính sold
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    return res.json({ success: true, data: products });
+    const productsWithSoldAndRemaining = products.map(p => {
+      const sold = p.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+      const remainingQuantity = Math.max(p.quantity - sold, 0); // tránh âm
+      return {
+        ...p,
+        sold,                 // số đã bán
+        remainingQuantity      // số còn lại
+      };
+    });
+
+    return res.json({ success: true, data: productsWithSoldAndRemaining });
   } catch (error: any) {
     console.error("Error getProductsByStore:", error.message);
+    return res.status(500).json({ success: false, message: "Lỗi server." });
+  }
+};
+
+//GET BY CATEGORY AND STOREID
+export const getProductsByCategoryForStore = async (req: Request, res: Response) => {
+  try {
+    const categoryId = Number(req.params.categoryId);
+    const storeId = req.query.storeId as string | undefined;
+
+    if (isNaN(categoryId)) {
+      return res.status(400).json({ success: false, message: "categoryId không hợp lệ." });
+    }
+
+    const products = await prisma.product.findMany({
+      where: {
+        categoryId,
+        ...(storeId ? { storeId } : {}),
+      },
+      include: {
+        images: true,
+        category: true,
+        store: { select: { storeName: true, avatarUrl: true } },
+        orderItems: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const productsWithSold = products.map(p => {
+      const sold = p.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+      const remainingQuantity = Math.max(p.quantity - sold, 0);
+      return { ...p, sold, remainingQuantity };
+    });
+
+    return res.json({ success: true, data: productsWithSold });
+  } catch (error: any) {
+    console.error("Error getProductsByCategoryForStore:", error.message);
     return res.status(500).json({ success: false, message: "Lỗi server." });
   }
 };
@@ -93,7 +144,12 @@ export const getProductsByStore = async (req: Request, res: Response) => {
 export const getProductsByCategory = async (req: Request, res: Response) => {
   try {
     const categoryId = Number(req.params.categoryId);
-    if (isNaN(categoryId)) return res.status(400).json({ success: false, message: "categoryId không hợp lệ." });
+    if (isNaN(categoryId)) {
+      return res.status(400).json({
+        success: false,
+        message: "categoryId không hợp lệ.",
+      });
+    }
 
     const products = await prisma.product.findMany({
       where: { categoryId },
@@ -103,57 +159,83 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
-            user: {
-              select: { avatarUrl: true }
-            }
-          }
-        }
+            avatarUrl: true,
+          },
+        },
+        orderItems: true, // để tính sold
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return res.json({ success: true, data: products });
+    // Tạo trường sold và remainingQuantity
+    const productsWithSold = products.map(product => {
+      const sold = product.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+      const remainingQuantity = Math.max(product.quantity - sold, 0);
+
+      return {
+        ...product,
+        sold,
+        remainingQuantity,
+      };
+    });
+
+    return res.json({ success: true, data: productsWithSold });
   } catch (error: any) {
     console.error("Error getProductsByCategory:", error.message);
-    return res.status(500).json({ success: false, message: "Lỗi server." });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server.",
+    });
   }
 };
-
 // === UPDATE PRODUCT ===
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ success: false, message: "ID không hợp lệ." });
 
-    console.log("req.body:", req.body);
-    console.log("req.files:", req.files);
+    const existing = await prisma.product.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ success: false, message: "Sản phẩm không tồn tại." });
 
-    const { storeId, categoryId, title, description, price, oldPrice, quantity } = req.body;
-    const files = req.files as Express.Multer.File[];
+    let storeIdToUse = req.body.storeId || existing.storeId;
+    if (!storeIdToUse) return res.status(400).json({ success: false, message: "Thiếu storeId." });
+
+    const { categoryId, title, description, price, oldPrice, quantity } = req.body;
+    const files = req.files as Express.Multer.File[]; // array of uploaded files
     const imageUrls: { url: string; alt: string | null }[] = [];
 
-    if (files && files.length > 0 && storeId) {
+    // Upload ảnh mới nếu có file
+    if (files && files.length > 0) {
       for (const file of files) {
         const result = await cloudinary.uploader.upload(file.path, {
-          folder: getCloudinaryFolder(storeId),
+          folder: getCloudinaryFolder(storeIdToUse),
         });
         imageUrls.push({ url: result.secure_url, alt: null });
         fs.unlinkSync(file.path);
       }
     }
 
+    // Build data object
+    const updateData: any = {};
+    if (title) updateData.title = title.trim();
+    if (description) updateData.description = description.trim();
+    if (price) updateData.price = Number(price);
+    if (oldPrice) updateData.oldPrice = Number(oldPrice);
+    if (quantity) updateData.quantity = Number(quantity);
+    if (storeIdToUse) updateData.storeId = String(storeIdToUse);
+    if (categoryId) updateData.categoryId = Number(categoryId);
+
+    // Xóa ảnh cũ và thêm ảnh mới nếu có
+    if (imageUrls.length > 0) {
+      updateData.images = {
+        deleteMany: {},  // xóa tất cả ảnh cũ
+        create: imageUrls, // tạo ảnh mới
+      };
+    }
+
     const updatedProduct = await prisma.product.update({
       where: { id },
-      data: {
-        title: title?.trim() || undefined,
-        description: description?.trim() || undefined,
-        price: price ? Number(price) : undefined,
-        oldPrice: oldPrice ? Number(oldPrice) : undefined,
-        quantity: quantity ? Number(quantity) : undefined,
-        storeId: storeId ? String(storeId) : undefined,
-        categoryId: categoryId ? Number(categoryId) : undefined,
-        images: imageUrls.length > 0 ? { deleteMany: {}, create: imageUrls } : undefined,
-      },
+      data: updateData,
       include: { images: true, category: true },
     });
 

@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 // === IP / BASE_URL của backend ===
 const API_BASE_URL = 'http://10.10.3.127:3001/api';
 
@@ -31,6 +33,8 @@ export interface Store {
 }
 
 export interface Product {
+    remainingQuantity: ReactNode;
+    sold: ReactNode;
     id: number;
     storeId: string;
     categoryId?: number;
@@ -298,6 +302,24 @@ export const productService = {
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || 'Không thể tải sản phẩm hot');
+        }
+
+        return response.json();
+    },
+
+    updateStock: async (id: number, newStock: number, token: string): Promise<{ success: boolean; data: Product }> => {
+        const response = await fetch(`${API_BASE_URL}/products/${id}/stock`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ stock: newStock }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Cập nhật stock thất bại');
         }
 
         return response.json();
