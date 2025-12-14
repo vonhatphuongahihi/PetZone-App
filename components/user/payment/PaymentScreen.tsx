@@ -150,7 +150,7 @@ export default function CheckoutScreen() {
 
             {/* Scroll nội dung */}
             <ScrollView
-                contentContainerStyle={{ padding: 15, paddingBottom: 40 }}
+                contentContainerStyle={{ padding: 15, paddingBottom: 80 }}
                 showsVerticalScrollIndicator={false}
                 nestedScrollEnabled={true}
             >
@@ -336,7 +336,10 @@ export default function CheckoutScreen() {
             <View style={styles.footer}>
                 <Text style={styles.footerPrice}>{totalPayment.toLocaleString()}đ</Text>
                 <TouchableOpacity
-                    style={styles.buyBtn}
+                    style={[
+                        styles.buyBtn,
+                        (selectedItems.length === 0 || !address || placingOrder) && styles.buyBtnDisabled
+                    ]}
                     onPress={handlePlaceOrder}
                     disabled={selectedItems.length === 0 || !address || placingOrder}
                 >

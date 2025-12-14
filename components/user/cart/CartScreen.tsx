@@ -280,18 +280,6 @@ export default function CartScreen() {
           onToggle={() => toggleShop(item.shopId)}
         />
         <Text style={styles.shopName}>{item.title}</Text>
-        <MaterialIcons
-          name="arrow-back-ios"
-          size={24}
-          color="#FBBC05"
-          onPress={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.push('/'); 
-            }
-          }}
-        />
 
       </View>
 
@@ -359,6 +347,9 @@ export default function CartScreen() {
     </View>
   );
 
+  // Tính tổng số lượng sản phẩm
+  const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -369,7 +360,7 @@ export default function CartScreen() {
           color="#FBBC05"
           onPress={() => router.back()}
         />
-        <Text style={styles.headerTitle}>Giỏ hàng ({cartItems.length})</Text>
+        <Text style={styles.headerTitle}>Giỏ hàng ({totalQuantity})</Text>
       </View>
 
       {loading ? (
