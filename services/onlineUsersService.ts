@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://192.168.1.162:3001/api';
+const API_BASE_URL = 'http://10.10.3.142:3001/api';
 
 let onlineUsersCache: string[] = [];
 let lastFetchTime = 0;

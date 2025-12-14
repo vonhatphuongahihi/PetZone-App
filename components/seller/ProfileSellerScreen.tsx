@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { SellerProfile, sellerService } from '../../services/sellerService';
 // SỬA: Import service của user để update avatar cá nhân
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { tokenService } from '../../services/tokenService';
 import { userInfoService } from '../../services/userInfoService';
 import { SellerBottomNavigation } from './SellerBottomNavigation';
@@ -227,7 +228,7 @@ export default function ProfileSellerScreen() {
             }
 
             const platform = Platform.OS === 'web' ? 'web' : 'mobile';
-            
+
             // Gọi API update avatar của User
             const response = await userInfoService.updateUserAvatar(imageUri, token, platform);
 
@@ -238,7 +239,7 @@ export default function ProfileSellerScreen() {
                         ...profile,
                         user: {
                             ...profile.user,
-                            avatarUrl: response.data.avatarUrl 
+                            avatarUrl: response.data.avatarUrl
                         }
                     });
                 }
@@ -292,21 +293,32 @@ export default function ProfileSellerScreen() {
     };
 
     const handleLogout = async () => {
-        Alert.alert(
-            'Đăng xuất',
-            'Bạn có chắc chắn muốn đăng xuất?',
-            [
-                { text: 'Hủy', style: 'cancel' },
-                {
-                    text: 'Đăng xuất',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await tokenService.clearAuthData();
-                        router.replace('/login');
-                    }
-                }
-            ]
-        );
+        if (Platform.OS === 'web') {
+            // Web
+            if (!window.confirm('Bạn có chắc chắn muốn đăng xuất?')) return;
+            await confirmLogout();
+        } else {
+            // Mobile
+            setShowLogoutModal(true);
+        }
+    };
+
+    const confirmLogout = async () => {
+        if (Platform.OS !== 'web') setShowLogoutModal(false);
+
+        try {
+            await tokenService.clearAuthData();
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('jwt_token');
+        } catch (e) {
+            console.error('Error during logout:', e);
+        }
+
+        router.replace('/login');
+    };
+
+    const cancelLogout = () => {
+        if (Platform.OS !== 'web') setShowLogoutModal(false);
     };
 
     // --- Sub Components: Modals ---
@@ -318,7 +330,7 @@ export default function ProfileSellerScreen() {
             statusBarTranslucent={true}
         >
             <View style={styles.modalOverlay}>
-                <Animated.View 
+                <Animated.View
                     style={[
                         styles.imagePickerModal,
                         {
@@ -331,19 +343,19 @@ export default function ProfileSellerScreen() {
                         <Text style={styles.modalTitle}>Đổi ảnh đại diện</Text>
                         <Text style={styles.modalSubtitle}>Bạn muốn chọn ảnh từ đâu?</Text>
                     </View>
-                    
+
                     <View style={styles.modalButtonsRow}>
                         <TouchableOpacity style={styles.modalButton} onPress={handlePickFromLibrary}>
                             <MaterialIcons name="photo-library" size={24} color="#FFB400" />
                             <Text style={styles.modalButtonText}>Thư viện ảnh</Text>
                         </TouchableOpacity>
-                        
+
                         <TouchableOpacity style={styles.modalButton} onPress={handleTakePicture}>
                             <MaterialIcons name="camera-alt" size={24} color="#FFB400" />
                             <Text style={styles.modalButtonText}>Chụp ảnh</Text>
                         </TouchableOpacity>
                     </View>
-                    
+
                     <TouchableOpacity style={styles.modalCancelButton} onPress={handleImagePickerClose}>
                         <Text style={styles.modalCancelText}>Hủy</Text>
                     </TouchableOpacity>
@@ -360,7 +372,7 @@ export default function ProfileSellerScreen() {
             statusBarTranslucent={true}
         >
             <View style={styles.modalOverlay}>
-                <Animated.View 
+                <Animated.View
                     style={[
                         styles.successModal,
                         {
@@ -369,10 +381,10 @@ export default function ProfileSellerScreen() {
                         }
                     ]}
                 >
-                    <MaterialIcons name="check-circle" size={50} color="#28a745" style={{marginBottom: 10}} />
+                    <MaterialIcons name="check-circle" size={50} color="#28a745" style={{ marginBottom: 10 }} />
                     <Text style={styles.successTitle}>Thành công</Text>
                     <Text style={styles.successMessage}>Ảnh đại diện đã được cập nhật!</Text>
-                    
+
                     <TouchableOpacity style={styles.successButton} onPress={handleSuccessModalClose}>
                         <Text style={styles.successButtonText}>OK</Text>
                     </TouchableOpacity>
@@ -421,7 +433,7 @@ export default function ProfileSellerScreen() {
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Avatar Section */}
                 <View style={styles.avatarSection}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.avatarWrapper}
                         onPress={handleAvatarPress}
                         disabled={uploadingAvatar}
@@ -438,13 +450,13 @@ export default function ProfileSellerScreen() {
                                 uploadingAvatar && { opacity: 0.5 }
                             ]}
                         />
-                         {/* Upload loading indicator */}
-                         {uploadingAvatar && (
+                        {/* Upload loading indicator */}
+                        {uploadingAvatar && (
                             <View style={styles.uploadingOverlay}>
                                 <ActivityIndicator size="large" color="#FFB400" />
                             </View>
                         )}
-                        
+
                         {/* Camera icon overlay */}
                         <View style={styles.cameraIconOverlay}>
                             <MaterialIcons name="camera-alt" size={20} color="#fff" />
@@ -990,3 +1002,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
 });
+function setShowLogoutModal(arg0: boolean) {
+    throw new Error('Function not implemented.');
+}
+

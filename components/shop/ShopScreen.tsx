@@ -138,7 +138,7 @@ export default function ShopScreen() {
             style={styles.productImage}
           />
           <View style={styles.stockTag}>
-            <Text style={styles.stockTagText}>Còn lại {item.quantity}</Text>
+            <Text style={styles.stockTagText}>Còn lại {item.remainingQuantity}</Text>
           </View>
         </View>
 
@@ -166,7 +166,7 @@ export default function ShopScreen() {
 
         {/* Meta */}
         <View style={styles.metaRow}>
-          <Text style={styles.soldLabel}>Đã bán {item.totalReviews}</Text>
+          <Text style={styles.soldLabel}>Đã bán {item.sold}</Text>
           <Text style={styles.rating}>★ {Number(item.avgRating).toFixed(1)}</Text>
         </View>
 
