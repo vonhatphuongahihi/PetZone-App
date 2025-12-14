@@ -308,11 +308,13 @@ export const getProductById = async (req: Request, res: Response) => {
             id: true,
             userId: true,
             storeName: true,
-            avatarUrl: true,
             rating: true,
             totalProducts: true,
             totalReviews: true,
-            followersCount: true
+            followersCount: true,
+            user: {
+              select: { avatarUrl: true }
+            }
           }
         }
       },

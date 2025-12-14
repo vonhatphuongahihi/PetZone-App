@@ -442,6 +442,21 @@ export const orderController = {
                 }
             });
 
+            // Cập nhật soldCount khi đơn hàng chuyển thành shipped
+            if (status === 'shipped' && !order.shippedAt) {
+                for (const orderItem of updatedOrder.orderItems) {
+                    await prisma.product.update({
+                        where: { id: Number(orderItem.productId) },
+                        data: {
+                            soldCount: {
+                                increment: Number(orderItem.quantity) || 0
+                            }
+                        }
+                    });
+                }
+                console.log('Successfully updated soldCount for all products in order');
+            }
+
             res.json({
                 success: true,
                 message: 'Order status updated successfully',
