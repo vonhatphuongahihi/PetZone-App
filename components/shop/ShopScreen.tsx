@@ -346,10 +346,6 @@ export default function ShopScreen() {
           />
           <View style={styles.shopTextContainer}>
             <Text style={styles.shopName}>{store?.storeName || "phuong-shop"}</Text>
-            <Text style={styles.subText}>
-              ★ {store?.rating ? Number(store.rating).toFixed(1) : "4.8"} |{" "}
-              {store?.totalOrders || 100} Người đã mua
-            </Text>
           </View>
         </View>
 

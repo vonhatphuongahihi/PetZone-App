@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { Order, orderService } from '../../../services/orderService';
+import { userInfoService } from '../../../services/userInfoService';
 import { styles } from './purchaseHistoryStyles';
 
 interface PurchaseItem {
@@ -30,6 +31,7 @@ interface PurchaseItem {
 export default function PurchaseHistoryScreen() {
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalSpent, setTotalSpent] = useState<number>(0);
 
   useEffect(() => {
     loadPurchaseHistory();
@@ -71,6 +73,18 @@ export default function PurchaseHistoryScreen() {
       items.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
 
       setPurchaseItems(items);
+
+      // Tính tổng số tiền đã chi tiêu từ các item
+      const calculatedTotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+      setTotalSpent(calculatedTotal);
+      
+      // Cập nhật totalSpent cho user
+      try {
+        await userInfoService.updateTotalSpent(calculatedTotal, token);
+        console.log('Total spent updated:', calculatedTotal);
+      } catch (error) {
+        console.error('Error updating total spent:', error);
+      }
     } catch (error: any) {
       console.error('Error loading purchase history:', error);
     } finally {
@@ -106,7 +120,13 @@ export default function PurchaseHistoryScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <>
+          <View style={{ backgroundColor: '#FFF', padding: 16, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>
+              Số tiền đã chi: <Text style={{ color: '#FBBC05', fontWeight: 'bold' }}>{totalSpent.toLocaleString()}đ</Text>
+            </Text>
+          </View>
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {purchaseItems.map((item) => (
             <View key={item.id} style={styles.productCard}>
               <View style={styles.productContent}>
@@ -161,6 +181,7 @@ export default function PurchaseHistoryScreen() {
             </View>
           ))}
         </ScrollView>
+        </>
       )}
     </SafeAreaView>
   );
