@@ -28,6 +28,10 @@ export interface Review {
         id: number;
         title: string;
         images?: Array<{ url: string }>;
+        store?: {
+            id: string;
+            storeName: string;
+        };
     };
     order?: {
         id: string;

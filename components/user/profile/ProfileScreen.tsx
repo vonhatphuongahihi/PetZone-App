@@ -235,7 +235,7 @@ export default function ProfileScreen() {
           <View style={styles.modalContainer}>
             {/* Cat Image */}
             <Image
-              source={require("../../../assets/images/icon.png")}
+              source={require("../../../assets/images/dog-feet.png")}
               style={styles.modalCatImage}
             />
 
