@@ -232,7 +232,7 @@ export default function AddAddressScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.navigate("/profile")}>
+        <TouchableOpacity onPress={() => router.back()}>
           <MaterialIcons name="arrow-back-ios" size={24} color="#FCCB05" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Địa chỉ người dùng</Text>
