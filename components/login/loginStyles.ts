@@ -126,34 +126,7 @@ export const loginStyles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 20,
     },
-    dividerLine: {
-        height: 1,
-        backgroundColor: '#E0E0E0',
-        width: '100%',
-        position: 'absolute',
-        top: '50%',
-    },
-    dividerText: {
-        backgroundColor: '#FFFFFF',
-        paddingHorizontal: 16,
-        color: '#666',
-        fontSize: 14,
-    },
 
-    googleIcon: {
-        width: 50,
-        height: 50,
-        alignSelf: 'center',
-        marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
     registerContainer: {
         alignItems: 'center',
     },

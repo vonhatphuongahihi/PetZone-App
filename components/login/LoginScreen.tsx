@@ -18,6 +18,7 @@ export default function LoginScreen() {
     const {
         control,
         handleSubmit,
+        watch,
         formState: { errors },
     } = useForm<LoginFormData>({
         defaultValues: {
@@ -40,9 +41,45 @@ export default function LoginScreen() {
             await AsyncStorage.setItem("jwt_token", response.token);
             await AsyncStorage.setItem("user_data", JSON.stringify(response.user));
             console.log("TOKEN ĐÃ LƯU THÀNH CÔNG:", response.token);
-            
+
+            // Initialize socket connection immediately after login to mark user as online
+            try {
+                const { getSocket } = await import('../../services/socket');
+                const socket = await getSocket();
+                console.log('[LoginScreen] Socket initialized, user will be marked as online');
+
+                // Wait for socket to actually connect (important for mobile)
+                const waitForConnection = () => {
+                    return new Promise<void>((resolve) => {
+                        if (socket.connected) {
+                            console.log('[LoginScreen] Socket already connected');
+                            resolve();
+                            return;
+                        }
+
+                        const timeout = setTimeout(() => {
+                            console.log('[LoginScreen] Socket connection timeout, proceeding anyway');
+                            resolve();
+                        }, 2000);
+
+                        socket.once('connect', () => {
+                            console.log('[LoginScreen] Socket connected after login');
+                            clearTimeout(timeout);
+                            resolve();
+                        });
+                    });
+                };
+
+                await waitForConnection();
+                // Additional delay to ensure backend processes the connection
+                await new Promise(resolve => setTimeout(resolve, 300));
+            } catch (socketError) {
+                console.error('[LoginScreen] Error initializing socket:', socketError);
+                // Continue with navigation even if socket fails
+            }
+
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             // Check user role and redirect accordingly
             if (response.user.role === 'SELLER') {
                 // For sellers, check if they have a store
@@ -72,7 +109,38 @@ export default function LoginScreen() {
                 router.replace('/(tabs)');
             }
         } catch (error) {
-            Alert.alert('Lỗi', error instanceof Error ? error.message : 'Đăng nhập thất bại');
+            const errorMessage = error instanceof Error ? error.message : 'Đăng nhập thất bại';
+
+            // Check if error is due to unverified email
+            if (errorMessage.includes('Email chưa được xác thực') || errorMessage.includes('xác thực email')) {
+                Alert.alert(
+                    'Email chưa được xác thực',
+                    'Vui lòng xác thực email trước khi đăng nhập. Bạn có muốn chuyển đến trang xác thực OTP không?',
+                    [
+                        {
+                            text: 'Hủy',
+                            style: 'cancel'
+                        },
+                        {
+                            text: 'Xác thực ngay',
+                            onPress: () => {
+                                // Get email from form
+                                const email = watch('email');
+                                if (email) {
+                                    router.push({
+                                        pathname: '/otp-verify',
+                                        params: { email, type: 'signup' }
+                                    });
+                                } else {
+                                    Alert.alert('Lỗi', 'Vui lòng nhập email để xác thực');
+                                }
+                            }
+                        }
+                    ]
+                );
+            } else {
+                Alert.alert('Lỗi', errorMessage);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -209,18 +277,6 @@ export default function LoginScreen() {
                     </Text>
                 </TouchableOpacity>
 
-                <View style={loginStyles.dividerContainer}>
-                    <View style={loginStyles.dividerLine} />
-                    <Text style={loginStyles.dividerText}>Hoặc đăng nhập bằng</Text>
-                </View>
-
-                <TouchableOpacity onPress={handleGoogleLogin}>
-                    <Image
-                        source={require('@/assets/images/google-login.png')}
-                        style={loginStyles.googleIcon}
-                        contentFit="contain"
-                    />
-                </TouchableOpacity>
 
                 <View style={loginStyles.registerContainer}>
                     <Text style={loginStyles.registerText}>

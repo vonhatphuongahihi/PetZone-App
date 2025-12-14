@@ -168,7 +168,7 @@ export default function ProfileSellerScreen() {
     const pickImageFromLibrary = async () => {
         try {
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: ['images'],
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,
@@ -429,24 +429,6 @@ export default function ProfileSellerScreen() {
                         </TouchableOpacity>
 
                     <Text style={styles.shopName}>{profile.store.storeName}</Text>
-                    
-                    <View style={styles.ratingRow}>
-                        <View style={styles.stars}>
-                            {[...Array(5)].map((_, i) => (
-                                <MaterialIcons 
-                                    key={i} 
-                                    name={i < Math.floor(Number(profile.store.rating)) ? "star" : "star-border"} 
-                                    size={18} 
-                                    color="#FFB400" 
-                                />
-                            ))}
-                        </View>
-                        <Text style={styles.ratingText}>{profile.store.rating}/5</Text>
-                        <View style={styles.dotSeparator} />
-                        <TouchableOpacity onPress={() => router.push('/seller/rating')}>
-                            <Text style={styles.reviewLink}>Xem đánh giá ({profile.store.totalReviews})</Text>
-                        </TouchableOpacity>
-                    </View>
 
                     {/* Stats Card */}
                     <View style={styles.statsCard}>
