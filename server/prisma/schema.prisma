@@ -77,6 +77,7 @@ model Product {
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
   tag          String?        @default("normal")
+  soldCount    Int?           @default(0)
   cartItems    CartItem[]
   orderItems   OrderItem[]
   images       ProductImage[]
@@ -252,20 +253,20 @@ model Payment {
 }
 
 model Review {
-  id          String    @id @default(cuid())
-  userId      String    @map("user_id")
-  productId   Int       @map("product_id")
-  orderId     String?   @map("order_id")
-  rating      Int
-  content     String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  replyAt     DateTime? @map("reply_at")
-  sellerReply String?   @map("seller_reply")
-  images      Json      @default("[]")
-  order       Order?    @relation(fields: [orderId], references: [id])
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  productId    Int       @map("product_id")
+  orderId      String?   @map("order_id")
+  rating       Int
+  content      String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  reply_at     DateTime?
+  seller_reply String?
+  images       Json      @default("[]")
+  order        Order?    @relation(fields: [orderId], references: [id])
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId, orderId])
   @@index([userId])

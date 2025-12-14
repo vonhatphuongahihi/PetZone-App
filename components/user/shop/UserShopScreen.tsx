@@ -293,7 +293,7 @@ export default function UserShopScreen() {
                         <View style={styles.shopInfo}>
                             <View style={styles.avatarContainer}>
                                 <Image
-                                    source={store.user?.avatarUrl ? { uri: store.user.avatarUrl } : require("../../../assets/images/shop.png")}
+                                    source={store.avatarUrl ? { uri: store.avatarUrl } : require("../../../assets/images/shop.jpg")}
                                     style={styles.avatar}
                                     resizeMode="cover"
                                 />

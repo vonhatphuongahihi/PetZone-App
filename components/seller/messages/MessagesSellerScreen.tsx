@@ -39,7 +39,10 @@ export default function MessagesSellerScreen() {
         setOnlineUsersLoaded(true);
       }
       // Also refresh online users list to ensure consistency
-      loadOnlineUsers();
+      // Use setTimeout to avoid blocking UI updates
+      setTimeout(() => {
+        loadOnlineUsers();
+      }, 100);
     };
 
     const handleUserOffline = (data: { userId: string }) => {
@@ -130,7 +133,9 @@ export default function MessagesSellerScreen() {
   const loadOnlineUsers = async () => {
     try {
       setOnlineUsersLoaded(false); // Reset loading state
+      console.log('[MessagesSellerScreen] Loading online users...');
       const onlineUserIds = await getOnlineUsers(true);
+      console.log('[MessagesSellerScreen] Online users loaded:', onlineUserIds);
       setOnlineUsers(new Set(onlineUserIds));
       setOnlineUsersLoaded(true); // Mark as loaded
     } catch (error) {
@@ -142,8 +147,18 @@ export default function MessagesSellerScreen() {
   // Refresh conversations whenever screen comes into focus
   useFocusEffect(
     useCallback(() => {
+      console.log('[MessagesSellerScreen] Screen focused, refreshing conversations and online users');
       loadConversations();
-      loadOnlineUsers();
+      loadOnlineUsers(); // Force refresh online users when screen is focused
+
+      // Also ensure socket is connected and refresh after a short delay
+      // This helps on mobile where socket might not be ready immediately
+      const refreshTimer = setTimeout(() => {
+        console.log('[MessagesSellerScreen] Delayed refresh of online users');
+        loadOnlineUsers();
+      }, 500);
+
+      return () => clearTimeout(refreshTimer);
     }, [])
   );
 
@@ -367,7 +382,7 @@ export default function MessagesSellerScreen() {
         {/* Avatar */}
         <View style={messagesSellerStyles.avatarContainer}>
           <Image
-            source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.png")}
+            source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.jpg")}
             style={messagesSellerStyles.avatar}
           />
           {/* Hiển thị nút xanh khi user thực sự online và đã load xong danh sách */}

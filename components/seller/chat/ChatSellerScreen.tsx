@@ -218,7 +218,7 @@ export default function ChatSellerScreen() {
                         </TouchableOpacity>
                         <View>
                             <Image
-                                source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.png")}
+                                source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.jpg")}
                                 style={chatSellerStyles.avatar}
                             />
                             {isPeerOnline ? <View style={chatSellerStyles.onlineDot} /> : null}

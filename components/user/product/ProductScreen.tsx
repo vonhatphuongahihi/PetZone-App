@@ -437,7 +437,7 @@ export default function ProductScreen() {
                     id: item.id.toString(),
                     name: item.title,
                     shop: item.store?.storeName || item.storeId,
-                    shopImage: item.store?.user?.avatarUrl ? { uri: item.store.user.avatarUrl } : require("../../../assets/images/shop.png"),
+                    shopImage: item.store?.avatarUrl ? { uri: item.store.avatarUrl } : require("../../../assets/images/shop.jpg"),
                     sold: Math.floor(Math.random() * 1000), // Tính toán từ dữ liệu bán hàng thực tế, sẽ hiển thị chính xác sau
                     category: item.category?.name || 'Không có danh mục',
                     rating: Number(item.avgRating) || 0,
@@ -590,9 +590,7 @@ export default function ProductScreen() {
                         <View style={productStyles.storeContainer}>
                             <View style={productStyles.storeHeader}>
                                 <Image
-                                    source={avatarUrl ? { uri: avatarUrl }
-                                            : require("../../../assets/images/shop.png")
-                                    }
+                                    source={product.store?.avatarUrl ? { uri: product.store.avatarUrl } : require("../../../assets/images/shop.jpg")}
                                     style={productStyles.storeAvatar}
                                 />
                                 <Text style={productStyles.storeName}>{product.store?.storeName || product.storeId}</Text>
