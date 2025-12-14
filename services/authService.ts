@@ -1,5 +1,5 @@
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.10.3.142:3001/api';
+const API_BASE_URL = 'http://10.10.3.127:3001/api';
 
 export interface RegisterData {
     email: string;
@@ -61,7 +61,10 @@ export const authService = {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Đăng nhập thất bại');
+            const error = new Error(errorData.message || 'Đăng nhập thất bại');
+            // Attach additional error info for handling
+            (error as any).requiresVerification = errorData.requiresVerification;
+            throw error;
         }
 
         return response.json();

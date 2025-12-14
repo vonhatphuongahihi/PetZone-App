@@ -16,6 +16,18 @@ export default StyleSheet.create({
         position: "relative",
         overflow: "hidden",
     },
+    backButton: {
+        position: "absolute",
+        top: 16,
+        left: 12,
+        zIndex: 3,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "rgba(0, 0, 0, 0.1)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
     headerDecoration: {
         position: "absolute",
         top: -50,
@@ -55,6 +67,7 @@ export default StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         marginBottom: 20,
+        marginLeft: 36,
     },
     avatar: {
         width: 80,

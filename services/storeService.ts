@@ -35,6 +35,7 @@ export interface Store {
         username: string;
         email: string;
         role: string;
+        avatarUrl?: string;
     };
 }
 
@@ -255,7 +256,7 @@ export const storeService = {
     },
 
     // Get top stores (public - no token required, but can pass token to get follow status)
-    getTopStores: async (token?: string, limit: number = 10): Promise<{ success: boolean; data: Array<Store & { isFollowing?: boolean }> }> => {
+    getTopStores: async (token?: string, limit: number = 10): Promise<{ success: boolean; data: (Store & { isFollowing?: boolean })[] }> => {
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
         };

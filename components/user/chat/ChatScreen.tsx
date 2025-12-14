@@ -216,8 +216,8 @@ export default function ChatScreen() {
                             <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" style={{ marginRight: 4 }} />
                         </TouchableOpacity>
                         <View>
-                            <Image 
-                                source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.png")} 
+                            <Image
+                                source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.jpg")}
                                 style={chatStyles.avatar}
                             />
                             {isPeerOnline ? <View style={chatStyles.onlineDot} /> : null}

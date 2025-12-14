@@ -90,7 +90,7 @@ const TopStoreCard = ({ item }: { item: typeof topStores[0] }) => {
 
       <View style={userHomeStyle.topShopContent}>
         <Image
-          source={require('../../../assets/images/shop.png')}
+          source={require('../../../assets/images/shop.jpg')}
           style={userHomeStyle.topShopAvatar}
         />
 

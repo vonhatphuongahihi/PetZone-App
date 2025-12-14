@@ -15,79 +15,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ProductCard } from "../../user/product-card/ProductCard";
 import { SearchResultsStyles } from './searchResultsStyles';
 
-// Mock data sản phẩm
-const products = [
-    {
-        id: "p1",
-        name: "Vòng Cổ Màu Vàng Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "phuong-shop",
-        shopImage: require("../../../assets/images/shop.png"),
-        sold: 1000,
-        category: "Vòng cổ",
-        rating: 5,
-        image: require("../../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    },
-    {
-        id: "p2",
-        name: "Vòng Cổ Màu Đỏ Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "pet-shop",
-        sold: 500,
-        shopImage: require("../../../assets/images/shop.png"),
-        category: "Vòng cổ",
-        rating: 4.5,
-        image: require("../../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    },
-    {
-        id: "p3",
-        name: "Vòng Cổ Màu Xanh Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "dog-cat-shop",
-        shopImage: require("../../../assets/images/shop.png"),
-        sold: 800,
-        category: "Vòng cổ",
-        rating: 4.8,
-        image: require("../../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    },
-    {
-        id: "p4",
-        name: "Vòng Cổ Màu Xanh Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        shop: "dog-cat-shop",
-        shopImage: require("../../../assets/images/shop.png"),
-        sold: 800,
-        category: "Vòng cổ",
-        rating: 4.8,
-        image: require("../../../assets/images/cat.png"),
-        price: 94679,
-        oldPrice: 105190,
-        discount: "-10%",
-    }
-];
-
-const hotProducts = [
-    {
-        id: 1,
-        name: "Vòng Cổ Mạ Vàng Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        price: 94679,
-        oldPrice: 105190,
-        image: require("../../../assets/images/cat.png"),
-    },
-    {
-        id: 2,
-        name: "Vòng Cổ Mạ Bạc Cho Chó Mèo - Sang Trọng, Đẳng Cấp",
-        price: 84679,
-        oldPrice: 95000,
-        image: require("../../../assets/images/cat.png"),
-    },
-];
-
 export default function SearchResultsScreen() {
     const router = useRouter();
     const { q } = useLocalSearchParams();
@@ -155,11 +82,11 @@ export default function SearchResultsScreen() {
                 ? { uri: item.images[0].url }
                 : require("../../../assets/images/cat.png"),
             shop: item.store?.storeName || "Pet Shop",
-            shopImage: item.store?.avatarUrl
-                ? { uri: item.store.avatarUrl }
-                : require("../../../assets/images/shop.png"),
-            sold: Math.floor(Math.random() * 800) + 100, 
-            rating: 5.0, 
+            shopImage: item.store?.user?.avatarUrl
+                ? { uri: item.store.user.avatarUrl }
+                : require("../../../assets/images/shop.jpg"),
+            sold: Math.floor(Math.random() * 800) + 100,
+            rating: 5.0,
             discount: item.oldPrice
                 ? `-${Math.round(((Number(item.oldPrice) - Number(item.price)) / Number(item.oldPrice)) * 100)}%`
                 : "",
@@ -172,7 +99,7 @@ export default function SearchResultsScreen() {
                 <ProductCard
                     product={productForCard}
                     onPress={() => handleProductPress(item.id)}
-                    layout="horizontal" 
+                    layout="horizontal"
                 />
             </View>
         );
@@ -187,8 +114,8 @@ export default function SearchResultsScreen() {
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
                     <SearchBarWithPopup
-                        //recentSearches={["cỏ mèo", "cát vệ sinh trà xanh", "áo cho mèo", "dây dắt"]}
-                        //hotProducts={hotProducts}
+                    //recentSearches={["cỏ mèo", "cát vệ sinh trà xanh", "áo cho mèo", "dây dắt"]}
+                    //hotProducts={hotProducts}
                     />
                 </View>
 
@@ -201,7 +128,7 @@ export default function SearchResultsScreen() {
                 ) : products.length === 0 ? (
                     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                         <Text style={{ fontSize: 16, color: "#666" }}>
-                            Không tìm thấy sản phẩm nào cho "{q}"
+                            Không tìm thấy sản phẩm nào cho &quot;{q}&quot;
                         </Text>
                     </View>
                 ) : (

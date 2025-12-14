@@ -343,31 +343,40 @@ export const getAllProducts = async (req: Request, res: Response) => {
   }
 };
 
-// === GET TODAY (3 NGÀY GẦN ĐÂY HOẶC GIẢM GIÁ) ===
+// === GET TODAY (SẢN PHẨM BÁN CHẠY NHẤT - THEO SỐ LƯỢT BÁN) ===
 export const getTodayProducts = async (req: Request, res: Response) => {
   try {
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+
+    const whereCondition: any = {
+      status: { not: 'draft' },
+      quantity: { gt: 0 }
+    };
+
+    if (limit) {
+      whereCondition.soldCount = { gt: 0 };
+    }
 
     const products = await prisma.product.findMany({
-      where: {
-        OR: [
-          { createdAt: { gte: threeDaysAgo } },
-          { oldPrice: { not: null } },
-        ],
-      },
+      where: whereCondition,
       include: {
         images: true,
         category: true,
         store: {
           select: {
             storeName: true,
-            avatarUrl: true
+            avatarUrl: true,
+            user: {
+              select: { avatarUrl: true }
+            },
           }
         }
       },
-      orderBy: { createdAt: "desc" },
-      take: 10,
+      orderBy: [
+        { soldCount: "desc" }, // Sắp xếp theo số lượng bán giảm dần
+        { createdAt: "desc" }
+      ],
+      ...(limit ? { take: limit } : {}), // Chỉ giới hạn nếu có limit
     });
 
     return res.json({ success: true, data: products });
@@ -391,7 +400,10 @@ export const getNewProducts = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
-            avatarUrl: true
+            avatarUrl: true,
+            user: {
+              select: { avatarUrl: true }
+            },
           }
         }
       },
@@ -417,7 +429,10 @@ export const getHotProducts = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
-            avatarUrl: true
+            avatarUrl: true,
+            user: {
+              select: { avatarUrl: true }
+            },
           }
         }
       },

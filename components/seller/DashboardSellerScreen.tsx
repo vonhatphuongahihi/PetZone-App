@@ -1,9 +1,11 @@
 import { AntDesign, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { storeService } from '../../services/storeService';
 import { tokenService } from '../../services/tokenService';
+import { userInfoService } from '../../services/userInfoService';
 import { dashboardSellerStyles } from './dashboardSellerStyles';
 import { SellerBottomNavigation } from './SellerBottomNavigation';
 import { SellerTopNavigation } from './SellerTopNavigation';
@@ -19,6 +21,7 @@ interface BestSellingProduct {
 
 export default function DashboardSellerScreen() {
     const [storeName, setStoreName] = useState('PetZone Store');
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         totalRevenue: 0,
@@ -36,6 +39,10 @@ export default function DashboardSellerScreen() {
                     setLoading(false);
                     return;
                 }
+
+                // Fetch user avatar
+                const userResponse = await userInfoService.getUserInfo(token);
+                setAvatarUrl(userResponse.user.avatarUrl || null);
 
                 // Fetch store name
                 const storeData = await storeService.getMyStore(token);
@@ -89,9 +96,9 @@ export default function DashboardSellerScreen() {
                             Hi <Text style={dashboardSellerStyles.storeNameText}>{storeName}</Text>
                         </Text>
                         <Image
-                            source={require('@/assets/images/seller-hello.png')}
+                            source={avatarUrl ? { uri: avatarUrl } : require('@/assets/images/seller-hello.png')}
                             style={dashboardSellerStyles.helloImage}
-                            contentFit="contain"
+                            contentFit="cover"
                         />
                     </View>
                 </View>
@@ -109,7 +116,6 @@ export default function DashboardSellerScreen() {
                                 <Text style={dashboardSellerStyles.kpiValue}>{formatCurrency(stats.totalRevenue)}</Text>
                             </View>
                         </View>
-                        <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
                     </View>
 
                     {/* Số đơn hàng */}
@@ -123,7 +129,6 @@ export default function DashboardSellerScreen() {
                                 <Text style={dashboardSellerStyles.kpiValue}>{stats.totalOrders}</Text>
                             </View>
                         </View>
-                        <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
                     </View>
 
                     {/* Sản phẩm */}
@@ -137,7 +142,6 @@ export default function DashboardSellerScreen() {
                                 <Text style={dashboardSellerStyles.kpiValue}>{stats.totalProducts}</Text>
                             </View>
                         </View>
-                        <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
                     </View>
 
                     {/* Đánh giá */}
@@ -151,7 +155,6 @@ export default function DashboardSellerScreen() {
                                 <Text style={dashboardSellerStyles.kpiValue}>{stats.rating}</Text>
                             </View>
                         </View>
-                        <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
                     </View>
                 </View>
 
@@ -164,7 +167,7 @@ export default function DashboardSellerScreen() {
                         </View>
                     ) : (
                         bestSellingProducts.map((product) => (
-                            <View key={product.id} style={dashboardSellerStyles.productCard}>
+                            <TouchableOpacity key={product.id} style={dashboardSellerStyles.productCard} onPress={() => router.push(`/product?productId=${product.id}`)} activeOpacity={0.7}>
                                 <Image
                                     source={product.image ? { uri: product.image } : require('@/assets/images/dog-feet.png')}
                                     style={dashboardSellerStyles.productImage}
@@ -185,7 +188,7 @@ export default function DashboardSellerScreen() {
                                         </View>
                                     </View>
                                 </View>
-                            </View>
+                            </TouchableOpacity>
                         ))
                     )}
                 </View>

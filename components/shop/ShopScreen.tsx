@@ -14,8 +14,10 @@ import {
 } from "react-native";
 import { Category as ApiCategory, categoryService } from "../../services/categoryService";
 import { Product as ApiProduct, productService } from "../../services/productService";
+import { SocketEventEmitter } from "../../services/socketEventEmitter";
 import { Store, storeService } from "../../services/storeService";
 import { tokenService } from "../../services/tokenService";
+import { userInfoService } from "../../services/userInfoService";
 import { SellerBottomNavigation } from "../seller/SellerBottomNavigation";
 import styles from "./shopStyle";
 
@@ -25,11 +27,32 @@ export default function ShopScreen() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isNavigating, setIsNavigating] = useState(false); // Ngăn nhấn nút khi đang tải
+  const [isNavigating, setIsNavigating] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ApiProduct[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  // Listen for unread messages
+  useEffect(() => {
+    const handleUnreadNotification = (data: { conversationId: number }) => {
+      setUnreadCount(prev => prev + 1);
+    };
+
+    const handleMarkAsRead = (data: { conversationId: number }) => {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    };
+
+    SocketEventEmitter.addListener('conversation:unread', handleUnreadNotification);
+    SocketEventEmitter.addListener('conversation:read', handleMarkAsRead);
+
+    return () => {
+      SocketEventEmitter.removeAllListeners('conversation:unread');
+      SocketEventEmitter.removeAllListeners('conversation:read');
+    };
+  }, []);
 
   const handleSearchInShop = async () => {
     if (!searchQuery.trim()) return;
@@ -51,7 +74,6 @@ export default function ShopScreen() {
     }
   };
 
-
   const { refresh } = useLocalSearchParams();
 
   const fetchData = useCallback(async () => {
@@ -63,13 +85,22 @@ export default function ShopScreen() {
         throw new Error("No token found");
       }
 
-      // Lấy thông tin cửa hàng
-      const storeResponse = await storeService.getMyStore(token);
+      // Lấy thông tin cửa hàng và user info song song
+      const [storeResponse, userResponse] = await Promise.all([
+        storeService.getMyStore(token),
+        userInfoService.getUserInfo(token)
+      ]);
+
       console.log("Store response:", JSON.stringify(storeResponse, null, 2));
       if (!storeResponse.store || !storeResponse.store.id) {
         throw new Error("Invalid store data: store or store.id is missing");
       }
       setStore(storeResponse.store);
+
+      // Lấy avatar từ user info
+      if (userResponse.user.avatarUrl) {
+        setAvatarUrl(userResponse.user.avatarUrl);
+      }
 
       // Lấy danh sách sản phẩm
       const productsResponse = await productService.getProductsByStore(storeResponse.store.id, token);
@@ -79,7 +110,7 @@ export default function ShopScreen() {
       const categoriesResponse = await categoryService.getAllCategories(token);
       setCategories(categoriesResponse.data || []);
 
-      return storeResponse.store; // Trả về store để sử dụng trong onPress
+      return storeResponse.store;
     } catch (err: any) {
       console.error("Error fetching shop data:", err.message);
       if (err.message === "No token found") {
@@ -108,7 +139,7 @@ export default function ShopScreen() {
     fetchData();
   }, [fetchData]);
 
-  // Reload dữ liệu khi focus screen (ví dụ sau khi thêm sản phẩm)
+  // Reload dữ liệu khi focus screen
   useFocusEffect(
     useCallback(() => {
       if (refresh === "true") fetchData();
@@ -124,7 +155,7 @@ export default function ShopScreen() {
       onPress={() => {
         router.push(`/product?productId=${item.id}`);
       }}
-      style={{ flex: 1, marginHorizontal: 6, marginBottom: 12 }} // ← quan trọng: flex + margin
+      style={{ flex: 1, marginHorizontal: 6, marginBottom: 12 }}
     >
       <View style={styles.card}>
         {/* Ảnh sản phẩm */}
@@ -170,12 +201,12 @@ export default function ShopScreen() {
           <Text style={styles.rating}>★ {Number(item.avgRating).toFixed(1)}</Text>
         </View>
 
-        {/* Nút Sửa + Xóa – CÓ stopPropagation ĐỂ KHÔNG BỊ NHẢY TRANG CHI TIẾT */}
+        {/* Nút Sửa + Xóa */}
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={styles.editButton}
             onPress={(e) => {
-              e.stopPropagation(); // ← BẮT BUỘC: ngăn Pressable cha bắt sự kiện
+              e.stopPropagation();
               router.push({
                 pathname: "/seller/shopUpdateProduct",
                 params: { product: JSON.stringify(item), storeId: store?.id },
@@ -188,7 +219,7 @@ export default function ShopScreen() {
           <TouchableOpacity
             style={styles.deleteButton}
             onPress={(e) => {
-              e.stopPropagation(); // ← BẮT BUỘC
+              e.stopPropagation();
               handleDeleteProduct(item.id);
             }}
           >
@@ -198,6 +229,7 @@ export default function ShopScreen() {
       </View>
     </Pressable>
   );
+
   const handleConfirmDelete = (id: number) => {
     confirmDelete(id);
   };
@@ -230,7 +262,6 @@ export default function ShopScreen() {
       console.log("Delete API response:", res);
       console.log("XÓA THÀNH CÔNG:", res);
 
-      // --- CẬP NHẬT NGAY STATE products ---
       setProducts(prev => prev.filter(p => p.id !== productId));
 
       Alert.alert("Thành công", "Đã xóa sản phẩm!");
@@ -281,7 +312,18 @@ export default function ShopScreen() {
           <Text style={styles.headerTitle}>Cửa hàng của tôi</Text>
           <View style={styles.iconGroup}>
             <Ionicons name="notifications-outline" size={22} color="#fff" style={styles.icon} />
-            <Ionicons name="chatbubble-ellipses-outline" size={22} color="#fff" style={styles.icon} />
+            <TouchableOpacity onPress={() => router.push('/seller/messages')}>
+              <View style={styles.messageIconContainer}>
+                <Ionicons name="chatbubble-ellipses-outline" size={22} color="#fff" style={styles.icon} />
+                {unreadCount > 0 && (
+                  <View style={styles.messageBadge}>
+                    <Text style={styles.messageBadgeText}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
             <Ionicons
               name="search-outline"
               size={22}
@@ -293,13 +335,17 @@ export default function ShopScreen() {
         </View>
 
         <View style={styles.shopInfo}>
-          <Image source={require("../../assets/images/cat.png")} style={styles.avatar} />
+          {/* Hiển thị avatar động từ API */}
+          <Image 
+            source={
+              avatarUrl 
+                ? { uri: avatarUrl } 
+                : require("../../assets/images/cat.png")
+            } 
+            style={styles.avatar} 
+          />
           <View style={styles.shopTextContainer}>
             <Text style={styles.shopName}>{store?.storeName || "phuong-shop"}</Text>
-            <Text style={styles.subText}>
-              ★ {store?.rating ? Number(store.rating).toFixed(1) : "4.8"} |{" "}
-              {store?.totalOrders || 100} Người đã mua
-            </Text>
           </View>
         </View>
 
@@ -421,7 +467,6 @@ export default function ShopScreen() {
             />
             {searchLoading && <Text>Đang tìm...</Text>}
 
-            {/* Đây là chỗ chèn FlatList */}
             <FlatList
               data={searchResults}
               keyExtractor={(item) => item.id.toString()}
@@ -444,7 +489,6 @@ export default function ShopScreen() {
                 </Pressable>
               )}
             />
-            {/* Kết thúc FlatList */}
           </Pressable>
         </Pressable>
       )}
