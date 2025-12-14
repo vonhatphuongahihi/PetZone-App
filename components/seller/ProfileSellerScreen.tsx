@@ -227,7 +227,7 @@ export default function ProfileSellerScreen() {
             }
 
             const platform = Platform.OS === 'web' ? 'web' : 'mobile';
-            
+
             // Gọi API update avatar của User
             const response = await userInfoService.updateUserAvatar(imageUri, token, platform);
 
@@ -238,7 +238,7 @@ export default function ProfileSellerScreen() {
                         ...profile,
                         user: {
                             ...profile.user,
-                            avatarUrl: response.data.avatarUrl 
+                            avatarUrl: response.data.avatarUrl
                         }
                     });
                 }
@@ -318,7 +318,7 @@ export default function ProfileSellerScreen() {
             statusBarTranslucent={true}
         >
             <View style={styles.modalOverlay}>
-                <Animated.View 
+                <Animated.View
                     style={[
                         styles.imagePickerModal,
                         {
@@ -331,19 +331,19 @@ export default function ProfileSellerScreen() {
                         <Text style={styles.modalTitle}>Đổi ảnh đại diện</Text>
                         <Text style={styles.modalSubtitle}>Bạn muốn chọn ảnh từ đâu?</Text>
                     </View>
-                    
+
                     <View style={styles.modalButtonsRow}>
                         <TouchableOpacity style={styles.modalButton} onPress={handlePickFromLibrary}>
                             <MaterialIcons name="photo-library" size={24} color="#FFB400" />
                             <Text style={styles.modalButtonText}>Thư viện ảnh</Text>
                         </TouchableOpacity>
-                        
+
                         <TouchableOpacity style={styles.modalButton} onPress={handleTakePicture}>
                             <MaterialIcons name="camera-alt" size={24} color="#FFB400" />
                             <Text style={styles.modalButtonText}>Chụp ảnh</Text>
                         </TouchableOpacity>
                     </View>
-                    
+
                     <TouchableOpacity style={styles.modalCancelButton} onPress={handleImagePickerClose}>
                         <Text style={styles.modalCancelText}>Hủy</Text>
                     </TouchableOpacity>
@@ -360,7 +360,7 @@ export default function ProfileSellerScreen() {
             statusBarTranslucent={true}
         >
             <View style={styles.modalOverlay}>
-                <Animated.View 
+                <Animated.View
                     style={[
                         styles.successModal,
                         {
@@ -369,10 +369,10 @@ export default function ProfileSellerScreen() {
                         }
                     ]}
                 >
-                    <MaterialIcons name="check-circle" size={50} color="#28a745" style={{marginBottom: 10}} />
+                    <MaterialIcons name="check-circle" size={50} color="#28a745" style={{ marginBottom: 10 }} />
                     <Text style={styles.successTitle}>Thành công</Text>
                     <Text style={styles.successMessage}>Ảnh đại diện đã được cập nhật!</Text>
-                    
+
                     <TouchableOpacity style={styles.successButton} onPress={handleSuccessModalClose}>
                         <Text style={styles.successButtonText}>OK</Text>
                     </TouchableOpacity>
@@ -421,7 +421,7 @@ export default function ProfileSellerScreen() {
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Avatar Section */}
                 <View style={styles.avatarSection}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.avatarWrapper}
                         onPress={handleAvatarPress}
                         disabled={uploadingAvatar}
@@ -438,13 +438,13 @@ export default function ProfileSellerScreen() {
                                 uploadingAvatar && { opacity: 0.5 }
                             ]}
                         />
-                         {/* Upload loading indicator */}
-                         {uploadingAvatar && (
+                        {/* Upload loading indicator */}
+                        {uploadingAvatar && (
                             <View style={styles.uploadingOverlay}>
                                 <ActivityIndicator size="large" color="#FFB400" />
                             </View>
                         )}
-                        
+
                         {/* Camera icon overlay */}
                         <View style={styles.cameraIconOverlay}>
                             <MaterialIcons name="camera-alt" size={20} color="#fff" />

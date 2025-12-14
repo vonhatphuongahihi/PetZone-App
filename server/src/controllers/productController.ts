@@ -258,18 +258,14 @@ export const getAllProducts = async (req: Request, res: Response) => {
   }
 };
 
-// === GET TODAY (3 NGÀY GẦN ĐÂY HOẶC GIẢM GIÁ) ===
+// === GET TODAY (SẢN PHẨM BÁN CHẠY NHẤT - THEO SỐ LƯỢT BÁN) ===
 export const getTodayProducts = async (req: Request, res: Response) => {
   try {
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-
     const products = await prisma.product.findMany({
       where: {
-        OR: [
-          { createdAt: { gte: threeDaysAgo } },
-          { oldPrice: { not: null } },
-        ],
+        status: { not: 'draft' },
+        quantity: { gt: 0 },
+        soldCount: { gt: 0 }
       },
       include: {
         images: true,
@@ -281,7 +277,10 @@ export const getTodayProducts = async (req: Request, res: Response) => {
           }
         }
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { soldCount: "desc" }, // Sắp xếp theo số lượng bán giảm dần
+        { createdAt: "desc" }
+      ],
       take: 10,
     });
 

@@ -13,48 +13,49 @@ model User {
   username                 String                    @unique
   password                 String
   isActive                 Boolean                   @default(true)
-  emailVerified             Boolean                   @default(false) @map("email_verified")
   role                     String                    @default("USER")
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
   avatarUrl                String?                   @map("avatar_url")
   dateofBirth              String?
+  totalSpent               Int?
+  emailVerified            Boolean                   @default(false) @map("email_verified")
   cartItems                CartItem[]
   conversationParticipants ConversationParticipant[] @relation("UserParticipants")
   messages                 Message[]                 @relation("UserMessages")
   orders                   Order[]
-  stores                   Store[]
-  addresses                UserAddress[]
   reviews                  Review[]
   storeFollows             StoreFollow[]
+  stores                   Store[]
+  addresses                UserAddress[]
 
   @@map("users")
 }
 
 model Store {
-  id             String       @id @default(cuid())
-  userId         String       @map("user_id")
-  storeName      String       @map("store_name")
-  slug           String       @unique
+  id             String        @id @default(cuid())
+  userId         String        @map("user_id")
+  storeName      String        @map("store_name")
+  slug           String        @unique
   description    String?
-  avatarUrl      String?      @map("avatar_url")
-  rating         Decimal      @default(0.00) @db.Decimal(3, 2)
-  revenue        Decimal      @default(0.00) @db.Decimal(12, 2)
-  totalOrders    Int          @default(0) @map("total_orders")
-  totalReviews   Int          @default(0) @map("total_reviews")
-  totalProducts  Int          @default(0) @map("total_products")
-  followersCount Int          @default(0) @map("followers_count")
-  isActive       Boolean      @default(true) @map("is_active")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
-  deletedAt      DateTime?    @map("deleted_at")
+  avatarUrl      String?       @map("avatar_url")
+  rating         Decimal       @default(0.00) @db.Decimal(3, 2)
+  revenue        Decimal       @default(0.00) @db.Decimal(12, 2)
+  totalOrders    Int           @default(0) @map("total_orders")
+  totalReviews   Int           @default(0) @map("total_reviews")
+  totalProducts  Int           @default(0) @map("total_products")
+  followersCount Int           @default(0) @map("followers_count")
+  isActive       Boolean       @default(true) @map("is_active")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
   address        String?
   email          String?
-  phoneNumber    String?      @map("phone_number")
+  phoneNumber    String?       @map("phone_number")
   orders         Order[]
   products       Product[]
   followers      StoreFollow[]
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("stores")
 }
@@ -76,12 +77,13 @@ model Product {
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
   tag          String?        @default("normal")
+  soldCount    Int?           @default(0)
   cartItems    CartItem[]
   orderItems   OrderItem[]
   images       ProductImage[]
-  reviews      Review[]
   category     Category?      @relation(fields: [categoryId], references: [id])
   store        Store          @relation(fields: [storeId], references: [id])
+  reviews      Review[]
 
   @@map("products")
 }
@@ -204,10 +206,10 @@ model Order {
   deletedAt             DateTime?   @map("deleted_at")
   estimatedDeliveryDate DateTime?   @map("estimated_delivery_date")
   orderItems            OrderItem[]
-  reviews               Review[]
   store                 Store?      @relation(fields: [storeId], references: [id])
   user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   payments              Payment[]
+  reviews               Review[]
 
   @@index([userId])
   @@index([storeId])
@@ -251,19 +253,22 @@ model Payment {
 }
 
 model Review {
-  id        String    @id @default(cuid())
-  userId    String    @map("user_id")
-  productId Int       @map("product_id")
-  orderId   String?   @map("order_id")
-  rating    Int
-  content   String?
-  images    String[]
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  order     Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  productId    Int       @map("product_id")
+  orderId      String?   @map("order_id")
+  rating       Int
+  content      String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  reply_at     DateTime?
+  seller_reply String?
+  images       Json      @default("[]")
+  order        Order?    @relation(fields: [orderId], references: [id])
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, productId, orderId])
   @@index([userId])
   @@index([productId])
   @@index([orderId])
@@ -275,8 +280,8 @@ model StoreFollow {
   userId    String   @map("user_id")
   storeId   String   @map("store_id")
   createdAt DateTime @default(now()) @map("created_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, storeId])
   @@index([userId])
