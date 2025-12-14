@@ -207,8 +207,8 @@ export const reviewController = {
             const updatedReview = await prisma.review.update({
                 where: { id: reviewId },
                 data: {
-                    sellerReply: reply,
-                    replyAt: new Date(),
+                    seller_reply: reply,
+                    reply_at: new Date(),
                 },
             });
 

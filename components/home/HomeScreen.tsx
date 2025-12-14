@@ -109,7 +109,7 @@ export default function HomeScreen() {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
             const API_BASE_URL = 'http://10.10.3.127:3001/api';
             const [todayRes, newRes, hotRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/products/today`, { headers }),
+                fetch(`${API_BASE_URL}/products/today?limit=5`, { headers }), // Chỉ lấy 5 sản phẩm cho HomeScreen
                 fetch(`${API_BASE_URL}/products/new`, { headers }),
                 fetch(`${API_BASE_URL}/products/hot`, { headers }),
             ]);
@@ -148,8 +148,8 @@ export default function HomeScreen() {
                             return {
                                 id: store.id,
                                 storeName: store.storeName,
-                                avatarUrl: store.avatarUrl || (store as any).sellerAvatarUrl || undefined,
-                                sellerAvatarUrl: (store as any).sellerAvatarUrl,
+                                avatarUrl: store.avatarUrl || (store as any).sellerAvatarUrl || (store as any).user?.avatarUrl || undefined,
+                                sellerAvatarUrl: (store as any).sellerAvatarUrl || (store as any).user?.avatarUrl,
                                 followersCount: store.followersCount,
                                 totalOrders: store.totalOrders,
                                 isFollowing: existingStore?.isFollowing !== undefined
@@ -161,8 +161,8 @@ export default function HomeScreen() {
                         return {
                             id: store.id,
                             storeName: store.storeName,
-                            avatarUrl: store.avatarUrl || (store as any).sellerAvatarUrl || undefined,
-                            sellerAvatarUrl: (store as any).sellerAvatarUrl,
+                            avatarUrl: store.avatarUrl || (store as any).sellerAvatarUrl || (store as any).user?.avatarUrl || undefined,
+                            sellerAvatarUrl: (store as any).sellerAvatarUrl || (store as any).user?.avatarUrl,
                             followersCount: store.followersCount,
                             totalOrders: store.totalOrders,
                             isFollowing: store.isFollowing !== undefined ? Boolean(store.isFollowing) : false
@@ -265,9 +265,9 @@ export default function HomeScreen() {
             image: item.images?.[0]?.url
                 ? { uri: item.images[0].url }
                 : require("../../assets/images/cat.png"),
-            shop: item.store?.name || "Pet Shop",
-            shopImage: item.store?.avatar
-                ? { uri: item.store.avatar }
+            shop: item.store?.storeName || "Pet Shop",
+            shopImage: item.store?.avatarUrl || item.store?.user?.avatarUrl
+                ? { uri: item.store?.avatarUrl || item.store?.user?.avatarUrl }
                 : require("../../assets/images/shop.jpg"),
             sold: item.soldCount || 0,
             rating: item.rating || 5,
@@ -353,8 +353,8 @@ export default function HomeScreen() {
                 <View style={homeStyles.fixedHeader}>
                     <View style={homeStyles.searchBarContainer}>
                         <SearchBarWithPopup
-                            //recentSearches={recentSearches}
-                            //hotProducts={hotSearchProducts}
+                        //recentSearches={recentSearches}
+                        //hotProducts={hotSearchProducts}
                         />
                     </View>
 

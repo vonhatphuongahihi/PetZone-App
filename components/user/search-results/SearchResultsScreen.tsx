@@ -84,9 +84,9 @@ export default function SearchResultsScreen() {
             shop: item.store?.storeName || "Pet Shop",
             shopImage: item.store?.user?.avatarUrl
                 ? { uri: item.store.user.avatarUrl }
-                : require("../../../assets/images/shop.png"),
-            sold: Math.floor(Math.random() * 800) + 100, 
-            rating: 5.0, 
+                : require("../../../assets/images/shop.jpg"),
+            sold: Math.floor(Math.random() * 800) + 100,
+            rating: 5.0,
             discount: item.oldPrice
                 ? `-${Math.round(((Number(item.oldPrice) - Number(item.price)) / Number(item.oldPrice)) * 100)}%`
                 : "",
@@ -99,7 +99,7 @@ export default function SearchResultsScreen() {
                 <ProductCard
                     product={productForCard}
                     onPress={() => handleProductPress(item.id)}
-                    layout="horizontal" 
+                    layout="horizontal"
                 />
             </View>
         );
@@ -114,8 +114,8 @@ export default function SearchResultsScreen() {
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
                     <SearchBarWithPopup
-                        //recentSearches={["cỏ mèo", "cát vệ sinh trà xanh", "áo cho mèo", "dây dắt"]}
-                        //hotProducts={hotProducts}
+                    //recentSearches={["cỏ mèo", "cát vệ sinh trà xanh", "áo cho mèo", "dây dắt"]}
+                    //hotProducts={hotProducts}
                     />
                 </View>
 

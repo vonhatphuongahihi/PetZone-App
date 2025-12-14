@@ -264,18 +264,26 @@ export const getAllProducts = async (req: Request, res: Response) => {
 // === GET TODAY (SẢN PHẨM BÁN CHẠY NHẤT - THEO SỐ LƯỢT BÁN) ===
 export const getTodayProducts = async (req: Request, res: Response) => {
   try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+
+    const whereCondition: any = {
+      status: { not: 'draft' },
+      quantity: { gt: 0 }
+    };
+
+    if (limit) {
+      whereCondition.soldCount = { gt: 0 };
+    }
+
     const products = await prisma.product.findMany({
-      where: {
-        status: { not: 'draft' },
-        quantity: { gt: 0 },
-        soldCount: { gt: 0 }
-      },
+      where: whereCondition,
       include: {
         images: true,
         category: true,
         store: {
           select: {
             storeName: true,
+            avatarUrl: true,
             user: {
               select: { avatarUrl: true }
             },
@@ -286,7 +294,7 @@ export const getTodayProducts = async (req: Request, res: Response) => {
         { soldCount: "desc" }, // Sắp xếp theo số lượng bán giảm dần
         { createdAt: "desc" }
       ],
-      take: 10,
+      ...(limit ? { take: limit } : {}), // Chỉ giới hạn nếu có limit
     });
 
     return res.json({ success: true, data: products });
@@ -310,6 +318,7 @@ export const getNewProducts = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
+            avatarUrl: true,
             user: {
               select: { avatarUrl: true }
             },
@@ -338,6 +347,7 @@ export const getHotProducts = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
+            avatarUrl: true,
             user: {
               select: { avatarUrl: true }
             },

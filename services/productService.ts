@@ -1,5 +1,5 @@
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.20.1.55:3001/api';
+const API_BASE_URL = 'http://10.10.3.127:3001/api';
 
 export interface ProductImage {
     id: number;
@@ -24,6 +24,7 @@ export interface Category {
 export interface Store {
     storeName: string;
     userId?: string;
+    avatarUrl?: string;
     user?: {
         avatarUrl?: string;
     };
@@ -44,6 +45,7 @@ export interface Product {
     tag?: string;
     avgRating: number;
     totalReviews: number;
+    soldCount?: number;
     createdAt: string;
     updatedAt: string;
     images: ProductImage[];
@@ -247,8 +249,9 @@ export const productService = {
         }
     },
     // --- LẤY SẢN PHẨM TRONG NGÀY ---
-    getTodayProducts: async (token: string): Promise<{ success: boolean; data: Product[] }> => {
-        const response = await fetch(`${API_BASE_URL}/products/today`, {
+    getTodayProducts: async (token: string, limit?: number): Promise<{ success: boolean; data: Product[] }> => {
+        const url = limit ? `${API_BASE_URL}/products/today?limit=${limit}` : `${API_BASE_URL}/products/today`;
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
