@@ -13,6 +13,7 @@ model User {
   username                 String                    @unique
   password                 String
   isActive                 Boolean                   @default(true)
+  emailVerified             Boolean                   @default(false) @map("email_verified")
   role                     String                    @default("USER")
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
@@ -31,7 +32,6 @@ model User {
 }
 
 model Store {
-<<<<<<< HEAD
   id             String       @id @default(cuid())
   userId         String       @map("user_id")
   storeName      String       @map("store_name")
@@ -55,31 +55,6 @@ model Store {
   products       Product[]
   followers      StoreFollow[]
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-=======
-  id             String          @id @default(cuid())
-  userId         String          @map("user_id")
-  storeName      String          @map("store_name")
-  slug           String          @unique
-  description    String?
-  avatarUrl      String?         @map("avatar_url")
-  rating         Decimal         @default(0.00) @db.Decimal(3, 2)
-  revenue        Decimal         @default(0.00) @db.Decimal(12, 2)
-  totalOrders    Int             @default(0) @map("total_orders")
-  totalReviews   Int             @default(0) @map("total_reviews")
-  totalProducts  Int             @default(0) @map("total_products")
-  followersCount Int             @default(0) @map("followers_count")
-  isActive       Boolean         @default(true) @map("is_active")
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
-  deletedAt      DateTime?       @map("deleted_at")
-  address        String?
-  email          String?
-  phoneNumber    String?         @map("phone_number")
-  orders         Order[]
-  products       Product[]
-  store_follows  store_follows[]
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
->>>>>>> 3a359e6f5f333fb5938c8a2be724dc8171d8d7d1
 
   @@map("stores")
 }
@@ -275,7 +250,6 @@ model Payment {
   @@map("payments")
 }
 
-<<<<<<< HEAD
 model Review {
   id        String    @id @default(cuid())
   userId    String    @map("user_id")

@@ -38,24 +38,46 @@ export default function SignupScreen() {
     const password = watch('password');
 
     const onSubmit = async (data: SignupFormData) => {
+        // Ensure modal is hidden before starting
+        setOtpModalVisible(false);
         setIsLoading(true);
-        setOtpModalVisible(true);
+
         try {
+            // First, register the user - this will throw error if email/username exists
             await authService.register({
                 email: data.email,
                 username: data.username,
                 password: data.password,
                 role: data.isSeller ? 'SELLER' : 'USER',
             });
-            authService.sendOtp(data.email).catch(() => { });
+
+            // Only show OTP modal AFTER successful registration
+            // Only set to true if registration was successful
+            setOtpModalVisible(true);
+
+            // Send OTP after registration succeeds
+            try {
+                await authService.sendOtp(data.email);
+            } catch (otpError) {
+                console.error('Error sending OTP:', otpError);
+                // Still proceed to OTP screen even if sending fails
+                // User can request resend on OTP screen
+            }
+
+            // Navigate to OTP verification screen after a short delay
             setTimeout(() => {
+                setOtpModalVisible(false);
                 router.replace({
                     pathname: '/otp-verify',
                     params: { username: data.username, email: data.email }
                 });
             }, 1200);
         } catch (error) {
+            // Ensure modal is ALWAYS hidden if registration fails
+            setOtpModalVisible(false);
+            setIsLoading(false);
             Alert.alert('Lỗi', error instanceof Error ? error.message : 'Đăng ký thất bại');
+            return; // Exit early to prevent any further execution
         } finally {
             setIsLoading(false);
         }
