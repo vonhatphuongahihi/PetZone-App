@@ -20,6 +20,7 @@ model User {
   avatarUrl                String?                   @map("avatar_url")
   dateofBirth              String?
   totalSpent               Int?
+  email_verified           Boolean                   @default(false)
   cartItems                CartItem[]
   conversationParticipants ConversationParticipant[] @relation("UserParticipants")
   messages                 Message[]                 @relation("UserMessages")

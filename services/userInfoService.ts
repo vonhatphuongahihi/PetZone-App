@@ -12,6 +12,7 @@ export interface UserInfo {
     createdAt: string;
     updatedAt: string;
     dateofBirth?: string;
+    totalSpent?: number;
 }
 
 export interface UpdateUserData {
@@ -113,5 +114,24 @@ export const userInfoService = {
         }
 
         return uploadResponse.json();
+    },
+
+    // Update total spent
+    updateTotalSpent: async (totalSpent: number, token: string): Promise<{ success: boolean; message: string }> => {
+        const response = await fetch(`${API_BASE_URL}/users/total-spent`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ totalSpent }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Cập nhật tổng chi tiêu thất bại');
+        }
+
+        return response.json();
     }
 };

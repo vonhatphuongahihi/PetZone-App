@@ -64,3 +64,39 @@ export const updateAvatar = async (req: Request, res: Response) => {
 };
 
 export const uploadAvatar = upload.single("avatar");
+
+export const updateTotalSpent = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "ID người dùng không hợp lệ." });
+    }
+
+    const { totalSpent } = req.body;
+    if (totalSpent === undefined || totalSpent === null) {
+      return res.status(400).json({ success: false, message: "Thiếu thông tin totalSpent." });
+    }
+
+    // Cập nhật totalSpent trong cơ sở dữ liệu
+    const updatedUser = await prisma.user.update({
+      where: { id: String(userId) },
+      data: { totalSpent: Math.round(totalSpent) },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        totalSpent: true
+      }
+    });
+
+    console.log("Total spent updated for user:", userId, "Amount:", totalSpent);
+    return res.json({ 
+      success: true, 
+      message: "Cập nhật tổng chi tiêu thành công.",
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating total spent:", error);
+    return res.status(500).json({ success: false, message: "Lỗi khi cập nhật tổng chi tiêu." });
+  }
+};
