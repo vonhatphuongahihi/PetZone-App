@@ -88,12 +88,22 @@ export const storeController = {
         try {
             const userId = (req as any).user?.id;
 
+            console.log('[getMyStore] User ID:', userId);
+            console.log('[getMyStore] User object:', (req as any).user);
+
             if (!userId) {
                 return res.status(401).json({
                     error: 'Unauthorized',
                     message: 'User not authenticated'
                 });
             }
+
+            // Check all stores for this user (including deleted ones for debugging)
+            const allStores = await prisma.store.findMany({
+                where: { userId },
+                select: { id: true, storeName: true, deletedAt: true }
+            });
+            console.log('[getMyStore] All stores for user:', allStores);
 
             const store = await prisma.store.findFirst({
                 where: { userId, deletedAt: null },
@@ -108,6 +118,8 @@ export const storeController = {
                     }
                 }
             });
+
+            console.log('[getMyStore] Found store:', store ? store.id : 'null');
 
             if (!store) {
                 return res.status(404).json({
@@ -909,11 +921,15 @@ export const storeController = {
                     totalOrders: true,
                     rating: true,
                     totalProducts: true,
-                    createdAt: true
+                    createdAt: true,
+                    user: {
+                        select: {
+                            avatarUrl: true
+                        }
+                    }
                 },
                 orderBy: [
-                    { followersCount: 'desc' },
-                    { totalOrders: 'desc' }
+                    { followersCount: 'desc' }
                 ],
                 take: limit
             });
@@ -935,12 +951,14 @@ export const storeController = {
                 const followedStoreIds = new Set(follows.map((f: any) => f.storeId));
                 storesWithFollowStatus = stores.map(store => ({
                     ...store,
-                    isFollowing: followedStoreIds.has(store.id)
+                    isFollowing: followedStoreIds.has(store.id),
+                    sellerAvatarUrl: store.user?.avatarUrl || null
                 }));
             } else {
                 storesWithFollowStatus = stores.map(store => ({
                     ...store,
-                    isFollowing: false
+                    isFollowing: false,
+                    sellerAvatarUrl: store.user?.avatarUrl || null
                 }));
             }
 

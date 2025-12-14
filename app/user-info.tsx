@@ -59,6 +59,5 @@ const styles = {
         fontSize: 18,
         fontWeight: '600' as const,
         color: '#000',
-        flex: 1,
     },
 };

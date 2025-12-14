@@ -31,6 +31,7 @@ interface TopStore {
     id: string;
     storeName: string;
     avatarUrl?: string;
+    sellerAvatarUrl?: string;
     followersCount: number;
     totalOrders: number;
     isFollowing?: boolean;
@@ -83,7 +84,7 @@ export default function HomeScreen() {
     const fetchCategories = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.20.1.95:3001/api';
+            const API_BASE_URL = 'http://10.10.3.127:3001/api';
             const res = await fetch(`${API_BASE_URL}/categories`, { headers });
 
             if (res.status === 401) {
@@ -106,9 +107,9 @@ export default function HomeScreen() {
     const fetchProducts = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.20.1.95:3001/api';
+            const API_BASE_URL = 'http://10.10.3.127:3001/api';
             const [todayRes, newRes, hotRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/products/today`, { headers }),
+                fetch(`${API_BASE_URL}/products/today?limit=5`, { headers }), // Chỉ lấy 5 sản phẩm cho HomeScreen
                 fetch(`${API_BASE_URL}/products/new`, { headers }),
                 fetch(`${API_BASE_URL}/products/hot`, { headers }),
             ]);
@@ -147,7 +148,8 @@ export default function HomeScreen() {
                             return {
                                 id: store.id,
                                 storeName: store.storeName,
-                                avatarUrl: store.avatarUrl,
+                                avatarUrl: store.avatarUrl || (store as any).sellerAvatarUrl || (store as any).user?.avatarUrl || undefined,
+                                sellerAvatarUrl: (store as any).sellerAvatarUrl || (store as any).user?.avatarUrl,
                                 followersCount: store.followersCount,
                                 totalOrders: store.totalOrders,
                                 isFollowing: existingStore?.isFollowing !== undefined
@@ -159,7 +161,8 @@ export default function HomeScreen() {
                         return {
                             id: store.id,
                             storeName: store.storeName,
-                            avatarUrl: store.avatarUrl,
+                            avatarUrl: store.avatarUrl || (store as any).sellerAvatarUrl || (store as any).user?.avatarUrl || undefined,
+                            sellerAvatarUrl: (store as any).sellerAvatarUrl || (store as any).user?.avatarUrl,
                             followersCount: store.followersCount,
                             totalOrders: store.totalOrders,
                             isFollowing: store.isFollowing !== undefined ? Boolean(store.isFollowing) : false
@@ -276,9 +279,9 @@ export default function HomeScreen() {
                 ? { uri: item.images[0].url }
                 : require("../../assets/images/cat.png"),
             shop: item.store?.storeName || "Pet Shop",
-            shopImage: item.store?.user?.avatarUrl
-                ? { uri: item.store.user.avatarUrl }
-                : require("../../assets/images/shop.png"),
+            shopImage: item.store?.avatarUrl || item.store?.user?.avatarUrl
+                ? { uri: item.store?.avatarUrl || item.store?.user?.avatarUrl }
+                : require("../../assets/images/shop.jpg"),
             sold: item.soldCount || 0,
             rating: item.avgRating || 5,
             discount: item.oldPrice
@@ -314,9 +317,9 @@ export default function HomeScreen() {
                 })}
             >
                 <Image
-                    source={item.avatarUrl
-                        ? { uri: item.avatarUrl }
-                        : require("../../assets/images/shop.png")
+                    source={item.avatarUrl || item.sellerAvatarUrl
+                        ? { uri: item.avatarUrl || item.sellerAvatarUrl }
+                        : require("../../assets/images/shop.jpg")
                     }
                     style={homeStyles.storeAvatar}
                     resizeMode="cover"
@@ -363,8 +366,8 @@ export default function HomeScreen() {
                 <View style={homeStyles.fixedHeader}>
                     <View style={homeStyles.searchBarContainer}>
                         <SearchBarWithPopup
-                            //recentSearches={recentSearches}
-                            //hotProducts={hotSearchProducts}
+                        //recentSearches={recentSearches}
+                        //hotProducts={hotSearchProducts}
                         />
                     </View>
 

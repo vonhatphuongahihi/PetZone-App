@@ -143,9 +143,9 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
   },
   reviewerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 8,
     backgroundColor: '#f5f5f5',
   },
   reviewerInfo: {
@@ -156,6 +156,11 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#000',
+    marginBottom: 2,
+  },
+  shopName: {
+    fontSize: 12,
+    color: '#666',
     marginBottom: 2,
   },
   reviewDate: {

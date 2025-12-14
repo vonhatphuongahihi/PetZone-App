@@ -415,7 +415,7 @@ export default function MessagesScreen() {
         {/* Avatar */}
         <View style={messagesStyles.avatarContainer}>
           <Image
-            source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.png")}
+            source={avatarUrl ? { uri: avatarUrl } : require("../../../assets/images/shop.jpg")}
             style={messagesStyles.avatar}
           />
           {/* Hiển thị nút xanh khi user thực sự online */}

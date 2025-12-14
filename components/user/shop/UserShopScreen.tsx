@@ -15,7 +15,6 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Category as ApiCategory, categoryService } from "../../../services/categoryService";
 import { chatService } from "../../../services/chatService";
 import { Product as ApiProduct, productService } from "../../../services/productService";
 import { Store, storeService } from "../../../services/storeService";
@@ -23,10 +22,8 @@ import { tokenService } from "../../../services/tokenService";
 import styles from "./userShopStyle";
 
 export default function UserShopScreen() {
-    const [activeTab, setActiveTab] = useState<"Sản phẩm" | "Danh mục">("Sản phẩm");
     const [store, setStore] = useState<(Store & { isFollowing?: boolean }) | null>(null);
     const [products, setProducts] = useState<ApiProduct[]>([]);
-    const [categories, setCategories] = useState<ApiCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [following, setFollowing] = useState(false);
 
@@ -67,16 +64,6 @@ export default function UserShopScreen() {
             } catch (err) {
                 console.error("Error fetching products:", err);
                 setProducts([]);
-            }
-
-            // Lấy danh sách danh mục (nếu có token)
-            if (token) {
-                try {
-                    const categoriesResponse = await categoryService.getAllCategories(token);
-                    setCategories(categoriesResponse.data || []);
-                } catch (err) {
-                    console.error("Error fetching categories:", err);
-                }
             }
         } catch (err: any) {
             console.error("Error fetching shop data:", err.message);
@@ -161,9 +148,6 @@ export default function UserShopScreen() {
         }
     };
 
-    // Lọc danh mục cha
-    const parentCategories = categories.filter(cat => !cat.parentId);
-
     // Tính CARD_WIDTH responsive
     const { width } = Dimensions.get('window');
     const CARD_WIDTH = (width - 48) / 2; // 2 cột, padding 12 mỗi bên
@@ -222,35 +206,6 @@ export default function UserShopScreen() {
         );
     };
 
-    // Render danh mục
-    const renderCategoryItem = ({ item }: { item: ApiCategory }) => {
-        const subCategories = item.children || [];
-        return (
-            <TouchableOpacity
-                style={styles.categoryCard}
-                onPress={() =>
-                    router.push({
-                        pathname: "/categories",
-                        params: {
-                            parentId: item.id,
-                            parentName: item.name,
-                        },
-                    })
-                }
-            >
-                <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-                    <Image
-                        source={item.image ? { uri: item.image } : require("../../../assets/images/food-icon.png")}
-                        style={styles.categoryIcon}
-                        resizeMode="contain"
-                    />
-                    <Text style={styles.categoryName}>{item.name}</Text>
-                    <Ionicons name="chevron-forward" size={20} color="#CCC" style={styles.categoryArrow} />
-                </View>
-            </TouchableOpacity>
-        );
-    };
-
     if (loading) {
         return (
             <SafeAreaView style={styles.container}>
@@ -293,7 +248,9 @@ export default function UserShopScreen() {
                         <View style={styles.shopInfo}>
                             <View style={styles.avatarContainer}>
                                 <Image
-                                    source={store.user?.avatarUrl ? { uri: store.user.avatarUrl } : require("../../../assets/images/shop.png")}
+                                    source={store.avatarUrl || (store as any).user?.avatarUrl
+                                        ? { uri: store.avatarUrl || (store as any).user?.avatarUrl }
+                                        : require("../../../assets/images/shop.jpg")}
                                     style={styles.avatar}
                                     resizeMode="cover"
                                 />
@@ -356,78 +313,24 @@ export default function UserShopScreen() {
                         </View>
                     )}
 
-                    {/* Tabs */}
-                    <View style={styles.tabs}>
-                        <TouchableOpacity
-                            style={[styles.tab, activeTab === "Sản phẩm" && styles.activeTab]}
-                            onPress={() => setActiveTab("Sản phẩm")}
-                        >
-                            <View style={{ flexDirection: "row", alignItems: "center" }}>
-                                <Text style={activeTab === "Sản phẩm" ? styles.activeTabText : styles.tabText}>
-                                    Sản phẩm
-                                </Text>
-                                {products.length > 0 && (
-                                    <View style={[styles.tabBadge, activeTab !== "Sản phẩm" && { backgroundColor: "#CCC" }]}>
-                                        <Text style={styles.tabBadgeText}>{products.length}</Text>
-                                    </View>
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                        <View style={styles.tabDivider} />
-                        <TouchableOpacity
-                            style={[styles.tab, activeTab === "Danh mục" && styles.activeTab]}
-                            onPress={() => setActiveTab("Danh mục")}
-                        >
-                            <View style={{ flexDirection: "row", alignItems: "center" }}>
-                                <Text style={activeTab === "Danh mục" ? styles.activeTabText : styles.tabText}>
-                                    Danh mục
-                                </Text>
-                                {parentCategories.length > 0 && (
-                                    <View style={[styles.tabBadge, activeTab !== "Danh mục" && { backgroundColor: "#CCC" }]}>
-                                        <Text style={styles.tabBadgeText}>{parentCategories.length}</Text>
-                                    </View>
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Content */}
-                    {activeTab === "Sản phẩm" ? (
-                        products.length > 0 ? (
-                            <FlatList
-                                key="products"
-                                data={products}
-                                renderItem={renderProductItem}
-                                keyExtractor={(item) => item.id.toString()}
-                                numColumns={2}
-                                columnWrapperStyle={styles.columnWrapper}
-                                contentContainerStyle={styles.productsList}
-                                scrollEnabled={false}
-                            />
-                        ) : (
-                            <View style={styles.emptyContainer}>
-                                <MaterialCommunityIcons name="package-variant" size={64} color="#DDD" style={styles.emptyIcon} />
-                                <Text style={styles.emptyText}>Cửa hàng chưa có sản phẩm</Text>
-                                <Text style={styles.emptySubText}>Hãy quay lại sau để xem sản phẩm mới</Text>
-                            </View>
-                        )
+                    {/* Products Section */}
+                    {products.length > 0 ? (
+                        <FlatList
+                            key="products"
+                            data={products}
+                            renderItem={renderProductItem}
+                            keyExtractor={(item) => item.id.toString()}
+                            numColumns={2}
+                            columnWrapperStyle={styles.columnWrapper}
+                            contentContainerStyle={styles.productsList}
+                            scrollEnabled={false}
+                        />
                     ) : (
-                        parentCategories.length > 0 ? (
-                            <FlatList
-                                key="categories"
-                                data={parentCategories}
-                                renderItem={renderCategoryItem}
-                                keyExtractor={(item) => item.id.toString()}
-                                contentContainerStyle={{ paddingHorizontal: 0, paddingTop: 20, paddingBottom: 30 }}
-                                scrollEnabled={false}
-                            />
-                        ) : (
-                            <View style={styles.emptyContainer}>
-                                <MaterialCommunityIcons name="folder-outline" size={64} color="#DDD" style={styles.emptyIcon} />
-                                <Text style={styles.emptyText}>Cửa hàng chưa có danh mục</Text>
-                                <Text style={styles.emptySubText}>Hãy quay lại sau để xem danh mục mới</Text>
-                            </View>
-                        )
+                        <View style={styles.emptyContainer}>
+                            <MaterialCommunityIcons name="package-variant" size={64} color="#DDD" style={styles.emptyIcon} />
+                            <Text style={styles.emptyText}>Cửa hàng chưa có sản phẩm</Text>
+                            <Text style={styles.emptySubText}>Hãy quay lại sau để xem sản phẩm mới</Text>
+                        </View>
                     )}
                 </ScrollView>
             </SafeAreaView >
