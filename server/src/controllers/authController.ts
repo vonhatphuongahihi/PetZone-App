@@ -70,6 +70,12 @@ export const authController = {
                 return res.status(400).json({ error: 'OTP không hợp lệ', message: 'Mã OTP không chính xác' });
             }
 
+            // Mark user as verified
+            await prisma.user.update({
+                where: { email },
+                data: { emailVerified: true }
+            });
+
             store.delete(email);
             res.json({ message: 'Xác thực OTP thành công' });
         } catch (error) {
@@ -134,6 +140,14 @@ export const authController = {
                 return res.status(401).json({ error: 'Tài khoản đã bị vô hiệu hóa', message: 'Tài khoản của bạn đã bị vô hiệu hóa' });
             }
 
+            if (!user.emailVerified) {
+                return res.status(403).json({
+                    error: 'Email chưa được xác thực',
+                    message: 'Vui lòng xác thực email trước khi đăng nhập. Kiểm tra email của bạn để lấy mã OTP.',
+                    requiresVerification: true
+                });
+            }
+
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
                 return res.status(401).json({ error: 'Email hoặc password không hợp lệ', message: 'Email hoặc password không hợp lệ' });
@@ -168,14 +182,14 @@ export const authController = {
 
             const user = await prisma.user.findUnique({
                 where: { id: userId },
-                select: { 
-                    id: true, 
-                    email: true, 
-                    username: true, 
+                select: {
+                    id: true,
+                    email: true,
+                    username: true,
                     avatarUrl: true,
-                    role: true, 
-                    isActive: true, 
-                    createdAt: true, 
+                    role: true,
+                    isActive: true,
+                    createdAt: true,
                     updatedAt: true,
                     dateofBirth: true
                 }
@@ -225,26 +239,26 @@ export const authController = {
 
             const updatedUser = await prisma.user.update({
                 where: { id: userId },
-                data: { 
+                data: {
                     username: username.trim(),
                     dateofBirth: dateofBirth || null
                 },
-                select: { 
-                    id: true, 
-                    email: true, 
-                    username: true, 
+                select: {
+                    id: true,
+                    email: true,
+                    username: true,
                     avatarUrl: true,
-                    role: true, 
+                    role: true,
                     isActive: true,
-                    createdAt: true, 
+                    createdAt: true,
                     updatedAt: true,
                     dateofBirth: true
                 }
             });
 
-            res.json({ 
-                message: 'Cập nhật thông tin thành công', 
-                user: updatedUser 
+            res.json({
+                message: 'Cập nhật thông tin thành công',
+                user: updatedUser
             });
         } catch (error) {
             console.error('Update profile error:', error);
@@ -257,9 +271,9 @@ export const authController = {
 
             // 1. Validate đầu vào
             if (!email || !password) {
-                return res.status(400).json({ 
-                    error: 'Thiếu thông tin', 
-                    message: 'Email và mật khẩu mới là bắt buộc' 
+                return res.status(400).json({
+                    error: 'Thiếu thông tin',
+                    message: 'Email và mật khẩu mới là bắt buộc'
                 });
             }
 
@@ -267,9 +281,9 @@ export const authController = {
             const user = await prisma.user.findUnique({ where: { email } });
 
             if (!user) {
-                return res.status(404).json({ 
-                    error: 'User không tồn tại', 
-                    message: 'Email không tồn tại trong hệ thống' 
+                return res.status(404).json({
+                    error: 'User không tồn tại',
+                    message: 'Email không tồn tại trong hệ thống'
                 });
             }
 
@@ -286,9 +300,9 @@ export const authController = {
 
         } catch (error) {
             console.error('Reset password error:', error);
-            res.status(500).json({ 
-                error: 'Lỗi server', 
-                message: 'Đã xảy ra lỗi khi đặt lại mật khẩu' 
+            res.status(500).json({
+                error: 'Lỗi server',
+                message: 'Đã xảy ra lỗi khi đặt lại mật khẩu'
             });
         }
     },
