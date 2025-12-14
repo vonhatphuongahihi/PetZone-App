@@ -177,7 +177,8 @@ export const authController = {
                     isActive: true, 
                     createdAt: true, 
                     updatedAt: true,
-                    dateofBirth: true
+                    dateofBirth: true,
+                    totalSpent: true
                 }
             });
 

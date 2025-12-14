@@ -42,6 +42,7 @@ export default function ProductScreen() {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loadingReviews, setLoadingReviews] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
 
     // Review form state (khi có orderId và rating từ params)
@@ -63,6 +64,7 @@ export default function ProductScreen() {
             // Fetch current user avatar
              const userResponse = await userInfoService.getUserInfo(token);
             setAvatarUrl(userResponse.user.avatarUrl || null);
+            setUserRole(userResponse.user.role || null);
 
             const response = await productService.getProductById(
                 parseInt(productId as string),
@@ -596,26 +598,28 @@ export default function ProductScreen() {
                                     style={productStyles.storeAvatar}
                                 />
                                 <Text style={productStyles.storeName}>{product.store?.storeName || product.storeId}</Text>
-                                <TouchableOpacity
-                                    style={productStyles.followButton}
-                                    accessible={true}
-                                    accessibilityLabel="Xem shop"
-                                    accessibilityRole="button"
-                                    onPress={() => {
-                                        // Sử dụng store.id nếu có, nếu không thì dùng storeId từ product
-                                        const storeIdToNavigate = product.store?.id || product.storeId;
-                                        if (storeIdToNavigate) {
-                                            router.push({
-                                                pathname: "/shop",
-                                                params: { storeId: storeIdToNavigate }
-                                            });
-                                        } else {
-                                            Alert.alert("Lỗi", "Không thể tìm thấy thông tin cửa hàng");
-                                        }
-                                    }}
-                                >
-                                    <Text style={productStyles.followButtonText}>Xem shop</Text>
-                                </TouchableOpacity>
+                                {userRole !== 'SELLER' && (
+                                    <TouchableOpacity
+                                        style={productStyles.followButton}
+                                        accessible={true}
+                                        accessibilityLabel="Xem shop"
+                                        accessibilityRole="button"
+                                        onPress={() => {
+                                            // Sử dụng store.id nếu có, nếu không thì dùng storeId từ product
+                                            const storeIdToNavigate = product.store?.id || product.storeId;
+                                            if (storeIdToNavigate) {
+                                                router.push({
+                                                    pathname: "/shop",
+                                                    params: { storeId: storeIdToNavigate }
+                                                });
+                                            } else {
+                                                Alert.alert("Lỗi", "Không thể tìm thấy thông tin cửa hàng");
+                                            }
+                                        }}
+                                    >
+                                        <Text style={productStyles.followButtonText}>Xem shop</Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
 
                             <View style={productStyles.storeInfo}>

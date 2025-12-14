@@ -116,7 +116,6 @@ export default function DashboardSellerScreen() {
                                 <Text style={dashboardSellerStyles.kpiValue}>{formatCurrency(stats.totalRevenue)}</Text>
                             </View>
                         </View>
-                        <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
                     </View>
 
                     {/* Số đơn hàng */}
@@ -130,7 +129,6 @@ export default function DashboardSellerScreen() {
                                 <Text style={dashboardSellerStyles.kpiValue}>{stats.totalOrders}</Text>
                             </View>
                         </View>
-                        <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
                     </View>
 
                     {/* Sản phẩm */}
@@ -144,7 +142,6 @@ export default function DashboardSellerScreen() {
                                 <Text style={dashboardSellerStyles.kpiValue}>{stats.totalProducts}</Text>
                             </View>
                         </View>
-                        <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
                     </View>
 
                     {/* Đánh giá */}
@@ -158,7 +155,6 @@ export default function DashboardSellerScreen() {
                                 <Text style={dashboardSellerStyles.kpiValue}>{stats.rating}</Text>
                             </View>
                         </View>
-                        <Text style={dashboardSellerStyles.arrowIcon}>›</Text>
                     </View>
                 </View>
 
