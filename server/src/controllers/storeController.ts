@@ -842,7 +842,8 @@ export const storeController = {
                         select: {
                             id: true,
                             username: true,
-                            email: true
+                            email: true,
+                            avatarUrl: true,
                         }
                     }
                 }
