@@ -13,5 +13,7 @@ router.get('/user', authMiddleware, reviewController.getUserReviews);
 // Lấy reviews của một sản phẩm
 router.get('/product/:productId', reviewController.getProductReviews);
 
-export default router;
+// Người bán trả lời review → ĐÚNG THỨ TỰ!!!
+router.post('/:reviewId/reply', authMiddleware, reviewController.replyToReview);
 
+export default router;

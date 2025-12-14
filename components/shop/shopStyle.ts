@@ -307,4 +307,34 @@ export default StyleSheet.create({
         color: '#E53935',
     },
 
+    messageIconContainer: {
+        position: 'relative',
+    },
+
+    messageBadge: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: '#FF3B30',
+        borderRadius: 8,
+        minWidth: 16,
+        height: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+    },
+    messageBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: '600',
+    },
+
+    avatarWrapper: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        overflow: 'hidden',
+        backgroundColor: '#fff',
+    },
+
 });

@@ -34,6 +34,8 @@ export interface Review {
         orderNumber: string;
         createdAt: string;
     };
+    sellerReply?: string | null;
+    replyAt?: string | null;
 }
 
 export const reviewService = {
@@ -86,6 +88,25 @@ export const reviewService = {
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || 'Lấy đánh giá sản phẩm thất bại');
+        }
+
+        return response.json();
+    },
+
+    // Trả lời đánh giá 
+    replyReview: async (reviewId: string | number, reply: string, token: string): Promise<{ success: true; data: Review }> => {
+        const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}/reply`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ reply }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Gửi phản hồi thất bại');
         }
 
         return response.json();

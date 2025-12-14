@@ -102,7 +102,7 @@ export default function SearchBarWithPopup() {
         }
 
         router.push({
-            pathname: "/search-result",
+            pathname: "/search-results",
             params: { q: keyword }
         } as any);
 

@@ -13,7 +13,8 @@ import categoryRoutes from './routes/category';
 import chatRoutes from './routes/chat';
 import orderRoutes from './routes/order';
 import productRoutes from './routes/product';
-import reviewRoutes from './routes/review';
+//import reviewRoutes from './routes/review';
+import review from './routes/review';
 import storeRoutes from './routes/store';
 import supportRoutes from './routes/support';
 import userRoutes from './routes/user';
@@ -86,7 +87,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/reviews', reviewRoutes);
+app.use('/api/reviews', review);
 app.use('/api/store', storeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -94,6 +95,7 @@ app.use('/api/support', supportRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/chat', chatRoutes);
 app.use('/api/users', userRoutes);
+//app.use('/reviews', review);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Global error handler:', err);
