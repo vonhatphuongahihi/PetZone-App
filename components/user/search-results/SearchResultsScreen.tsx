@@ -84,7 +84,7 @@ export default function SearchResultsScreen() {
             shop: item.store?.storeName || "Pet Shop",
             shopImage: item.store?.user?.avatarUrl
                 ? { uri: item.store.user.avatarUrl }
-                : require("../../../assets/images/shop.png"),
+                : require("../../../assets/images/shop.jpg"),
             sold: item.soldCount || 0, 
             rating: 5.0, 
             discount: item.oldPrice
