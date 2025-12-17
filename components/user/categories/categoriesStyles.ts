@@ -6,16 +6,32 @@ export const categoriesStyles = StyleSheet.create({
         backgroundColor: "#fff",
     },
     header: {
-        fontSize: 18,
-        fontWeight: "700",
-        marginVertical: 16,
-        marginHorizontal: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 12,
+        paddingLeft: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#F0F0F0",
+    },
+    headerTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        marginLeft: 16,
+        flex: 1,
+    },
+    headerContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingTop: 8,
     },
     categoryContainer: {
         paddingTop: 6,
     },
     categorySection: {
         marginBottom: 16,
+        marginTop: 16,
         paddingHorizontal: 16,
     },
     categoryHeader: {

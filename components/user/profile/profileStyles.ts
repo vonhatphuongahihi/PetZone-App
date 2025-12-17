@@ -5,9 +5,9 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  container: { 
-    flex: 1, 
-    backgroundColor: "#fff" 
+  container: {
+    flex: 1,
+    backgroundColor: "#fff"
   },
 
   // Header
@@ -16,20 +16,20 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
-  avatar: { 
-    width: 60, 
-    height: 60, 
-    borderRadius: 30, 
-    backgroundColor: "#eee" 
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#eee"
   },
-  name: { 
-    fontSize: 16, 
-    fontWeight: "bold", 
-    color: "#000" 
+  name: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000"
   },
-  rank: { 
-    color: "#666", 
-    marginTop: 2 
+  rank: {
+    color: "#666",
+    marginTop: 2
   },
   pawCircle: {
     width: 50,
@@ -54,14 +54,14 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 12,
   },
-  cardTitle: { 
-    fontSize: 15, 
-    fontWeight: "600", 
-    color: "#000" 
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#000"
   },
-  link: { 
-    color: "#666", 
-    fontSize: 12 
+  link: {
+    color: "#666",
+    fontSize: 12
   },
 
   row: {
@@ -91,11 +91,11 @@ export const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 10,
   },
-  menuLabel: { 
-    fontSize: 13, 
-    marginTop: 8, 
-    color: "#000", 
-    fontWeight: "500" 
+  menuLabel: {
+    fontSize: 13,
+    marginTop: 8,
+    color: "#000",
+    fontWeight: "500"
   },
   badge: {
     backgroundColor: "red",
@@ -105,10 +105,10 @@ export const styles = StyleSheet.create({
     top: -5,
     right: 10,
   },
-  badgeText: { 
-    color: "#fff", 
-    fontSize: 10, 
-    fontWeight: "bold" 
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "bold"
   },
 
   // Menu dưới
@@ -122,23 +122,23 @@ export const styles = StyleSheet.create({
   firstMenuItem: {
     marginTop: 20,
   },
-  menuText: { 
-    fontSize: 15, 
-    color: "#000" 
+  menuText: {
+    fontSize: 15,
+    color: "#000"
   },
 
   // Logout
   logoutBtn: {
-    margin: 20,
+    margin: 40,
     backgroundColor: "#FBBC05",
     paddingVertical: 12,
     borderRadius: 30,
     alignItems: "center",
   },
-  logoutText: { 
-    color: "#fff", 
-    fontWeight: "bold", 
-    fontSize: 16 
+  logoutText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16
   },
 
   // Modal styles

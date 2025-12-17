@@ -123,6 +123,18 @@ export const orderController = {
                 });
 
                 createdOrders.push(order);
+
+                // Cập nhật totalOrders của store khi tạo order
+                if (storeId) {
+                    await prisma.store.update({
+                        where: { id: storeId },
+                        data: {
+                            totalOrders: {
+                                increment: 1
+                            }
+                        }
+                    });
+                }
             }
 
             // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng

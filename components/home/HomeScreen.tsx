@@ -276,7 +276,14 @@ export default function HomeScreen() {
         <TouchableOpacity
             style={homeStyles.categoryItem}
             onPress={() =>
-                router.push(`/categories`)
+                router.push({
+                    pathname: '/child-categories' as any,
+                    params: {
+                        parentId: item.id.toString(),
+                        parentName: item.name,
+                        parentImage: item.image || ''
+                    }
+                })
             }
         >
             <View style={homeStyles.categoryIconContainer}>
