@@ -27,13 +27,13 @@ export default function UserInfoScreen() {
     const [saving, setSaving] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
-    
+
     // Custom modal states
     const [showImagePickerModal, setShowImagePickerModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [modalOpacity] = useState(new Animated.Value(0));
     const [modalScale] = useState(new Animated.Value(0.3));
-    
+
     // Form data
     const [formData, setFormData] = useState({
         username: '',
@@ -97,7 +97,7 @@ export default function UserInfoScreen() {
 
     const handleCancel = () => {
         if (!userInfo) return;
-        
+
         // Reset form data
         setFormData({
             username: userInfo.username,
@@ -161,7 +161,7 @@ export default function UserInfoScreen() {
         try {
             // Request permissions
             const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            
+
             if (permissionResult.granted === false) {
                 Alert.alert('Lỗi', 'Cần cấp quyền truy cập thư viện ảnh để chọn ảnh đại diện!');
                 return;
@@ -198,7 +198,7 @@ export default function UserInfoScreen() {
     const takePicture = async () => {
         try {
             const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-            
+
             if (permissionResult.granted === false) {
                 Alert.alert('Lỗi', 'Cần cấp quyền camera để chụp ảnh!');
                 return;
@@ -223,7 +223,7 @@ export default function UserInfoScreen() {
         try {
             setUploadingAvatar(true);
             const token = await tokenService.getToken();
-            
+
             if (!token) {
                 Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
                 return;
@@ -231,7 +231,7 @@ export default function UserInfoScreen() {
 
             const platform = Platform.OS === 'web' ? 'web' : 'mobile';
             const response = await userInfoService.updateUserAvatar(imageUri, token, platform);
-            
+
             if (response.success) {
                 // Update local state
                 setUserInfo(prev => prev ? { ...prev, avatarUrl: response.data.avatarUrl } : null);
@@ -282,7 +282,7 @@ export default function UserInfoScreen() {
                     <Text style={userInfoStyles.errorText}>
                         Không thể tải thông tin tài khoản
                     </Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={userInfoStyles.retryButton}
                         onPress={loadUserInfo}
                     >
@@ -302,7 +302,7 @@ export default function UserInfoScreen() {
             statusBarTranslucent={true}
         >
             <View style={userInfoStyles.modalOverlay}>
-                <Animated.View 
+                <Animated.View
                     style={[
                         userInfoStyles.imagePickerModal,
                         {
@@ -315,17 +315,17 @@ export default function UserInfoScreen() {
                         <Text style={userInfoStyles.modalTitle}>Chọn ảnh đại diện</Text>
                         <Text style={userInfoStyles.modalSubtitle}>Bạn muốn chọn ảnh từ đâu?</Text>
                     </View>
-                    
+
                     <View style={userInfoStyles.modalButtons}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={userInfoStyles.modalButton}
                             onPress={handlePickFromLibrary}
                         >
                             <MaterialIcons name="photo-library" size={24} color="#FFB400" />
                             <Text style={userInfoStyles.modalButtonText}>Thư viện ảnh</Text>
                         </TouchableOpacity>
-                        
-                        <TouchableOpacity 
+
+                        <TouchableOpacity
                             style={userInfoStyles.modalButton}
                             onPress={handleTakePicture}
                         >
@@ -333,8 +333,8 @@ export default function UserInfoScreen() {
                             <Text style={userInfoStyles.modalButtonText}>Chụp ảnh</Text>
                         </TouchableOpacity>
                     </View>
-                    
-                    <TouchableOpacity 
+
+                    <TouchableOpacity
                         style={userInfoStyles.modalCancelButton}
                         onPress={handleImagePickerClose}
                     >
@@ -354,7 +354,7 @@ export default function UserInfoScreen() {
             statusBarTranslucent={true}
         >
             <View style={userInfoStyles.modalOverlay}>
-                <Animated.View 
+                <Animated.View
                     style={[
                         userInfoStyles.successModal,
                         {
@@ -367,8 +367,8 @@ export default function UserInfoScreen() {
                     <Text style={userInfoStyles.successMessage}>
                         Ảnh đại diện đã được cập nhật thành công
                     </Text>
-                    
-                    <TouchableOpacity 
+
+                    <TouchableOpacity
                         style={userInfoStyles.successButton}
                         onPress={handleSuccessModalClose}
                     >
@@ -386,36 +386,36 @@ export default function UserInfoScreen() {
             <ScrollView style={userInfoStyles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Avatar Section */}
                 <View style={userInfoStyles.avatarSection}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={userInfoStyles.avatarWrapper}
                         onPress={handleAvatarPress}
                         disabled={uploadingAvatar}
                     >
-                        <Image 
+                        <Image
                             source={
-                                userInfo.avatarUrl 
+                                userInfo.avatarUrl
                                     ? { uri: userInfo.avatarUrl }
-                                    : require('../../../assets/images/icon.png')
+                                    : require('../../../assets/images/user.jpg')
                             }
                             style={[
                                 userInfoStyles.avatar,
                                 uploadingAvatar && { opacity: 0.5 }
                             ]}
                         />
-                        
+
                         {/* Upload loading indicator */}
                         {uploadingAvatar && (
                             <View style={userInfoStyles.uploadingOverlay}>
                                 <ActivityIndicator size="large" color="#FFB400" />
                             </View>
                         )}
-                        
+
                         {/* Camera icon overlay */}
                         <View style={userInfoStyles.cameraIconOverlay}>
                             <MaterialIcons name="camera-alt" size={20} color="#fff" />
                         </View>
                     </TouchableOpacity>
-                    
+
                     <Text style={userInfoStyles.usernameText}>{userInfo.username}</Text>
                     <Text style={userInfoStyles.roleText}>{getRoleDisplayName(userInfo.role)}</Text>
                     <Text style={userInfoStyles.memberSinceText}>
@@ -435,7 +435,7 @@ export default function UserInfoScreen() {
                                 !isEditing && userInfoStyles.disabledInput
                             ]}
                             value={formData.username}
-                            onChangeText={(text) => setFormData({...formData, username: text})}
+                            onChangeText={(text) => setFormData({ ...formData, username: text })}
                             onFocus={() => setFocusedInput('username')}
                             onBlur={() => setFocusedInput(null)}
                             editable={isEditing}
@@ -471,10 +471,10 @@ export default function UserInfoScreen() {
                             userInfoStyles.statusBadge,
                             !userInfo.isActive && userInfoStyles.statusBadgeInactive
                         ]}>
-                            <MaterialIcons 
-                                name={userInfo.isActive ? "check-circle" : "cancel"} 
-                                size={16} 
-                                color={userInfo.isActive ? "#155724" : "#721C24"} 
+                            <MaterialIcons
+                                name={userInfo.isActive ? "check-circle" : "cancel"}
+                                size={16}
+                                color={userInfo.isActive ? "#155724" : "#721C24"}
                             />
                             <Text style={[
                                 userInfoStyles.statusText,
@@ -488,19 +488,25 @@ export default function UserInfoScreen() {
                     {/* Date of Birth */}
                     <View style={userInfoStyles.inputGroup}>
                         <Text style={userInfoStyles.label}>Ngày sinh</Text>
-                        <TextInput
-                            style={[
-                                userInfoStyles.input,
-                                focusedInput === 'dateofBirth' && userInfoStyles.inputFocused,
-                                !isEditing && userInfoStyles.disabledInput
-                            ]}
-                            value={formData.dateofBirth}
-                            onChangeText={(text) => setFormData({...formData, dateofBirth: text})}
-                            onFocus={() => setFocusedInput('dateofBirth')}
-                            onBlur={() => setFocusedInput(null)}
-                            editable={isEditing}
-                            placeholder="Nhập ngày sinh (VD: 01/01/2000)"
-                        />
+                        {!isEditing && !formData.dateofBirth ? (
+                            <Text style={[userInfoStyles.input, userInfoStyles.disabledInput, { color: '#999' }]}>
+                                Không có
+                            </Text>
+                        ) : (
+                            <TextInput
+                                style={[
+                                    userInfoStyles.input,
+                                    focusedInput === 'dateofBirth' && userInfoStyles.inputFocused,
+                                    !isEditing && userInfoStyles.disabledInput
+                                ]}
+                                value={formData.dateofBirth}
+                                onChangeText={(text) => setFormData({ ...formData, dateofBirth: text })}
+                                onFocus={() => setFocusedInput('dateofBirth')}
+                                onBlur={() => setFocusedInput(null)}
+                                editable={isEditing}
+                                placeholder="Nhập ngày sinh (VD: 01/01/2000)"
+                            />
+                        )}
                     </View>
 
                     {/* Created Date */}

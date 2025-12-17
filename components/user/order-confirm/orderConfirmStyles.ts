@@ -3,26 +3,25 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
   backButton: {
     padding: 4,
+    marginRight: 12,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#000',
-  },
-  placeholder: {
-    width: 32,
   },
   scrollView: {
     flex: 1,

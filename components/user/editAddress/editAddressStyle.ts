@@ -52,12 +52,12 @@ export const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "#F44336",
+    borderColor: "#AF0000",
     borderRadius: 6,
     padding: 12,
     alignItems: "center",
   },
-  deleteText: { color: "#F44336", fontWeight: "bold" },
+  deleteText: { color: "#AF0000", fontWeight: "bold" },
   saveBtn: {
     flex: 1,
     marginLeft: 8,
@@ -153,7 +153,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
   },
 
-    select: {
+  select: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,

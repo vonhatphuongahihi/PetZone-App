@@ -205,7 +205,7 @@ export default function AddAddressScreen() {
               handleDeleteAddress(item.id);
             }}
           >
-            <MaterialIcons name="delete" size={22} color="#F44336" />
+            <MaterialIcons name="delete" size={22} color="#AF0000" />
           </TouchableOpacity>
         </View>
       </View>
@@ -375,7 +375,7 @@ export default function AddAddressScreen() {
       <Modal transparent visible={showCancel} animationType="fade">
         <View style={styles.overlay}>
           <View style={styles.popup}>
-            <View style={[styles.popupHeader, { backgroundColor: "#F44336" }]}>
+            <View style={[styles.popupHeader, { backgroundColor: "#AF0000" }]}>
               <MaterialIcons name="error" size={40} color="#fff" />
               <Text style={styles.popupHeaderText}>
                 Bạn có chắc chắn muốn hủy thêm địa chỉ?

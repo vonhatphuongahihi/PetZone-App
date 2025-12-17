@@ -409,7 +409,9 @@ export default function CartScreen() {
         >
           <Text style={styles.buyBtnText}>
             Mua hàng (
-            {Object.keys(checkedProducts).filter((id) => checkedProducts[id]).length}
+            {cartItems
+              .filter((item) => checkedProducts[item.id])
+              .reduce((sum, item) => sum + item.quantity, 0)}
             )
           </Text>
         </TouchableOpacity>

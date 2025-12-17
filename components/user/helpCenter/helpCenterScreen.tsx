@@ -2,14 +2,14 @@ import { MaterialIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
-    Alert,
-    Image,
-    Modal,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { helpCenterStyles as styles } from "./helpCenterStyle";
 
@@ -135,10 +135,10 @@ export default function HelpCenterScreen({ navigation }: any) {
       <Modal transparent visible={showCancelConfirm} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.card}>
-            <View style={[styles.cardTop, { backgroundColor: "#F44336" }]}>
+            <View style={[styles.cardTop, { backgroundColor: "#AF0000" }]}>
               <View style={styles.iconWrap}>
                 <View style={styles.iconCircleWhite}>
-                  <MaterialIcons name="error-outline" size={28} color="#F44336" />
+                  <MaterialIcons name="error-outline" size={28} color="#AF0000" />
                 </View>
               </View>
 
@@ -147,7 +147,7 @@ export default function HelpCenterScreen({ navigation }: any) {
 
             <View style={styles.cardBottom}>
               <TouchableOpacity
-                style={[styles.primaryAction, { backgroundColor: "#F44336" }]}
+                style={[styles.primaryAction, { backgroundColor: "#AF0000" }]}
                 onPress={() => {
                   setShowCancelConfirm(false);
                   navigation.goBack();

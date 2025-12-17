@@ -12,7 +12,11 @@ export default function ProfilePage() {
     const insets = useSafeAreaInsets();
 
     const navigateToTab = (tabName: string) => {
-        router.push(`/${tabName}` as any);
+        if (tabName === 'index' || tabName === '') {
+            router.replace('/(tabs)');
+        } else {
+            router.replace(`/(tabs)/${tabName}` as any);
+        }
     };
 
     return (
@@ -38,7 +42,7 @@ export default function ProfilePage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}
-                    onPress={() => router.push('/')}
+                    onPress={() => router.replace('/(tabs)')}
                 >
                     <HomeIcon color="#8D93A5" size={28} />
                     <Text style={{
@@ -58,7 +62,7 @@ export default function ProfilePage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}
-                    onPress={() => navigateToTab('categories')}
+                    onPress={() => router.replace('/(tabs)/categories')}
                 >
                     <CategoriesIcon color="#8D93A5" size={22} />
                     <Text style={{
@@ -78,7 +82,7 @@ export default function ProfilePage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}
-                    onPress={() => navigateToTab('messages')}
+                    onPress={() => router.replace('/(tabs)/messages')}
                 >
                     <MessagesIcon color="#8D93A5" size={28} />
                     <Text style={{

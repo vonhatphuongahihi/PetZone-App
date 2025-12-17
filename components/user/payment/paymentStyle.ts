@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     popupBtnWarning: {
-        backgroundColor: "#F44336",
+        backgroundColor: "#AF0000",
         padding: 15,
         margin: 20,
         borderRadius: 6,

@@ -60,12 +60,12 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "#F44336",
+    borderColor: "#AF0000",
     borderRadius: 6,
     padding: 12,
     alignItems: "center",
   },
-  cancelText: { color: "#F44336", fontWeight: "bold" },
+  cancelText: { color: "#AF0000", fontWeight: "bold" },
   saveBtn: {
     flex: 1,
     marginLeft: 8,
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   popupBtnWarning: {
-    backgroundColor: "#F44336",
+    backgroundColor: "#AF0000",
     padding: 15,
     borderRadius: 6,
     alignItems: "center",
