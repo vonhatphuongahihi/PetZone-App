@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.10.3.127:3001/api';
+const API_BASE_URL = 'http://172.16.0.132:3001/api';
 
 export interface ProductImage {
     id: number;
@@ -50,7 +50,6 @@ export interface Product {
     tag?: string;
     avgRating: number;
     totalReviews: number;
-    soldCount?: number;
     createdAt: string;
     updatedAt: string;
     images: ProductImage[];

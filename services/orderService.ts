@@ -1,6 +1,6 @@
 // Order Service
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.20.1.55:3001/api';
+const API_BASE_URL = 'http://172.16.0.132:3001/api';
 
 export interface OrderItem {
     productId: number;

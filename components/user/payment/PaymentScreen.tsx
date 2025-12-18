@@ -15,6 +15,7 @@ import {
 import { addressService, UserAddress } from "../../../services/addressService";
 import { CartItem } from "../../../services/cartService";
 import { orderService } from "../../../services/orderService";
+import { productService } from "../../../services/productService";
 import styles from "./paymentStyle";
 
 interface SelectedShop {
@@ -25,7 +26,14 @@ interface SelectedShop {
 
 export default function CheckoutScreen() {
     const router = useRouter();
-    const params = useLocalSearchParams();
+    const params = useLocalSearchParams<{
+        selectedItems?: string;
+        selectedShops?: string;
+        totalAmount?: string;
+        productId?: string;
+        quantity?: string;
+        type?: string;
+    }>();
 
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [showSuccess, setShowSuccess] = useState(false);
@@ -37,16 +45,18 @@ export default function CheckoutScreen() {
     const [address, setAddress] = useState<UserAddress | null>(null);
     const [loadingAddress, setLoadingAddress] = useState(true);
     const [placingOrder, setPlacingOrder] = useState(false);
+    const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
 
     // Load dữ liệu từ params (chỉ chạy một lần khi mount)
     useEffect(() => {
+        // ===== CART FLOW =====
         if (params.selectedItems) {
             try {
-                const items = JSON.parse(params.selectedItems as string) as CartItem[];
+                const items = JSON.parse(params.selectedItems) as CartItem[];
                 setSelectedItems(items);
 
                 if (params.selectedShops) {
-                    const shops = JSON.parse(params.selectedShops as string) as SelectedShop[];
+                    const shops = JSON.parse(params.selectedShops) as SelectedShop[];
                     setSelectedShops(shops);
                 }
 
@@ -54,11 +64,66 @@ export default function CheckoutScreen() {
                     setTotalAmount(Number(params.totalAmount));
                 }
             } catch (error) {
-                console.error('Error parsing params:', error);
+                console.error("Error parsing cart params:", error);
             }
+            return;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Chỉ chạy một lần khi component mount
+
+        // ===== BUY NOW FLOW =====
+        if (params.type === "buy_now" && params.productId) {
+            (async () => {
+                try {
+                    const token = await AsyncStorage.getItem("jwt_token");
+                    if (!token) return;
+
+                    const res = await productService.getProductById(
+                        Number(params.productId),
+                        token
+                    );
+
+                    const apiProduct = res.data;
+                    if (!apiProduct.store) {
+                        throw new Error("Store not found");
+                    }
+
+                    const cartItem: CartItem = {
+                        id: `buy-now-${apiProduct.id}`,
+                        quantity: Number(params.quantity) || 1,
+                        product: {
+                            id: apiProduct.id,
+                            title: apiProduct.title,
+                            price: apiProduct.price,
+                            oldPrice: apiProduct.oldPrice,
+                            images: apiProduct.images,
+                            store: {
+                                id: String(apiProduct.store.id),
+                                storeName: apiProduct.store.storeName,
+                                avatarUrl: apiProduct.store.avatarUrl,
+                            },
+                            category: apiProduct.category,
+                        },
+                        userId: "",
+                        productId: 0,
+                        createdAt: "",
+                        updatedAt: ""
+                    };
+
+                    setSelectedItems([cartItem]);
+                    setSelectedShops([
+                        {
+                            shopId: cartItem.product.store.id,
+                            shopName: cartItem.product.store.storeName,
+                            products: [cartItem],
+                        },
+                    ]);
+                    setTotalAmount(cartItem.quantity * Number(cartItem.product.price));
+                } catch (err) {
+                    console.error("Buy now error:", err);
+                }
+            })();
+        }
+
+    }, []);
 
     // Load địa chỉ mặc định
     const loadAddress = useCallback(async () => {
@@ -143,7 +208,7 @@ export default function CheckoutScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push("/cart")}>
+                <TouchableOpacity onPress={() => router.back()}>
                     <MaterialIcons name="arrow-back-ios" size={24} color="#FBBC05" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Thanh toán</Text>
