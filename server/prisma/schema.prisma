@@ -18,7 +18,7 @@ model User {
   updatedAt                DateTime                  @updatedAt
   avatarUrl                String?                   @map("avatar_url")
   dateofBirth              String?
-  totalSpent               Int?
+  totalSpent               Int?                      @default(0)
   emailVerified            Boolean                   @default(false) @map("email_verified")
   cartItems                CartItem[]
   conversationParticipants ConversationParticipant[] @relation("UserParticipants")
