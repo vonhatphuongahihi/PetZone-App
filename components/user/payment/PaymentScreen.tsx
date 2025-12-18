@@ -208,7 +208,7 @@ export default function CheckoutScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.push("/cart")}>
+                <TouchableOpacity onPress={() => router.back()}>
                     <MaterialIcons name="arrow-back-ios" size={24} color="#FBBC05" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Thanh toán</Text>
