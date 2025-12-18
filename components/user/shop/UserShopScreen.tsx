@@ -195,7 +195,7 @@ export default function UserShopScreen() {
                 </View>
                 <View style={styles.metaRow}>
                     <Text style={styles.soldLabel}>
-                        Đã bán {item.totalReviews || 0}
+                        Đã bán {item.sold || 0}
                     </Text>
                     <Text style={styles.rating}>
                         ★ {item.avgRating ? Number(item.avgRating).toFixed(1) : "0.0"}

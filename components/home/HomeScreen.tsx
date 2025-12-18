@@ -86,7 +86,7 @@ export default function HomeScreen() {
     const fetchCategories = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.0.155.232:3001/api';
+            const API_BASE_URL = 'http://10.11.1.141:3001/api';
             const res = await fetch(`${API_BASE_URL}/categories`, { headers });
 
             if (res.status === 401) {
@@ -109,7 +109,7 @@ export default function HomeScreen() {
     const fetchProducts = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.0.155.232:3001/api';
+            const API_BASE_URL = 'http://10.11.1.141:3001/api';
             const [todayRes, newRes, hotRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/products/today?limit=5`, { headers }), // Chỉ lấy 5 sản phẩm cho HomeScreen
                 fetch(`${API_BASE_URL}/products/new`, { headers }),

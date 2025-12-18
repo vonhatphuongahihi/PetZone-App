@@ -350,40 +350,48 @@ export const getAllProducts = async (req: Request, res: Response) => {
 // === GET TODAY (SẢN PHẨM BÁN CHẠY NHẤT - THEO SỐ LƯỢT BÁN) ===
 export const getTodayProducts = async (req: Request, res: Response) => {
   try {
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-
-    const whereCondition: any = {
-      status: { not: 'draft' },
-      quantity: { gt: 0 }
-    };
-
-    if (limit) {
-      whereCondition.soldCount = { gt: 0 };
-    }
+    const limit = Number(req.query.limit) || 5;
 
     const products = await prisma.product.findMany({
-      where: whereCondition,
+      where: { status: { not: "draft" } },
       include: {
         images: true,
         category: true,
+        orderItems: {
+          include: { order: true }, // để đọc order.status
+        },
         store: {
           select: {
             storeName: true,
             avatarUrl: true,
-            user: {
-              select: { avatarUrl: true }
-            },
-          }
-        }
+            user: { select: { avatarUrl: true } },
+          },
+        },
       },
-      orderBy: [
-        { soldCount: "desc" }, // Sắp xếp theo số lượng bán giảm dần
-        { createdAt: "desc" }
-      ],
-      ...(limit ? { take: limit } : {}), // Chỉ giới hạn nếu có limit
     });
 
-    return res.json({ success: true, data: products });
+    console.log(products.map(p => ({
+      id: p.id,
+      title: p.title,
+      orderItems: p.orderItems.map(i => ({
+        quantity: i.quantity,
+        status: i.order?.status
+      }))
+    })));
+
+    const productsWithSold = products
+      .map(product => {
+        const sold = product.orderItems
+          .filter(item => item.order?.status === "shipped") // chỉ tính đơn đã shipped
+          .reduce((sum, item) => sum + item.quantity, 0);
+
+        return { ...product, sold };
+      })
+      .filter(product => product.sold > 0)       // chỉ lấy sản phẩm có bán
+      .sort((a, b) => b.sold - a.sold)           // bán nhiều nhất lên đầu
+      .slice(0, limit);                          // giới hạn số lượng
+
+    return res.json({ success: true, data: productsWithSold });
   } catch (error: any) {
     console.error("Error getTodayProducts:", error.message);
     return res.status(500).json({ success: false, message: "Lỗi server." });
