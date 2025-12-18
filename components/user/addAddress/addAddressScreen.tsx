@@ -96,14 +96,14 @@ export default function AddAddressScreen() {
       };
 
       await addressService.addAddress(addressData, token);
-      
+
       // Clear form
       setName("");
       setPhone("");
       setProvince("");
       setStreet("");
       setType("Nhà riêng");
-      
+
       setShowSuccess(true);
       await loadAddresses();
     } catch (error: any) {
@@ -116,19 +116,19 @@ export default function AddAddressScreen() {
 
   const handleDeleteAddress = async (addressId: string) => {
     console.log('🗑️ DELETE INITIATED for ID:', addressId);
-    
+
     const addressToDelete = addresses.find(addr => addr.id === addressId);
-    
+
     if (!addressToDelete) {
       console.error('❌ Address not found in list!');
       Alert.alert('Lỗi', 'Không tìm thấy địa chỉ cần xóa');
       return;
     }
-    
+
     if (addressToDelete.isDefault) {
       console.log('⚠️ Cannot delete default address');
       Alert.alert(
-        'Không thể xóa', 
+        'Không thể xóa',
         'Không thể xóa địa chỉ mặc định. Vui lòng đặt địa chỉ khác làm mặc định trước.'
       );
       return;
@@ -138,20 +138,20 @@ export default function AddAddressScreen() {
     try {
       console.log('🔥 Starting delete process for:', addressId);
       const token = await tokenService.getToken();
-      
+
       if (!token) {
         console.error('❌ No token available');
         Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
         return;
       }
-      
+
       console.log('🌐 Calling API delete...');
       await addressService.deleteAddress(addressId, token);
       console.log('✅ Delete API success');
-      
+
       console.log('🔄 Reloading addresses...');
       await loadAddresses();
-      
+
       Alert.alert('Thành công', 'Đã xóa địa chỉ');
     } catch (error: any) {
       console.error('❌ Delete error:', error);
@@ -166,7 +166,7 @@ export default function AddAddressScreen() {
         Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
         return;
       }
-      
+
       await addressService.setDefaultAddress(addressId, token);
       await loadAddresses();
       Alert.alert('Thành công', 'Đã đặt làm địa chỉ mặc định');
@@ -196,20 +196,16 @@ export default function AddAddressScreen() {
             </TouchableOpacity>
           )}
           <TouchableOpacity
-            style={[styles.deleteBtn, { 
-              padding: 8, 
+            style={[styles.deleteBtn, {
               zIndex: 999,
-              elevation: 5 
             }]}
             activeOpacity={0.6}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             onPress={() => {
-              console.log('🗑️ DELETE BUTTON PRESSED!');
-              console.log('Item:', item.id, item.name);
               handleDeleteAddress(item.id);
             }}
           >
-            <MaterialIcons name="delete" size={22} color="#F44336" />
+            <MaterialIcons name="delete" size={22} color="#AF0000" />
           </TouchableOpacity>
         </View>
       </View>
@@ -218,10 +214,10 @@ export default function AddAddressScreen() {
         {item.street}, {item.province}
       </Text>
       <View style={styles.addressTypeContainer}>
-        <MaterialIcons 
-          name={item.type === 'Văn phòng' ? 'business' : 'home'} 
-          size={16} 
-          color="#666" 
+        <MaterialIcons
+          name={item.type === 'Văn phòng' ? 'business' : 'home'}
+          size={16}
+          color="#666"
         />
         <Text style={styles.addressType}>{item.type}</Text>
       </View>
@@ -244,7 +240,7 @@ export default function AddAddressScreen() {
       </Text>
 
       {/* Nội dung */}
-      <ScrollView 
+      <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
@@ -252,9 +248,9 @@ export default function AddAddressScreen() {
       >
         <View style={{ padding: 15 }}>
           <Text style={styles.label}>Họ và Tên</Text>
-          <TextInput 
-            style={styles.input} 
-            value={name} 
+          <TextInput
+            style={styles.input}
+            value={name}
             onChangeText={setName}
             placeholder="Nhập họ và tên"
           />
@@ -278,9 +274,9 @@ export default function AddAddressScreen() {
           />
 
           <Text style={styles.label}>Tên đường, Tòa nhà, Số nhà</Text>
-          <TextInput 
-            style={styles.input} 
-            value={street} 
+          <TextInput
+            style={styles.input}
+            value={street}
             onChangeText={setStreet}
             placeholder="Nhập tên đường, số nhà"
           />
@@ -301,10 +297,10 @@ export default function AddAddressScreen() {
             </TouchableOpacity>
 
             {showDropdown && (
-              <View style={[styles.dropdown, { 
-                position: 'absolute', 
-                top: 45, 
-                left: 0, 
+              <View style={[styles.dropdown, {
+                position: 'absolute',
+                top: 45,
+                left: 0,
                 right: 0,
                 zIndex: 1000,
                 elevation: 10
@@ -378,32 +374,28 @@ export default function AddAddressScreen() {
       {/* POPUP HỦY */}
       <Modal transparent visible={showCancel} animationType="fade">
         <View style={styles.overlay}>
-          <View style={styles.alertCard}>
-            <View style={[styles.alertHeader, { backgroundColor: "#F44336" }]}>
-              <View style={styles.iconCircle}>
-                <MaterialIcons name="error-outline" size={28} color="#F44336" />
-              </View>
-              <Text style={styles.alertHeaderText}>
+          <View style={styles.popup}>
+            <View style={[styles.popupHeader, { backgroundColor: "#AF0000" }]}>
+              <MaterialIcons name="error" size={40} color="#fff" />
+              <Text style={styles.popupHeaderText}>
                 Bạn có chắc chắn muốn hủy thêm địa chỉ?
               </Text>
             </View>
-
-            <View style={styles.alertBody}>
+            <View style={styles.popupBody}>
               <TouchableOpacity
-                style={[styles.alertPrimaryBtn, { backgroundColor: "#F44336" }]}
+                style={styles.popupBtnWarning}
                 onPress={() => {
                   setShowCancel(false);
                   router.back();
                 }}
               >
-                <Text style={styles.alertPrimaryBtnText}>Hủy</Text>
+                <Text style={styles.popupBtnText}>Hủy</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
-                style={styles.alertSecondaryBtn}
+                style={styles.popupBtnSecondary}
                 onPress={() => setShowCancel(false)}
               >
-                <Text style={styles.alertSecondaryBtnText}>Tiếp tục</Text>
+                <Text style={styles.popupBtnSecondaryText}>Tiếp tục</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -413,19 +405,19 @@ export default function AddAddressScreen() {
       {/* POPUP THÀNH CÔNG */}
       <Modal transparent visible={showSuccess} animationType="fade">
         <View style={styles.overlay}>
-          <View style={styles.alertCard}>
-            <View style={[styles.alertHeader, { backgroundColor: "#FBBC05" }]}>
-              <View style={styles.iconCircle}>
-                <MaterialIcons name="check" size={28} color="#FBBC05" />
-              </View>
-              <Text style={styles.alertHeaderText}>
+          <View style={styles.popup}>
+            <View style={[styles.popupHeader, { backgroundColor: "#FBBC05" }]}>
+              <MaterialIcons name="check-circle" size={40} color="#fff" />
+              <Text style={styles.popupHeaderText}>
                 Thêm địa chỉ thành công!
               </Text>
             </View>
-
-            <View style={styles.alertBody}>
-              {/* Auto-close after 1 second - no button needed */}
-            </View>
+            <TouchableOpacity
+              style={styles.popupBtnSuccess}
+              onPress={() => setShowSuccess(false)}
+            >
+              <Text style={styles.popupBtnText}>Đóng</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

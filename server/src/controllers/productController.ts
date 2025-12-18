@@ -159,7 +159,9 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
         store: {
           select: {
             storeName: true,
-            avatarUrl: true,
+            user: {
+              select: { avatarUrl: true }
+            },
           },
         },
         orderItems: true, // để tính sold
@@ -308,11 +310,13 @@ export const getProductById = async (req: Request, res: Response) => {
             id: true,
             userId: true,
             storeName: true,
-            avatarUrl: true,
             rating: true,
             totalProducts: true,
             totalReviews: true,
-            followersCount: true
+            followersCount: true,
+            user: {
+              select: { avatarUrl: true }
+            }
           }
         }
       },

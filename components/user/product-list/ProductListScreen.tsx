@@ -116,9 +116,7 @@ export default function ProductListScreen() {
                 id: item.id.toString(),
                 name: item.title,
                 shop: item.store?.storeName || item.storeId,
-                shopImage: item.store?.avatarUrl || (item.store as any)?.user?.avatarUrl
-                    ? { uri: item.store?.avatarUrl || (item.store as any)?.user?.avatarUrl }
-                    : require("../../../assets/images/shop.jpg"),
+                shopImage: item.store?.user?.avatarUrl ? { uri: item.store.user.avatarUrl } : require("../../../assets/images/shop.jpg"),
                 sold: item.soldCount || 0,
                 category: item.category?.name || 'Không có danh mục',
                 rating: Number(item.avgRating) || 0,

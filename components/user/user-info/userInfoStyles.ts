@@ -5,7 +5,7 @@ export const userInfoStyles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F5F7FA', // Màu nền hiện đại hơn
     },
-    
+
     // Header
     header: {
         flexDirection: 'row',
@@ -31,7 +31,7 @@ export const userInfoStyles = StyleSheet.create({
         fontWeight: '700',
         color: '#2D3748',
         textAlign: 'center',
-        marginRight: 40, 
+        marginRight: 40,
     },
 
     scrollView: {
@@ -40,10 +40,9 @@ export const userInfoStyles = StyleSheet.create({
 
     // Avatar Section
     avatarSection: {
-        backgroundColor: '#FFFFFF',
         alignItems: 'center',
-        paddingTop: 40,
-        paddingBottom: 30,
+        paddingTop: 20,
+        paddingBottom: 20,
         marginBottom: 20,
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,

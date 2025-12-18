@@ -72,16 +72,16 @@ export default function AboutUsScreen() {
 
     return (
         <>
-            <Stack.Screen 
-                options={{ 
+            <Stack.Screen
+                options={{
                     title: 'Về chúng tôi',
                     headerShown: false
-                }} 
+                }}
             />
             <SafeAreaView style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         onPress={handleGoBack}
                         style={styles.backButton}
                         activeOpacity={0.7}
@@ -137,15 +137,15 @@ export default function AboutUsScreen() {
                                                 <Text style={styles.itemDescription}>{item.description}</Text>
                                             </View>
                                             <View style={styles.chevronContainer}>
-                                                <MaterialIcons 
-                                                    name={isExpanded ? "expand-less" : "expand-more"} 
-                                                    size={24} 
-                                                    color="#FBBC05" 
+                                                <MaterialIcons
+                                                    name={isExpanded ? "expand-less" : "expand-more"}
+                                                    size={24}
+                                                    color="#FBBC05"
                                                 />
                                             </View>
                                         </View>
                                     </TouchableOpacity>
-                                    
+
                                     {isExpanded && (
                                         <View style={styles.expandedContent}>
                                             <Text style={styles.contentText}>{item.content}</Text>
@@ -171,10 +171,10 @@ const styles = {
         alignItems: 'center' as const,
         paddingHorizontal: 16,
         paddingVertical: 12,
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
         zIndex: 10,
-        backgroundColor: '#F8FAFC',
     },
     backButton: {
         padding: 4,

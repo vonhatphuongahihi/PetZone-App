@@ -85,8 +85,8 @@ export default function SearchResultsScreen() {
             shopImage: item.store?.user?.avatarUrl
                 ? { uri: item.store.user.avatarUrl }
                 : require("../../../assets/images/shop.jpg"),
-            sold: Math.floor(Math.random() * 800) + 100,
-            rating: 5.0,
+            sold: item.soldCount || 0, 
+            rating: 5.0, 
             discount: item.oldPrice
                 ? `-${Math.round(((Number(item.oldPrice) - Number(item.price)) / Number(item.oldPrice)) * 100)}%`
                 : "",

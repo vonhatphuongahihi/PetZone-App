@@ -123,6 +123,18 @@ export const orderController = {
                 });
 
                 createdOrders.push(order);
+
+                // Cập nhật totalOrders của store khi tạo order
+                if (storeId) {
+                    await prisma.store.update({
+                        where: { id: storeId },
+                        data: {
+                            totalOrders: {
+                                increment: 1
+                            }
+                        }
+                    });
+                }
             }
 
             // Xóa các sản phẩm đã đặt hàng khỏi giỏ hàng
@@ -441,6 +453,21 @@ export const orderController = {
                     payments: true
                 }
             });
+
+            // Cập nhật soldCount khi đơn hàng chuyển thành shipped
+            if (status === 'shipped' && !order.shippedAt) {
+                for (const orderItem of updatedOrder.orderItems) {
+                    await prisma.product.update({
+                        where: { id: Number(orderItem.productId) },
+                        data: {
+                            soldCount: {
+                                increment: Number(orderItem.quantity) || 0
+                            }
+                        }
+                    });
+                }
+                console.log('Successfully updated soldCount for all products in order');
+            }
 
             res.json({
                 success: true,

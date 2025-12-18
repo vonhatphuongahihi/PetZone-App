@@ -8,7 +8,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
-    paddingVertical: 20,
+    paddingTop: 45,
+    paddingBottom: 15,
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
@@ -59,12 +60,12 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: "#F44336",
+    borderColor: "#AF0000",
     borderRadius: 6,
     padding: 12,
     alignItems: "center",
   },
-  cancelText: { color: "#F44336", fontWeight: "bold" },
+  cancelText: { color: "#AF0000", fontWeight: "bold" },
   saveBtn: {
     flex: 1,
     marginLeft: 8,
@@ -78,76 +79,62 @@ const styles = StyleSheet.create({
   // Overlay
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(0,0,0,0.3)",
     justifyContent: "center",
     alignItems: "center",
   },
 
-  alertCard: {
-    width: "82%",
+  // Popup
+  popup: {
+    width: "80%",
+    backgroundColor: "#fff",
     borderRadius: 10,
     overflow: "hidden",
-    backgroundColor: "#fff",
-    elevation: 6,
+    elevation: 5,
   },
-  alertHeader: {
-    paddingVertical: 20,
+  popupHeader: {
+    padding: 20,
     alignItems: "center",
-    justifyContent: "center",
   },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  alertHeaderText: {
+  popupHeaderText: {
     color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
     marginTop: 10,
-    paddingHorizontal: 12,
-    lineHeight: 20,
+    textAlign: "center",
   },
-
-  alertBody: {
-    backgroundColor: "#fff",
-    paddingVertical: 18,
-    paddingHorizontal: 18,
+  popupBody: {
+    padding: 20,
+    gap: 12,
+  },
+  popupBtnSuccess: {
+    backgroundColor: "#FBBC05",
+    padding: 15,
+    margin: 20,
+    borderRadius: 6,
     alignItems: "center",
   },
-
-  alertPrimaryBtn: {
-    width: "100%",
-    borderRadius: 8,
-    paddingVertical: 12,
+  popupBtnWarning: {
+    backgroundColor: "#AF0000",
+    padding: 15,
+    borderRadius: 6,
     alignItems: "center",
-    justifyContent: "center",
   },
-  alertPrimaryBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-
-  alertSecondaryBtn: {
-    marginTop: 12,
-    width: "100%",
-    borderRadius: 8,
-    paddingVertical: 12,
+  popupBtnSecondary: {
+    padding: 15,
+    borderRadius: 6,
     alignItems: "center",
-    justifyContent: "center",
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#ddd",
   },
-  alertSecondaryBtnText: {
+  popupBtnText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  popupBtnSecondaryText: {
     color: "#333",
-    fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "bold",
   },
 
   noteText: {
@@ -158,29 +145,29 @@ const styles = StyleSheet.create({
   },
 
   dropdown: {
-  backgroundColor: '#fff',
-  borderWidth: 1,
-  borderColor: '#ccc',
-  borderRadius: 8,
-  marginTop: 5,
-  elevation: 5, // shadow Android
-  shadowColor: '#000', // shadow iOS
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-},
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginTop: 5,
+    elevation: 5, // shadow Android
+    shadowColor: '#000', // shadow iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
 
-dropdownItem: {
-  paddingVertical: 12,
-  paddingHorizontal: 15,
-  borderBottomWidth: 1,
-  borderBottomColor: '#eee',
-},
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
 
-dropdownText: {
-  fontSize: 16,
-  color: '#333',
-},
+  dropdownText: {
+    fontSize: 16,
+    color: '#333',
+  },
 
   // Address List
   addressListContainer: {

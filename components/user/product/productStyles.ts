@@ -17,6 +17,26 @@ export const productStyles = StyleSheet.create({
         flex: 1,
         paddingRight: 8,
         alignItems: 'flex-end',
+        position: 'relative',
+    },
+    cartBadge: {
+        position: 'absolute',
+        top: -6,
+        right: 2,
+        backgroundColor: '#F44336',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 6,
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
+    },
+    cartBadgeText: {
+        color: '#FFFFFF',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
     headerTitle: {
         fontSize: 16,
@@ -527,7 +547,7 @@ export const productStyles = StyleSheet.create({
     sellerReplyContainer: {
         marginTop: 10,
         padding: 12,
-        backgroundColor: '#FFF6D6', 
+        backgroundColor: '#FFF6D6',
         borderRadius: 10,
         borderLeftWidth: 4,
         borderLeftColor: '#FBBC05',
@@ -536,7 +556,7 @@ export const productStyles = StyleSheet.create({
     sellerReplyTitle: {
         fontSize: 13,
         fontWeight: '700',
-        color: '#C79300', 
+        color: '#C79300',
         marginBottom: 4,
     },
 

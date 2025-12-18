@@ -1,7 +1,7 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -29,7 +29,6 @@ export default function CheckoutScreen() {
 
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [showSuccess, setShowSuccess] = useState(false);
-    const [showWarning, setShowWarning] = useState(false);
 
     const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
     const [selectedShops, setSelectedShops] = useState<SelectedShop[]>([]);
@@ -62,32 +61,34 @@ export default function CheckoutScreen() {
     }, []); // Chỉ chạy một lần khi component mount
 
     // Load địa chỉ mặc định
-    useEffect(() => {
-        const loadAddress = async () => {
-            try {
-                setLoadingAddress(true);
-                const token = await AsyncStorage.getItem('jwt_token');
-                if (!token) return;
+    const loadAddress = useCallback(async () => {
+        try {
+            setLoadingAddress(true);
+            const token = await AsyncStorage.getItem('jwt_token');
+            if (!token) return;
 
-                const response = await addressService.getUserAddresses(token);
-                const defaultAddress = response.data.find(addr => addr.isDefault) || response.data[0];
-                setAddress(defaultAddress || null);
-            } catch (error) {
-                console.error('Error loading address:', error);
-            } finally {
-                setLoadingAddress(false);
-            }
-        };
-
-        loadAddress();
+            const response = await addressService.getUserAddresses(token);
+            const defaultAddress = response.data.find(addr => addr.isDefault) || response.data[0];
+            setAddress(defaultAddress || null);
+        } catch (error) {
+            console.error('Error loading address:', error);
+        } finally {
+            setLoadingAddress(false);
+        }
     }, []);
 
-    const handlePlaceOrder = async () => {
-        if (!paymentMethod) {
-            setShowWarning(true);
-            return;
-        }
+    useEffect(() => {
+        loadAddress();
+    }, [loadAddress]);
 
+    // Reload địa chỉ khi quay lại từ trang sửa
+    useFocusEffect(
+        useCallback(() => {
+            loadAddress();
+        }, [loadAddress])
+    );
+
+    const handlePlaceOrder = async () => {
         if (!address) {
             Alert.alert('Lỗi', 'Vui lòng chọn địa chỉ giao hàng');
             return;
@@ -150,7 +151,7 @@ export default function CheckoutScreen() {
 
             {/* Scroll nội dung */}
             <ScrollView
-                contentContainerStyle={{ padding: 15, paddingBottom: 40 }}
+                contentContainerStyle={{ padding: 15, paddingBottom: 80 }}
                 showsVerticalScrollIndicator={false}
                 nestedScrollEnabled={true}
             >
@@ -161,9 +162,15 @@ export default function CheckoutScreen() {
                             <ActivityIndicator size="small" color="#FBBC05" />
                         </View>
                     ) : address ? (
-                        <>
+                        <TouchableOpacity
+                            onPress={() => router.push({
+                                pathname: "/editAddress",
+                                params: { addressId: address.id }
+                            })}
+                            activeOpacity={0.7}
+                        >
                             <View style={styles.rowBetween}>
-                                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
                                     <MaterialIcons
                                         name="location-on"
                                         size={20}
@@ -174,18 +181,16 @@ export default function CheckoutScreen() {
                                         {address.name} | {address.phoneNumber}
                                     </Text>
                                 </View>
-                                <TouchableOpacity onPress={() => router.push("/editAddress")}>
-                                    <MaterialIcons
-                                        name="arrow-forward-ios"
-                                        size={14}
-                                        color="rgba(0,0,0,0.55)"
-                                    />
-                                </TouchableOpacity>
+                                <MaterialIcons
+                                    name="arrow-forward-ios"
+                                    size={14}
+                                    color="rgba(0,0,0,0.55)"
+                                />
                             </View>
                             <Text style={{ marginTop: 4, marginLeft: 28 }}>
                                 {address.street}{"\n"}{address.province}
                             </Text>
-                        </>
+                        </TouchableOpacity>
                     ) : (
                         <TouchableOpacity
                             onPress={() => router.push("/addAddress")}
@@ -336,9 +341,12 @@ export default function CheckoutScreen() {
             <View style={styles.footer}>
                 <Text style={styles.footerPrice}>{totalPayment.toLocaleString()}đ</Text>
                 <TouchableOpacity
-                    style={styles.buyBtn}
+                    style={[
+                        styles.buyBtn,
+                        (selectedItems.length === 0 || !address || !paymentMethod || placingOrder) && styles.buyBtnDisabled
+                    ]}
                     onPress={handlePlaceOrder}
-                    disabled={selectedItems.length === 0 || !address || placingOrder}
+                    disabled={selectedItems.length === 0 || !address || !paymentMethod || placingOrder}
                 >
                     {placingOrder ? (
                         <ActivityIndicator size="small" color="#fff" />
@@ -360,7 +368,7 @@ export default function CheckoutScreen() {
                             style={styles.popupBtnSuccess}
                             onPress={() => {
                                 setShowSuccess(false);
-                                router.push("/"); // ✅ quay về trang Home
+                                router.replace('/(tabs)'); // Quay về trang Home
                             }}
                         >
                             <Text style={styles.popupBtnText}>Tiếp tục mua sắm</Text>
@@ -369,25 +377,6 @@ export default function CheckoutScreen() {
                 </View>
             </Modal>
 
-            {/* Popup cảnh báo */}
-            <Modal transparent visible={showWarning} animationType="fade">
-                <View style={styles.overlay}>
-                    <View style={styles.popup}>
-                        <View style={[styles.popupHeader, { backgroundColor: "#F44336" }]}>
-                            <MaterialIcons name="error" size={40} color="#fff" />
-                            <Text style={styles.popupHeaderText}>
-                                Vui lòng chọn phương thức thanh toán
-                            </Text>
-                        </View>
-                        <TouchableOpacity
-                            style={styles.popupBtnWarning}
-                            onPress={() => setShowWarning(false)}
-                        >
-                            <Text style={styles.popupBtnText}>Đóng</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
         </View>
     );
 }

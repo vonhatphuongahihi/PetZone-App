@@ -403,7 +403,7 @@ export default function MessagesScreen() {
     const isTyping = conversationTypingUsers.length > 0;
     const typingText = isTyping ? `${otherUser.username} đang nhập...` : lastMessage;
 
-    // const avatarSource = otherUser.avatarUrl ? { uri: otherUser.avatarUrl } : require("../../../assets/images/shop.png");
+    // const avatarSource = otherUser.avatarUrl ? { uri: otherUser.avatarUrl } : require("../../../assets/images/shop.jpg");
 
     return (
       <TouchableOpacity

@@ -87,14 +87,22 @@ const styles = StyleSheet.create({
         paddingHorizontal: 30,
         borderRadius: 6,
     },
+    buyBtnDisabled: {
+        backgroundColor: "#CCCCCC",
+        paddingVertical: 10,
+        paddingHorizontal: 30,
+        borderRadius: 6,
+    },
     buyBtnText: { color: "#fff", fontWeight: "bold" },
 
     // Note
     note: {
         fontSize: 12,
         color: "gray",
-        marginTop: -10,
+        marginTop: 10,
+        marginBottom: 20,
         lineHeight: 18,
+        textAlign: 'center',
     },
 
     // Popup
@@ -130,7 +138,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     popupBtnWarning: {
-        backgroundColor: "#F44336",
+        backgroundColor: "#AF0000",
         padding: 15,
         margin: 20,
         borderRadius: 6,

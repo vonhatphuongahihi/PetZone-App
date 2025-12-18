@@ -82,11 +82,15 @@ export default function OrderConfirmScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <MaterialIcons name="arrow-back-ios" size={24} color="#FBBC05" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Xác nhận đơn hàng</Text>
-        <View style={styles.placeholder} />
       </View>
 
       {loading ? (

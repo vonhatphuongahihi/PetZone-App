@@ -2,7 +2,7 @@
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -15,6 +15,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { cartService } from "../../services/cartService";
 import { storeService } from "../../services/storeService";
 import { tokenService } from "../../services/tokenService";
 import { ProductCard } from "../user/product-card/ProductCard";
@@ -44,6 +45,7 @@ export default function HomeScreen() {
     const [hotProducts, setHotProducts] = useState<any[]>([]);
     const [topStores, setTopStores] = useState<TopStore[]>([]);
     const [loading, setLoading] = useState(true);
+    const [cartItemCount, setCartItemCount] = useState(0);
 
     const { refresh } = useLocalSearchParams();
 
@@ -84,7 +86,7 @@ export default function HomeScreen() {
     const fetchCategories = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.10.3.127:3001/api';
+            const API_BASE_URL = 'http://10.0.155.232:3001/api';
             const res = await fetch(`${API_BASE_URL}/categories`, { headers });
 
             if (res.status === 401) {
@@ -107,7 +109,7 @@ export default function HomeScreen() {
     const fetchProducts = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.10.3.127:3001/api';
+            const API_BASE_URL = 'http://10.0.155.232:3001/api';
             const [todayRes, newRes, hotRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/products/today?limit=5`, { headers }), // Chỉ lấy 5 sản phẩm cho HomeScreen
                 fetch(`${API_BASE_URL}/products/new`, { headers }),
@@ -201,7 +203,7 @@ export default function HomeScreen() {
 
     // Listen for follow status changes from UserShopScreen
     useEffect(() => {
-        const subscription = DeviceEventEmitter.addListener('store_follow_changed', (data: { storeId: string; isFollowing: boolean; followersCount: number }) => {
+        const followSubscription = DeviceEventEmitter.addListener('store_follow_changed', (data: { storeId: string; isFollowing: boolean; followersCount: number }) => {
             setTopStores(prev => prev.map(s =>
                 s.id === data.storeId
                     ? {
@@ -213,22 +215,60 @@ export default function HomeScreen() {
             ));
         });
 
+        // Listen for order status updates to refresh product data (soldCount)
+        const orderUpdateSubscription = DeviceEventEmitter.addListener('order_status_updated', async () => {
+            const token = await AsyncStorage.getItem("jwt_token");
+            if (token) {
+                await fetchProducts(token); // Refresh products to get updated soldCount
+            }
+        });
+
         return () => {
-            subscription.remove();
+            followSubscription.remove();
+            orderUpdateSubscription.remove();
         };
     }, []);
 
-    // Refresh top stores when screen is focused, but preserve follow state
+    // Fetch cart count
+    const fetchCartCount = useCallback(async () => {
+        try {
+            const token = await tokenService.getToken();
+            if (!token) {
+                setCartItemCount(0);
+                return;
+            }
+            const response = await cartService.getCart(token);
+            if (response.success) {
+                const totalQuantity = response.data.reduce((sum, item) => sum + item.quantity, 0);
+                setCartItemCount(totalQuantity);
+            }
+        } catch (error) {
+            console.error('Error fetching cart count:', error);
+            setCartItemCount(0);
+        }
+    }, []);
+
+    // Fetch cart count on mount
+    useEffect(() => {
+        fetchCartCount();
+    }, [fetchCartCount]);
+
+    // Refresh data when screen is focused to get updated soldCount
     useFocusEffect(
         React.useCallback(() => {
-            const refreshStores = async () => {
+            const refreshData = async () => {
                 const token = await AsyncStorage.getItem("jwt_token");
                 if (token) {
-                    await fetchTopStores(token, true); // Preserve follow state when refreshing
+                    // Refresh both products (to get updated soldCount) and stores
+                    await Promise.all([
+                        fetchProducts(token), // Refresh products to get updated soldCount
+                        fetchTopStores(token, true) // Preserve follow state when refreshing
+                    ]);
                 }
             };
-            refreshStores();
-        }, [])
+            refreshData();
+            fetchCartCount(); // Refresh cart count when screen is focused
+        }, [fetchCartCount])
     );
 
     // 🔹 Render danh mục cha
@@ -236,7 +276,14 @@ export default function HomeScreen() {
         <TouchableOpacity
             style={homeStyles.categoryItem}
             onPress={() =>
-                router.push(`/categories`)
+                router.push({
+                    pathname: '/child-categories' as any,
+                    params: {
+                        parentId: item.id.toString(),
+                        parentName: item.name,
+                        parentImage: item.image || ''
+                    }
+                })
             }
         >
             <View style={homeStyles.categoryIconContainer}>
@@ -270,7 +317,7 @@ export default function HomeScreen() {
                 ? { uri: item.store?.avatarUrl || item.store?.user?.avatarUrl }
                 : require("../../assets/images/shop.jpg"),
             sold: item.soldCount || 0,
-            rating: item.rating || 5,
+            rating: item.avgRating || 5,
             discount: item.oldPrice
                 ? `-${Math.round((item.oldPrice - item.price) / item.oldPrice * 100)}%`
                 : "",
@@ -363,6 +410,13 @@ export default function HomeScreen() {
                         onPress={() => router.push('/cart')}
                     >
                         <MaterialCommunityIcons name="cart" color="#FBBC05" size={28} />
+                        {cartItemCount > 0 && (
+                            <View style={homeStyles.cartBadge}>
+                                <Text style={homeStyles.cartBadgeText}>
+                                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                                </Text>
+                            </View>
+                        )}
                     </TouchableOpacity>
                 </View>
 

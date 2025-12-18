@@ -1,7 +1,10 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
+    Alert,
     Modal,
     ScrollView,
     Text,
@@ -9,18 +12,19 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { addressService } from "../../../services/addressService";
 import { styles } from "./editAddressStyle";
 
 export default function EditAddressScreen() {
     const router = useRouter();
-    const [name, setName] = useState("Nguyễn Thu Phương");
-    const [phone, setPhone] = useState("(+84) 389 144 068");
-    const [province, setProvince] = useState(
-        "Bình Dương\nThành phố Dĩ An\nPhường Đông Hòa"
-    );
-    const [street, setStreet] = useState("Kí túc xá Khu A, Đường số 6");
+    const params = useLocalSearchParams();
+    const addressId = params.addressId as string;
 
-    // dropdown loại địa chỉ
+    const [loading, setLoading] = useState(true);
+    const [name, setName] = useState("");
+    const [phone, setPhone] = useState("");
+    const [province, setProvince] = useState("");
+    const [street, setStreet] = useState("");
     const [type, setType] = useState("Nhà riêng");
     const [showDropdown, setShowDropdown] = useState(false);
     const addressTypes = ["Nhà riêng", "Văn phòng"];
@@ -28,6 +32,112 @@ export default function EditAddressScreen() {
     // popup state
     const [showDelete, setShowDelete] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    // Load địa chỉ từ API
+    useEffect(() => {
+        const loadAddress = async () => {
+            if (!addressId) {
+                Alert.alert('Lỗi', 'Không tìm thấy địa chỉ');
+                router.back();
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const token = await AsyncStorage.getItem('jwt_token');
+                if (!token) {
+                    Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                    router.back();
+                    return;
+                }
+
+                const response = await addressService.getUserAddresses(token);
+                const address = response.data.find(addr => addr.id === addressId);
+
+                if (!address) {
+                    Alert.alert('Lỗi', 'Không tìm thấy địa chỉ');
+                    router.back();
+                    return;
+                }
+
+                setName(address.name);
+                setPhone(address.phoneNumber);
+                setProvince(address.province);
+                setStreet(address.street);
+                setType(address.type);
+            } catch (error: any) {
+                console.error('Error loading address:', error);
+                Alert.alert('Lỗi', error.message || 'Không thể tải địa chỉ');
+                router.back();
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadAddress();
+    }, [addressId, router]);
+
+    const handleSave = async () => {
+        if (!name.trim() || !phone.trim() || !province.trim() || !street.trim()) {
+            Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin');
+            return;
+        }
+
+        try {
+            setSaving(true);
+            const token = await AsyncStorage.getItem('jwt_token');
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                return;
+            }
+
+            await addressService.updateAddress(addressId, {
+                name: name.trim(),
+                phoneNumber: phone.trim(),
+                province: province.trim(),
+                street: street.trim(),
+                type: type,
+            }, token);
+
+            setShowSuccess(true);
+        } catch (error: any) {
+            console.error('Error updating address:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể cập nhật địa chỉ');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        try {
+            setDeleting(true);
+            const token = await AsyncStorage.getItem('jwt_token');
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập lại');
+                return;
+            }
+
+            await addressService.deleteAddress(addressId, token);
+            setShowDelete(false);
+            router.back();
+        } catch (error: any) {
+            console.error('Error deleting address:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể xóa địa chỉ');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color="#FBBC05" />
+                <Text style={{ marginTop: 10, color: '#666' }}>Đang tải địa chỉ...</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -108,14 +218,20 @@ export default function EditAddressScreen() {
                 <TouchableOpacity
                     style={styles.deleteBtn}
                     onPress={() => setShowDelete(true)}
+                    disabled={deleting}
                 >
                     <Text style={styles.deleteText}>Xóa địa chỉ</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    style={styles.saveBtn}
-                    onPress={() => setShowSuccess(true)}
+                    style={[styles.saveBtn, saving && { opacity: 0.7 }]}
+                    onPress={handleSave}
+                    disabled={saving}
                 >
-                    <Text style={styles.saveText}>Hoàn thành</Text>
+                    {saving ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                        <Text style={styles.saveText}>Hoàn thành</Text>
+                    )}
                 </TouchableOpacity>
             </View>
 
@@ -123,9 +239,9 @@ export default function EditAddressScreen() {
             <Modal transparent visible={showDelete} animationType="fade">
                 <View style={styles.overlay}>
                     <View style={styles.alertCard}>
-                        <View style={[styles.alertHeader, { backgroundColor: "#F44336" }]}>
+                        <View style={[styles.alertHeader, { backgroundColor: "#AF0000" }]}>
                             <View style={styles.iconCircle}>
-                                <MaterialIcons name="error-outline" size={28} color="#F44336" />
+                                <MaterialIcons name="error-outline" size={28} color="#AF0000" />
                             </View>
                             <Text style={styles.alertHeaderText}>
                                 Bạn có chắc chắn muốn xóa địa chỉ này?
@@ -134,18 +250,21 @@ export default function EditAddressScreen() {
 
                         <View style={styles.alertBody}>
                             <TouchableOpacity
-                                style={[styles.alertPrimaryBtn, { backgroundColor: "#F44336" }]}
-                                onPress={() => {
-                                    setShowDelete(false);
-                                    router.back();
-                                }}
+                                style={[styles.alertPrimaryBtn, { backgroundColor: "#AF0000" }]}
+                                onPress={handleDelete}
+                                disabled={deleting}
                             >
-                                <Text style={styles.alertPrimaryBtnText}>Xóa</Text>
+                                {deleting ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Text style={styles.alertPrimaryBtnText}>Xóa</Text>
+                                )}
                             </TouchableOpacity>
 
                             <TouchableOpacity
                                 style={styles.alertSecondaryBtn}
                                 onPress={() => setShowDelete(false)}
+                                disabled={deleting}
                             >
                                 <Text style={styles.alertSecondaryBtnText}>Hủy</Text>
                             </TouchableOpacity>
@@ -158,9 +277,9 @@ export default function EditAddressScreen() {
             <Modal transparent visible={showSuccess} animationType="fade">
                 <View style={styles.overlay}>
                     <View style={styles.alertCard}>
-                        <View style={[styles.alertHeader, { backgroundColor: "#FBBC05" }]}>
+                        <View style={[styles.alertHeader, { backgroundColor: "#229B00" }]}>
                             <View style={styles.iconCircle}>
-                                <MaterialIcons name="check" size={28} color="#FBBC05" />
+                                <MaterialIcons name="check" size={28} color="#229B00" />
                             </View>
                             <Text style={styles.alertHeaderText}>
                                 Sửa địa chỉ thành công!
@@ -169,13 +288,13 @@ export default function EditAddressScreen() {
 
                         <View style={styles.alertBody}>
                             <TouchableOpacity
-                                style={[styles.alertPrimaryBtn, { backgroundColor: "#FBBC05" }]}
+                                style={[styles.alertPrimaryBtn, { backgroundColor: "#229B00" }]}
                                 onPress={() => {
                                     setShowSuccess(false);
-                                    router.push("/");
+                                    router.back();
                                 }}
                             >
-                                <Text style={styles.alertPrimaryBtnText}>Tiếp tục mua sắm</Text>
+                                <Text style={styles.alertPrimaryBtnText}>Đóng</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

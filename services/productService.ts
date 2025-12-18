@@ -46,6 +46,7 @@ export interface Product {
     status: string;
     featured: boolean;
     quantity: number;
+    soldCount?: number;
     tag?: string;
     avgRating: number;
     totalReviews: number;
@@ -61,11 +62,13 @@ export interface StoreDetail {
     id: string;
     userId: string;
     storeName: string;
-    avatarUrl?: string;
     rating: number | string;
     totalProducts: number;
     totalReviews: number;
     followersCount: number;
+    user?: {
+        avatarUrl?: string;
+    };
 }
 
 export interface ProductDetail {
@@ -80,6 +83,7 @@ export interface ProductDetail {
     status: string;
     featured: boolean;
     quantity: number;
+    soldCount?: number;
     tag?: string;
     avgRating: number;
     totalReviews: number;

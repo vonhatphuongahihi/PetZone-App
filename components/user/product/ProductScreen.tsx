@@ -2,11 +2,12 @@ import ReviewItem from "@/app/review-item";
 import { userInfoService } from "@/services/userInfoService";
 import { FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Animated,
     Dimensions,
     FlatList,
     Image,
@@ -18,6 +19,7 @@ import {
     View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { cartService } from '../../../services/cartService';
 import { Product, ProductDetail, productService } from '../../../services/productService';
 import { Review, reviewService } from '../../../services/reviewService';
 import { tokenService } from '../../../services/tokenService';
@@ -43,7 +45,9 @@ export default function ProductScreen() {
     const [loadingReviews, setLoadingReviews] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
-
+    const [cartItemCount, setCartItemCount] = useState(0);
+    const cartCountScale = useRef(new Animated.Value(1)).current;
+    const cartCountOpacity = useRef(new Animated.Value(1)).current;
 
     // Review form state (khi có orderId và rating từ params)
     const [userRating, setUserRating] = useState<number>(0);
@@ -62,7 +66,7 @@ export default function ProductScreen() {
             }
 
             // Fetch current user avatar
-             const userResponse = await userInfoService.getUserInfo(token);
+            const userResponse = await userInfoService.getUserInfo(token);
             setAvatarUrl(userResponse.user.avatarUrl || null);
             setUserRole(userResponse.user.role || null);
 
@@ -178,7 +182,7 @@ export default function ProductScreen() {
         }
     }, [productId, fetchProduct]);
 
-    
+
     const fetchReviews = useCallback(async () => {
         if (!productId) return;
 
@@ -201,6 +205,36 @@ export default function ProductScreen() {
             fetchReviews();
         }
     }, [product, fetchOtherProducts, fetchReviews]);
+
+    // Fetch cart count
+    const fetchCartCount = useCallback(async () => {
+        try {
+            const token = await tokenService.getToken();
+            if (!token) {
+                setCartItemCount(0);
+                return;
+            }
+            const response = await cartService.getCart(token);
+            if (response.success) {
+                const totalQuantity = response.data.reduce((sum, item) => sum + item.quantity, 0);
+                setCartItemCount(totalQuantity);
+            }
+        } catch (error) {
+            console.error('Error fetching cart count:', error);
+            setCartItemCount(0);
+        }
+    }, []);
+
+    // Fetch cart count on mount and when screen is focused
+    useEffect(() => {
+        fetchCartCount();
+    }, [fetchCartCount]);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchCartCount();
+        }, [fetchCartCount])
+    );
 
     // Set initial rating nếu có từ params
     useEffect(() => {
@@ -289,6 +323,35 @@ export default function ProductScreen() {
             const result = await cartService.addToCart(token, Number(product.id), finalQuantity);
 
             console.log('Add to cart result:', result);
+
+            // Cập nhật số lượng cart và tạo hiệu ứng
+            await fetchCartCount();
+
+            // Animation: scale up và fade
+            Animated.sequence([
+                Animated.parallel([
+                    Animated.spring(cartCountScale, {
+                        toValue: 1.5,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(cartCountOpacity, {
+                        toValue: 0.5,
+                        duration: 150,
+                        useNativeDriver: true,
+                    }),
+                ]),
+                Animated.parallel([
+                    Animated.spring(cartCountScale, {
+                        toValue: 1,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(cartCountOpacity, {
+                        toValue: 1,
+                        duration: 150,
+                        useNativeDriver: true,
+                    }),
+                ]),
+            ]).start();
 
             // Hiển thị modal thành công
             setSuccessMessage(`Đã thêm ${finalQuantity} sản phẩm vào giỏ hàng!`);
@@ -437,8 +500,10 @@ export default function ProductScreen() {
                     id: item.id.toString(),
                     name: item.title,
                     shop: item.store?.storeName || item.storeId,
-                    shopImage: item.store?.avatarUrl ? { uri: item.store.avatarUrl } : require("../../../assets/images/shop.jpg"),
-                    sold: Math.floor(Math.random() * 1000), // Tính toán từ dữ liệu bán hàng thực tế, sẽ hiển thị chính xác sau
+                    shopImage: item.store?.avatarUrl || (item.store as any)?.user?.avatarUrl
+                        ? { uri: item.store?.avatarUrl || (item.store as any)?.user?.avatarUrl }
+                        : require("../../../assets/images/shop.jpg"),
+                    sold: item.soldCount || 0,
                     category: item.category?.name || 'Không có danh mục',
                     rating: Number(item.avgRating) || 0,
                     image: item.images?.[0]?.url ? { uri: item.images[0].url } : require("../../../assets/images/cat.png"),
@@ -501,8 +566,24 @@ export default function ProductScreen() {
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
+                    <Text style={productStyles.headerTitle}>Chi tiết sản phẩm</Text>
                     <TouchableOpacity onPress={() => router.push('/cart')} style={productStyles.cartButton}>
                         <MaterialIcons name="shopping-cart" size={28} color="#FBBC05" />
+                        {cartItemCount > 0 && (
+                            <Animated.View
+                                style={[
+                                    productStyles.cartBadge,
+                                    {
+                                        transform: [{ scale: cartCountScale }],
+                                        opacity: cartCountOpacity,
+                                    },
+                                ]}
+                            >
+                                <Text style={productStyles.cartBadgeText}>
+                                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                                </Text>
+                            </Animated.View>
+                        )}
                     </TouchableOpacity>
                 </View>
 
@@ -590,7 +671,9 @@ export default function ProductScreen() {
                         <View style={productStyles.storeContainer}>
                             <View style={productStyles.storeHeader}>
                                 <Image
-                                    source={product.store?.avatarUrl ? { uri: product.store.avatarUrl } : require("../../../assets/images/shop.jpg")}
+                                    source={product.store?.avatarUrl || (product.store as any)?.user?.avatarUrl
+                                        ? { uri: product.store?.avatarUrl || (product.store as any)?.user?.avatarUrl }
+                                        : require("../../../assets/images/shop.jpg")}
                                     style={productStyles.storeAvatar}
                                 />
                                 <Text style={productStyles.storeName}>{product.store?.storeName || product.storeId}</Text>
@@ -620,7 +703,7 @@ export default function ProductScreen() {
 
                             <View style={productStyles.storeInfo}>
                                 <View style={productStyles.storeStats}>
-                                    <Text style={productStyles.storeStatText}>{product.store?.rating || 0}</Text>
+                                    <Text style={productStyles.storeStatText}>{product.store?.totalReviews || 0}</Text>
                                     <Text style={productStyles.storeStatTextLabel}>Đánh giá</Text>
                                 </View>
                                 <View style={productStyles.storeStats}>
