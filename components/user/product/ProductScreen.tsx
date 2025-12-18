@@ -372,8 +372,17 @@ export default function ProductScreen() {
 
     const handleBuyNow = () => {
         const finalQuantity = quantity || 1;
-        Alert.alert('Thông báo', `Mua ngay ${finalQuantity} sản phẩm`);
+
+        router.push({
+            pathname: '/payment',
+            params: {
+                productId,
+                quantity: finalQuantity,
+                type: 'buy_now',
+            },
+        });
     };
+
 
     const renderImagePagination = () => {
         if (!product?.images || product.images.length <= 1) return null;
