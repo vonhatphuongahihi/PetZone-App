@@ -4,22 +4,22 @@ import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  Image,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    Image,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { styles } from "../../components/shop-add-product/addProductStyle";
 
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.11.1.141:3001/api';
+const API_BASE_URL = 'http://10.0.176.156:3001/api';
 
 interface Category {
   id: number;
