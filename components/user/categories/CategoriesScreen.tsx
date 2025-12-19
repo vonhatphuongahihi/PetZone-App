@@ -57,7 +57,7 @@ export default function CategoriesScreen() {
     return (
         <SafeAreaView style={categoriesStyles.container}>
             {/* Tiêu đề */}
-            <Text style={categoriesStyles.header}>Danh mục sản phẩm</Text>
+            <Text style={categoriesStyles.headerTitle}>Danh mục sản phẩm</Text>
 
             {/* Hiển thị Category cha và Category con */}
             <FlatList
