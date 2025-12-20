@@ -248,9 +248,19 @@ export const reviewController = {
                 }
             });
 
+            const formattedReviews = reviews.map(review => {
+                const { seller_reply, reply_at, ...rest } = review;
+                return {
+                    ...rest,
+                    sellerReply: seller_reply,
+                    replyAt: reply_at,
+                    images: review.images || []
+                };
+            });
+
             res.json({
                 success: true,
-                data: reviews
+                data: formattedReviews
             });
         } catch (error: any) {
             console.error('Get product reviews error:', error);
@@ -289,9 +299,28 @@ export const reviewController = {
                     seller_reply: reply,
                     reply_at: new Date(),
                 },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            username: true,
+                            avatarUrl: true
+                        }
+                    }
+                }
             });
 
-            res.json({ success: true, data: updatedReview });
+            // Format response để match với frontend (camelCase)
+            // Loại bỏ các field snake_case và chỉ giữ camelCase
+            const { seller_reply, reply_at, ...rest } = updatedReview;
+            const formattedReview = {
+                ...rest,
+                sellerReply: seller_reply,
+                replyAt: reply_at,
+                images: updatedReview.images || []
+            };
+
+            res.json({ success: true, data: formattedReview });
         } catch (error) {
             console.error(error);
             res.status(500).json({ success: false, message: 'Lỗi khi trả lời review' });
