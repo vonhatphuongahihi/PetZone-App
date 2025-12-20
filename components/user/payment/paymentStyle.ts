@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
 
     // Footer
     footer: {
-        position: "absolute",
+        position: "relative",
         bottom: 0,
         left: 0,
         right: 0,

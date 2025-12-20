@@ -5,13 +5,16 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Animated
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { supportService } from "../../services/supportService";
 
 export default function SupportScreen() {
@@ -20,6 +23,8 @@ export default function SupportScreen() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
 
   const handleSubmit = async () => {
     // Validate form
@@ -48,22 +53,8 @@ export default function SupportScreen() {
 
       const result = await supportService.submitSupport(supportData);
       
-      Alert.alert(
-        'Thành công', 
-        result.message || 'Đã gửi thông tin trợ giúp. Chúng tôi sẽ phản hồi qua email trong vòng 24h.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              setName("");
-              setEmail("");
-              setSubject("");
-              setMessage("");
-              router.back();
-            }
-          }
-        ]
-      );
+      // Show custom success modal
+      showSuccessPopup();
     } catch (error: any) {
       Alert.alert('Lỗi', error.message || 'Không thể gửi thông tin. Vui lòng thử lại.');
     } finally {
@@ -71,8 +62,33 @@ export default function SupportScreen() {
     }
   };
 
+  const showSuccessPopup = () => {
+    setShowSuccessModal(true);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const hideSuccessPopup = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowSuccessModal(false);
+      // Reset form and go back
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+      router.back();
+    });
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* 2. Thêm dòng này để ẩn Header mặc định của Expo Router */}
       <Stack.Screen options={{ headerShown: false }} />
 
@@ -167,7 +183,30 @@ export default function SupportScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="none"
+        onRequestClose={hideSuccessPopup}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View style={[styles.modalContainer, { opacity: fadeAnim }]}>
+            <View style={styles.successIcon}>
+              <MaterialIcons name="check-circle" size={60} color="#4CAF50" />
+            </View>
+            <Text style={styles.successTitle}>Gửi thành công!</Text>
+            <Text style={styles.successMessage}>
+              Đã gửi thông tin trợ giúp. Chúng tôi sẽ phản hồi qua email trong vòng 24 giờ làm việc.
+            </Text>
+            <TouchableOpacity style={styles.successButton} onPress={hideSuccessPopup}>
+              <Text style={styles.successButtonText}>Đóng</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
@@ -271,5 +310,60 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // Success Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 30,
+    alignItems: 'center',
+    maxWidth: 320,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 16,
+  },
+  successIcon: {
+    marginBottom: 20,
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  successMessage: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 25,
+  },
+  successButton: {
+    backgroundColor: '#FBBC05',
+    paddingHorizontal: 40,
+    paddingVertical: 12,
+    borderRadius: 25,
+    minWidth: 120,
+  },
+  successButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
