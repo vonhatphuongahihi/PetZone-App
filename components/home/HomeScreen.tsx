@@ -15,10 +15,12 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useOrderNotificationModal } from "../../hooks/useOrderNotificationModal";
 import { useOrderNotifications } from "../../hooks/useOrderNotifications";
 import { cartService } from "../../services/cartService";
 import { storeService } from "../../services/storeService";
 import { tokenService } from "../../services/tokenService";
+import { OrderNotificationModal } from "../user/notifications/OrderNotificationModal";
 import { ProductCard } from "../user/product-card/ProductCard";
 import SearchBarWithPopup from "../user/search-bar-with-popup/SearchBarWithPopup";
 import { homeStyles } from './homeStyles';
@@ -48,6 +50,7 @@ export default function HomeScreen() {
     const [loading, setLoading] = useState(true);
     const [cartItemCount, setCartItemCount] = useState(0);
     const { unreadCount: notificationCount } = useOrderNotifications();
+    const { modalVisible, modalData, handleClose, handleViewOrder } = useOrderNotificationModal();
 
     const { refresh } = useLocalSearchParams();
 
@@ -397,7 +400,17 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={homeStyles.container}>
-
+            {modalVisible && modalData && (
+                <OrderNotificationModal
+                    visible={modalVisible}
+                    title={modalData.title}
+                    message={modalData.message}
+                    orderNumber={modalData.orderNumber}
+                    total={modalData.total}
+                    onClose={handleClose}
+                    onViewOrder={handleViewOrder}
+                />
+            )}
             <ScrollView showsVerticalScrollIndicator={false} >
                 <View style={homeStyles.fixedHeader}>
                     <View style={homeStyles.searchBarContainer}>

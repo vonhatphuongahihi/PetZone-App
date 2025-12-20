@@ -10,7 +10,9 @@ export type SocketEventType =
   | 'conversation:stop_typing'
   | 'order:new'
   | 'order:created'
-  | 'order:status_changed';
+  | 'order:status_changed'
+  | 'order:delivered'
+  | 'order:cancelled';
 
 export interface SocketEventData {
   user_online: { userId: string };
@@ -72,6 +74,21 @@ export interface SocketEventData {
     statusMessage: string;
     total: number;
     updatedAt: string;
+  };
+  'order:delivered': {
+    orderId: string;
+    orderNumber: string;
+    customerName: string;
+    customerEmail: string;
+    total: number;
+    deliveredAt: string;
+  };
+  'order:cancelled': {
+    orderId: string;
+    orderNumber: string;
+    customerName: string;
+    total: number;
+    cancelledAt: string;
   };
 }
 

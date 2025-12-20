@@ -3,28 +3,45 @@ import { StyleSheet } from 'react-native';
 export const notificationStyles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F7FAFC',
+        backgroundColor: '#FFFFFF',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: '#FFF',
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
-        borderBottomColor: '#E2E8F0',
+        borderBottomColor: '#f0f0f0',
+    },
+    backButton: {
+        padding: 4,
+        marginRight: 12,
     },
     headerTitle: {
         fontSize: 18,
-        fontWeight: '700',
-        color: '#1A202C',
+        fontWeight: '600',
+        color: '#000',
         flex: 1,
-        textAlign: 'center',
+    },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginLeft: 'auto',
+    },
+    actionButton: {
+        paddingVertical: 4,
+        paddingHorizontal: 8,
     },
     markAllReadText: {
         fontSize: 14,
         color: '#FBBC05',
+        fontWeight: '600',
+    },
+    clearAllText: {
+        fontSize: 14,
+        color: '#E53935',
         fontWeight: '600',
     },
     listContainer: {

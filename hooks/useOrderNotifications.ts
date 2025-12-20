@@ -53,7 +53,11 @@ export function useOrderNotifications() {
 
                     const title = data.newStatus === 'cancelled'
                         ? 'Đơn hàng đã bị hủy'
-                        : `Đơn hàng ${data.statusMessage}`;
+                        : data.newStatus === 'confirmed'
+                            ? 'Đơn hàng đã được xác nhận!'
+                            : data.newStatus === 'shipped'
+                                ? 'Đơn hàng đã được giao!'
+                                : `Đơn hàng ${data.statusMessage}`;
 
                     await notificationService.addNotification({
                         type: 'order',
@@ -67,13 +71,28 @@ export function useOrderNotifications() {
                     });
                     await loadUnreadCount();
 
-                    // Show alert for important status changes
-                    if (data.newStatus === 'shipped' || data.newStatus === 'cancelled') {
-                        Alert.alert(
-                            title,
-                            `Đơn hàng ${data.orderNumber} ${data.statusMessage}`,
-                            [{ text: 'OK' }]
-                        );
+                    // Show toast notification for shipped orders (sliding from top)
+                    if (data.newStatus === 'shipped') {
+                        const { DeviceEventEmitter } = await import('react-native');
+                        // Shorten order number (e.g., "ORD-1234567890-1234" -> "ORD-...1234")
+                        const shortOrderNumber = data.orderNumber?.length > 12
+                            ? `${data.orderNumber.substring(0, 4)}...${data.orderNumber.slice(-4)}`
+                            : data.orderNumber;
+                        DeviceEventEmitter.emit('show_toast_notification', {
+                            title: 'Đơn hàng đã được giao!',
+                            message: `Đơn ${shortOrderNumber} đã được giao thành công`
+                        });
+                    }
+                    // Show modal for confirmed and cancelled orders
+                    else if (data.newStatus === 'confirmed' || data.newStatus === 'cancelled') {
+                        const { DeviceEventEmitter } = await import('react-native');
+                        DeviceEventEmitter.emit('show_order_notification', {
+                            title: title,
+                            message: `Đơn hàng ${data.orderNumber} từ ${data.storeName} ${data.statusMessage}`,
+                            orderNumber: data.orderNumber,
+                            total: data.total,
+                            isSeller: false
+                        });
                     }
                 } catch (error) {
                     console.error('Error adding order status changed notification:', error);

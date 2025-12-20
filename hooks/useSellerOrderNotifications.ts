@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
 import { notificationService } from '../services/notificationService';
 import { getSocket } from '../services/socket';
 import { SocketEventEmitter } from '../services/socketEventEmitter';
@@ -16,12 +15,24 @@ export function useSellerOrderNotifications() {
         loadUnreadCount();
 
         // Ensure socket is connected
-        getSocket();
+        const initSocket = async () => {
+            try {
+                const socket = await getSocket();
+                console.log('[useSellerOrderNotifications] Socket initialized:', socket.connected);
+                if (socket.connected) {
+                    console.log('[useSellerOrderNotifications] Socket ID:', socket.id);
+                }
+            } catch (error) {
+                console.error('[useSellerOrderNotifications] Error initializing socket:', error);
+            }
+        };
+        initSocket();
 
         // Listen for order:new (seller notification)
         const orderNewSubscription = SocketEventEmitter.addListener(
             'order:new',
             async (data: any) => {
+                console.log('[useSellerOrderNotifications] Received order:new event:', data);
                 try {
                     await notificationService.addNotification({
                         type: 'order',
@@ -35,14 +46,50 @@ export function useSellerOrderNotifications() {
                     });
                     await loadUnreadCount();
 
-                    // Show alert for new order
-                    Alert.alert(
-                        'Đơn hàng mới!',
-                        `Bạn có đơn hàng mới từ ${data.customerName}. Mã đơn: ${data.orderNumber}`,
-                        [{ text: 'Xem ngay' }, { text: 'Đóng' }]
-                    );
+                    // Show beautiful modal for new order
+                    const { DeviceEventEmitter } = await import('react-native');
+                    DeviceEventEmitter.emit('show_order_notification', {
+                        title: 'Đơn hàng mới!',
+                        message: `Bạn có đơn hàng mới từ ${data.customerName}`,
+                        orderNumber: data.orderNumber,
+                        total: data.total,
+                        isSeller: true
+                    });
                 } catch (error) {
                     console.error('Error adding new order notification:', error);
+                }
+            }
+        );
+
+        // Listen for order:delivered (seller notification when customer confirms received)
+        const orderDeliveredSubscription = SocketEventEmitter.addListener(
+            'order:delivered',
+            async (data: any) => {
+                console.log('[useSellerOrderNotifications] Received order:delivered event:', data);
+                try {
+                    await notificationService.addNotification({
+                        type: 'order',
+                        title: 'Khách hàng đã nhận hàng!',
+                        message: `Đơn hàng ${data.orderNumber} từ ${data.customerName} đã được khách hàng xác nhận đã nhận. Tổng tiền: ${(data.total || 0).toLocaleString('vi-VN')}đ`,
+                        data: {
+                            orderId: data.orderId,
+                            orderNumber: data.orderNumber,
+                            status: 'shipped'
+                        }
+                    });
+                    await loadUnreadCount();
+
+                    // Show beautiful modal for delivered order
+                    const { DeviceEventEmitter } = await import('react-native');
+                    DeviceEventEmitter.emit('show_order_notification', {
+                        title: 'Khách hàng đã nhận hàng!',
+                        message: `Đơn hàng ${data.orderNumber} từ ${data.customerName} đã được khách hàng xác nhận đã nhận`,
+                        orderNumber: data.orderNumber,
+                        total: data.total,
+                        isSeller: true
+                    });
+                } catch (error) {
+                    console.error('Error adding order delivered notification:', error);
                 }
             }
         );
@@ -80,6 +127,7 @@ export function useSellerOrderNotifications() {
 
         return () => {
             orderNewSubscription.remove();
+            orderDeliveredSubscription.remove();
             orderStatusChangedSubscription.remove();
             clearInterval(interval);
         };

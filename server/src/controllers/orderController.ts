@@ -172,8 +172,14 @@ export const orderController = {
                             const storeOwnerSockets = Array.from(io.sockets.sockets.values())
                                 .filter(s => s.data.userId === store.userId);
 
+                            console.log(`📦 [Socket] Found ${storeOwnerSockets.length} sockets for store owner ${store.userId}`);
+
+                            if (storeOwnerSockets.length === 0) {
+                                console.log(`⚠️ [Socket] No active sockets found for store owner ${store.userId}. Seller may not be connected.`);
+                            }
+
                             storeOwnerSockets.forEach(socket => {
-                                socket.emit('order:new', {
+                                const notificationData = {
                                     orderId: order.id,
                                     orderNumber: order.orderNumber,
                                     storeId: order.storeId,
@@ -181,7 +187,9 @@ export const orderController = {
                                     total: order.total,
                                     status: order.status,
                                     createdAt: order.createdAt
-                                });
+                                };
+                                console.log(`📦 [Socket] Emitting order:new to socket ${socket.id}:`, notificationData);
+                                socket.emit('order:new', notificationData);
                             });
 
                             console.log(`📦 [Socket] New order notification sent to store owner ${store.userId} for order ${order.id}`);
@@ -533,13 +541,18 @@ export const orderController = {
                 console.log('Successfully updated soldCount for all products in order');
             }
 
-            // Emit socket notification cho customer khi trạng thái đơn hàng thay đổi
+            // Emit socket notification cho customer và seller khi trạng thái đơn hàng thay đổi
             try {
                 const { getSocketInstance } = await import('../index');
                 const io = getSocketInstance();
 
                 // Lấy thông tin store để gửi notification
                 const store = updatedOrder.store;
+                const storeUserId = (store as any)?.userId;
+
+                // Kiểm tra xem người update là customer hay seller
+                const isCustomerUpdate = userId === updatedOrder.userId;
+                const isSellerUpdate = userId === storeUserId;
 
                 // Map status sang tiếng Việt
                 const statusMessages: { [key: string]: string } = {
@@ -549,7 +562,7 @@ export const orderController = {
                     'cancelled': 'đã bị hủy'
                 };
 
-                // Gửi notification cho customer
+                // Gửi notification cho customer (khi seller update hoặc customer update)
                 const customerSockets = Array.from(io.sockets.sockets.values())
                     .filter(s => s.data.userId === updatedOrder.userId);
 
@@ -567,6 +580,39 @@ export const orderController = {
                 });
 
                 console.log(`📦 [Socket] Order status change notification sent to customer ${updatedOrder.userId} for order ${updatedOrder.id}`);
+
+                // Gửi notification cho seller khi customer xác nhận đã nhận hàng (shipped)
+                if (isCustomerUpdate && status === 'shipped' && storeUserId) {
+                    // Lấy thông tin customer
+                    const customer = await prisma.user.findUnique({
+                        where: { id: updatedOrder.userId },
+                        select: { username: true, email: true }
+                    });
+
+                    const sellerSockets = Array.from(io.sockets.sockets.values())
+                        .filter(s => s.data.userId === storeUserId);
+
+                    console.log(`📦 [Socket] Found ${sellerSockets.length} sockets for seller ${storeUserId} when order delivered`);
+
+                    if (sellerSockets.length === 0) {
+                        console.log(`⚠️ [Socket] No active sockets found for seller ${storeUserId}. Seller may not be connected.`);
+                    }
+
+                    sellerSockets.forEach(socket => {
+                        const notificationData = {
+                            orderId: updatedOrder.id,
+                            orderNumber: updatedOrder.orderNumber,
+                            customerName: customer?.username || 'Khách hàng',
+                            customerEmail: customer?.email || '',
+                            total: updatedOrder.total,
+                            deliveredAt: updatedOrder.shippedAt || updatedOrder.updatedAt
+                        };
+                        console.log(`📦 [Socket] Emitting order:delivered to socket ${socket.id}:`, notificationData);
+                        socket.emit('order:delivered', notificationData);
+                    });
+
+                    console.log(`📦 [Socket] Order delivered notification sent to seller ${storeUserId} for order ${updatedOrder.id}`);
+                }
             } catch (socketError) {
                 console.error('Error emitting socket notification:', socketError);
                 // Không throw error, chỉ log để không ảnh hưởng đến việc update order

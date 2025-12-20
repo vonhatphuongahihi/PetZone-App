@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -16,7 +17,9 @@ import { SellerBottomNavigation } from './SellerBottomNavigation';
 import { SellerTopNavigation } from './SellerTopNavigation';
 
 export default function OrdersSellerScreen() {
-    const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'confirmed' | 'shipped' | 'cancelled'>('all');
+    const params = useLocalSearchParams<{ filter?: string }>();
+    const initialFilter = (params.filter as 'all' | 'pending' | 'confirmed' | 'shipped' | 'cancelled') || 'all';
+    const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'confirmed' | 'shipped' | 'cancelled'>(initialFilter);
     const [showDropdown, setShowDropdown] = useState(false);
     const [orders, setOrders] = useState<Order[]>([]);
     const [allOrders, setAllOrders] = useState<Order[]>([]);
@@ -27,6 +30,16 @@ export default function OrdersSellerScreen() {
     useEffect(() => {
         loadOrders();
     }, [selectedFilter]);
+
+    // Update filter when params change
+    useEffect(() => {
+        if (params.filter) {
+            const filter = params.filter as 'all' | 'pending' | 'confirmed' | 'shipped' | 'cancelled';
+            if (['all', 'pending', 'confirmed', 'shipped', 'cancelled'].includes(filter)) {
+                setSelectedFilter(filter);
+            }
+        }
+    }, [params.filter]);
 
     const loadOrders = async () => {
         try {

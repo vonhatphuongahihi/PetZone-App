@@ -8,6 +8,8 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getSocket } from '@/services/socket';
+import { ToastNotification } from '@/components/user/notifications/ToastNotification';
+import { useToastNotification } from '@/hooks/useToastNotification';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -15,6 +17,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const { visible: toastVisible, toastData, handleClose: handleCloseToast } = useToastNotification();
   const [fontsLoaded] = useFonts({
     PaytoneOne_400Regular: PaytoneOne_400Regular,
   });
@@ -51,6 +54,14 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      {toastVisible && toastData && (
+        <ToastNotification
+          visible={toastVisible}
+          title={toastData.title}
+          message={toastData.message}
+          onClose={handleCloseToast}
+        />
+      )}
       <Stack initialRouteName="splash">
         <Stack.Screen name="splash" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />

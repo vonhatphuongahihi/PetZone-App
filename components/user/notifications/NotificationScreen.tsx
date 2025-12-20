@@ -54,6 +54,11 @@ export default function NotificationScreen() {
         await loadNotifications();
     };
 
+    const handleClearAll = async () => {
+        await notificationService.clearAll();
+        await loadNotifications();
+    };
+
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -90,9 +95,42 @@ export default function NotificationScreen() {
                 if (!item.read) {
                     handleMarkAsRead(item.id);
                 }
-                // Navigate based on notification type
+                // Navigate based on notification type and content
                 if (item.type === 'order' && item.data?.orderId) {
-                    router.push(`/purchase-history`);
+                    // Check if it's a new order notification (for seller)
+                    if (item.title === 'Đơn hàng mới!' || item.title.includes('đơn hàng mới')) {
+                        // Navigate to seller orders screen with pending filter
+                        router.push({
+                            pathname: '/seller/orders',
+                            params: { filter: 'pending' }
+                        });
+                    }
+                    // Check if it's a confirmed/delivery notification (for user)
+                    else if (item.title.includes('đã được xác nhận') ||
+                        item.title.includes('đang giao') ||
+                        (item.data?.status === 'confirmed' && !item.title.includes('đã nhận hàng'))) {
+                        // Navigate to delivery screen
+                        router.push('/delivery');
+                    }
+                    // Check if it's a delivered notification (for user - shipped)
+                    else if (item.title.includes('đã được giao') ||
+                        (item.data?.status === 'shipped' && !item.title.includes('đã nhận hàng'))) {
+                        // Navigate to purchase history screen
+                        router.push('/purchase-history');
+                    }
+                    // Check if it's a delivered notification (for seller - customer received)
+                    else if (item.title.includes('đã nhận hàng') ||
+                        item.title.includes('Khách hàng đã nhận hàng')) {
+                        // Navigate to seller orders screen with shipped filter
+                        router.push({
+                            pathname: '/seller/orders',
+                            params: { filter: 'shipped' }
+                        });
+                    }
+                    // Default: navigate to seller orders
+                    else {
+                        router.push('/seller/orders');
+                    }
                 } else if (item.type === 'message' && item.data?.conversationId) {
                     router.push(`/messages`);
                 }
@@ -135,11 +173,16 @@ export default function NotificationScreen() {
         return (
             <SafeAreaView style={notificationStyles.container}>
                 <View style={notificationStyles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <MaterialIcons name="arrow-back" size={24} color="#FBBC05" />
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={notificationStyles.backButton}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <MaterialIcons name="arrow-back-ios" size={24} color="#FBBC05" />
                     </TouchableOpacity>
                     <Text style={notificationStyles.headerTitle}>Thông báo</Text>
-                    <View style={{ width: 24 }} />
+                    <View style={{ flex: 1 }} />
                 </View>
                 <View style={[notificationStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                     <ActivityIndicator size="large" color="#FBBC05" />
@@ -151,15 +194,35 @@ export default function NotificationScreen() {
     return (
         <SafeAreaView style={notificationStyles.container}>
             <View style={notificationStyles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <MaterialIcons name="arrow-back" size={24} color="#FBBC05" />
+                <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={notificationStyles.backButton}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                    <MaterialIcons name="arrow-back-ios" size={24} color="#FBBC05" />
                 </TouchableOpacity>
                 <Text style={notificationStyles.headerTitle}>Thông báo</Text>
-                {notifications.some(n => !n.read) && (
-                    <TouchableOpacity onPress={handleMarkAllAsRead}>
-                        <Text style={notificationStyles.markAllReadText}>Đọc tất cả</Text>
-                    </TouchableOpacity>
-                )}
+                <View style={notificationStyles.headerActions}>
+                    {notifications.length > 0 && (
+                        <TouchableOpacity
+                            onPress={handleClearAll}
+                            style={notificationStyles.actionButton}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={notificationStyles.clearAllText}>Xóa tất cả</Text>
+                        </TouchableOpacity>
+                    )}
+                    {notifications.some(n => !n.read) && (
+                        <TouchableOpacity
+                            onPress={handleMarkAllAsRead}
+                            style={notificationStyles.actionButton}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={notificationStyles.markAllReadText}>Đọc tất cả</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
 
             {notifications.length === 0 ? (
