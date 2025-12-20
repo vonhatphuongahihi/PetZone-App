@@ -4,17 +4,17 @@ import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { styles } from "../../components/shop-add-product/addProductStyle";
 
@@ -46,6 +46,7 @@ export default function AddProductScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isCheckingToken, setIsCheckingToken] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
     checkTokenAndFetchCategories();
@@ -192,6 +193,7 @@ export default function AddProductScreen() {
       return;
     }
 
+    setIsAdding(true);
     console.log("storeId đang gửi:", storeId);
     const formData = new FormData();
     formData.append("storeId", storeId as string);
@@ -213,6 +215,7 @@ export default function AddProductScreen() {
         } catch (err) {
           console.error("Lỗi xử lý ảnh web:", err);
           Alert.alert("Lỗi", "Không thể xử lý ảnh trên web.");
+          setIsAdding(false);
           return;
         }
       } else {
@@ -242,6 +245,7 @@ export default function AddProductScreen() {
         const errorText = await res.text();
         console.error("Server error:", errorText);
         Alert.alert("Lỗi server", `Mã lỗi: ${res.status}`);
+        setIsAdding(false);
         return;
       }
 
@@ -251,6 +255,7 @@ export default function AddProductScreen() {
         router.setParams({ refresh: "true" });
       } else {
         Alert.alert("Lỗi", data.message || "Thêm sản phẩm thất bại");
+        setIsAdding(false);
       }
     } catch (err: any) {
       if (err.name === "AbortError") {
@@ -259,6 +264,7 @@ export default function AddProductScreen() {
         console.error("Lỗi kết nối:", err);
         Alert.alert("Lỗi", "Không kết nối được server");
       }
+      setIsAdding(false);
     }
   };
 
@@ -418,8 +424,14 @@ export default function AddProductScreen() {
           ))}
         </ScrollView>
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Thêm sản phẩm</Text>
+        <TouchableOpacity 
+          style={[styles.submitButton, isAdding && { opacity: 0.6, backgroundColor: '#ccc' }]} 
+          onPress={handleSubmit}
+          disabled={isAdding}
+        >
+          <Text style={styles.submitButtonText}>
+            {isAdding ? "Đang thêm sản phẩm..." : "Thêm sản phẩm"}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -432,7 +444,11 @@ export default function AddProductScreen() {
               style={successModalStyles.button}
               onPress={() => {
                 setSuccessModalVisible(false);
-                router.back();
+                setIsAdding(false);
+                router.push({
+                  pathname: '/seller/shop',
+                  params: { refresh: 'true', tab: 'products' }
+                });
               }}
             >
               <Text style={successModalStyles.buttonText}>OK</Text>

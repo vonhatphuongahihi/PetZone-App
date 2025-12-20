@@ -156,7 +156,7 @@ export default function ShopScreen() {
       onPress={() => {
         router.push(`/product?productId=${item.id}`);
       }}
-      style={{ flex: 1, marginHorizontal: 6, marginBottom: 12 }}
+      style={{ width: '47%', marginHorizontal: 6, marginBottom: 12 }}
     >
       <View style={styles.card}>
         {/* Ảnh sản phẩm */}
@@ -441,7 +441,7 @@ export default function ShopScreen() {
           renderItem={renderProductItem}
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
-          columnWrapperStyle={{ justifyContent: "space-between" }}
+          columnWrapperStyle={{ justifyContent: "flex-start" }}
           contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 10 }}
           showsVerticalScrollIndicator={false}
         />
