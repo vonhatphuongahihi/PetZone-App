@@ -5,7 +5,7 @@ import { ProfileIcon } from '@/assets/svg/seller/ProfileIcon';
 import { usePathname, useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { sellerBottomNavStyles } from './sellerBottomNavStyles';
 
 interface NavigationItem {
@@ -45,44 +45,50 @@ const navigationItems: NavigationItem[] = [
 export const SellerBottomNavigation: React.FC = () => {
     const router = useRouter();
     const pathname = usePathname();
+    const insets = useSafeAreaInsets();
 
     const handleNavigation = (route: string) => {
         router.push(route as any);
     };
 
     return (
-        <SafeAreaView edges={['bottom']} style={sellerBottomNavStyles.safeArea}>
-            <View style={sellerBottomNavStyles.container}>
-                {navigationItems.map((item) => {
-                    const routeSegment = item.route.split('/').pop() || '';
-                    const isActive =
-                        pathname === item.route ||
-                        pathname.includes(routeSegment) ||
-                        pathname.includes(`/seller/${routeSegment}`) ||
-                        pathname.includes(`/${routeSegment}`);
-                    const IconComponent = item.icon;
+        <View style={[
+            sellerBottomNavStyles.container,
+            {
+                height: 70 + insets.bottom,
+                paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+                paddingTop: 6,
+            }
+        ]}>
+            {navigationItems.map((item) => {
+                const routeSegment = item.route.split('/').pop() || '';
+                const isActive =
+                    pathname === item.route ||
+                    pathname.includes(routeSegment) ||
+                    pathname.includes(`/seller/${routeSegment}`) ||
+                    pathname.includes(`/${routeSegment}`);
+                const IconComponent = item.icon;
 
-                    return (
-                        <TouchableOpacity
-                            key={item.id}
-                            style={sellerBottomNavStyles.navItem}
-                            onPress={() => handleNavigation(item.route)}
-                            activeOpacity={0.7}
+                return (
+                    <TouchableOpacity
+                        key={item.id}
+                        style={sellerBottomNavStyles.navItem}
+                        onPress={() => handleNavigation(item.route)}
+                        activeOpacity={0.7}
+                    >
+                        <IconComponent color={isActive ? '#FBBC05' : '#7F8C8D'} size={24} />
+                        <Text
+                            style={[
+                                sellerBottomNavStyles.navLabel,
+                                isActive && sellerBottomNavStyles.navLabelActive,
+                            ]}
                         >
-                            <IconComponent color={isActive ? '#FBBC05' : '#7F8C8D'} size={24} />
-                            <Text
-                                style={[
-                                    sellerBottomNavStyles.navLabel,
-                                    isActive && sellerBottomNavStyles.navLabelActive,
-                                ]}
-                            >
-                                {item.label}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </View>
-        </SafeAreaView>
+                            {item.label}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
     );
 
 };
