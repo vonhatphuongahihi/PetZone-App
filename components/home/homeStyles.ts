@@ -169,7 +169,7 @@ export const homeStyles = StyleSheet.create({
         paddingRight: 4,
     },
     productWrapper: {
-        width: 160,
+        width: 180,
         marginRight: 12,
     },
     storesList: {
