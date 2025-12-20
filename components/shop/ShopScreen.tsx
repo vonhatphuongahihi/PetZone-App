@@ -338,13 +338,13 @@ export default function ShopScreen() {
 
         <View style={styles.shopInfo}>
           {/* Hiển thị avatar động từ API */}
-          <Image 
+          <Image
             source={
-              avatarUrl 
-                ? { uri: avatarUrl } 
+              avatarUrl
+                ? { uri: avatarUrl }
                 : require("../../assets/images/cat.png")
-            } 
-            style={styles.avatar} 
+            }
+            style={styles.avatar}
           />
           <View style={styles.shopTextContainer}>
             <Text style={styles.shopName}>{store?.storeName || "phuong-shop"}</Text>
@@ -459,6 +459,7 @@ export default function ShopScreen() {
       {searchVisible && (
         <Pressable style={styles.searchOverlay} onPress={() => setSearchVisible(false)}>
           <Pressable style={styles.searchPopup} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.searchTitle}>Tìm kiếm sản phẩm</Text>
             <TextInput
               style={styles.searchInput}
               placeholder="Tìm sản phẩm..."
