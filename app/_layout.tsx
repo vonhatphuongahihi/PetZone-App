@@ -76,6 +76,7 @@ export default function RootLayout() {
         <Stack.Screen name="purchase-history" options={{ headerShown: false }} />
         <Stack.Screen name="product-rating" options={{ headerShown: false }} />
         <Stack.Screen name="delivery" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ headerShown: false }} />
         <Stack.Screen name="terms-of-use" options={{ headerShown: false }} />
         <Stack.Screen name="privacy-policies" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />

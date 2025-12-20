@@ -78,6 +78,19 @@ export async function getSocket(): Promise<Socket> {
             SocketEventEmitter.emit('conversation:stop_typing', data);
         });
 
+        // Listen for order notifications
+        socket.on('order:new', (data: any) => {
+            SocketEventEmitter.emit('order:new', data);
+        });
+
+        socket.on('order:created', (data: any) => {
+            SocketEventEmitter.emit('order:created', data);
+        });
+
+        socket.on('order:status_changed', (data: any) => {
+            SocketEventEmitter.emit('order:status_changed', data);
+        });
+
         listenersSetup = true;
     }
 
