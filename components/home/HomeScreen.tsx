@@ -15,6 +15,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useOrderNotifications } from "../../hooks/useOrderNotifications";
 import { cartService } from "../../services/cartService";
 import { storeService } from "../../services/storeService";
 import { tokenService } from "../../services/tokenService";
@@ -46,6 +47,7 @@ export default function HomeScreen() {
     const [topStores, setTopStores] = useState<TopStore[]>([]);
     const [loading, setLoading] = useState(true);
     const [cartItemCount, setCartItemCount] = useState(0);
+    const { unreadCount: notificationCount } = useOrderNotifications();
 
     const { refresh } = useLocalSearchParams();
 
@@ -86,7 +88,7 @@ export default function HomeScreen() {
     const fetchCategories = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.20.3.212:3001/api';
+            const API_BASE_URL = 'http://10.10.3.71:3001/api';
             const res = await fetch(`${API_BASE_URL}/categories`, { headers });
 
             if (res.status === 401) {
@@ -109,7 +111,7 @@ export default function HomeScreen() {
     const fetchProducts = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.20.3.212:3001/api';
+            const API_BASE_URL = 'http://10.10.3.71:3001/api';
             const [todayRes, newRes, hotRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/products/today?limit=5`, { headers }), // Chỉ lấy 5 sản phẩm cho HomeScreen
                 fetch(`${API_BASE_URL}/products/new`, { headers }),
@@ -405,19 +407,35 @@ export default function HomeScreen() {
                         />
                     </View>
 
-                    <TouchableOpacity
-                        style={homeStyles.cartButton}
-                        onPress={() => router.push('/cart')}
-                    >
-                        <MaterialCommunityIcons name="cart" color="#FBBC05" size={28} />
-                        {cartItemCount > 0 && (
-                            <View style={homeStyles.cartBadge}>
-                                <Text style={homeStyles.cartBadgeText}>
-                                    {cartItemCount > 99 ? '99+' : cartItemCount}
-                                </Text>
-                            </View>
-                        )}
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        <TouchableOpacity
+                            style={homeStyles.cartButton}
+                            onPress={() => router.push('/notifications')}
+                        >
+                            <MaterialCommunityIcons name="bell" color="#FBBC05" size={28} />
+                            {notificationCount > 0 && (
+                                <View style={homeStyles.cartBadge}>
+                                    <Text style={homeStyles.cartBadgeText}>
+                                        {notificationCount > 99 ? '99+' : notificationCount}
+                                    </Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={homeStyles.cartButton}
+                            onPress={() => router.push('/cart')}
+                        >
+                            <MaterialCommunityIcons name="cart" color="#FBBC05" size={28} />
+                            {cartItemCount > 0 && (
+                                <View style={homeStyles.cartBadge}>
+                                    <Text style={homeStyles.cartBadgeText}>
+                                        {cartItemCount > 99 ? '99+' : cartItemCount}
+                                    </Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Banner */}

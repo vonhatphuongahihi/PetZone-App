@@ -61,7 +61,7 @@ export const orderController = {
                 return acc;
             }, {});
 
-            const createdOrders = [];
+            const createdOrders: any[] = [];
 
             // Create order for each store
             for (const [storeId, storeItems] of Object.entries(itemsByStore)) {
@@ -147,6 +147,70 @@ export const orderController = {
                     }
                 }
             });
+
+            // Emit socket notification cho seller khi có đơn hàng mới
+            try {
+                const { getSocketInstance } = await import('../index');
+                const io = getSocketInstance();
+
+                // Lấy thông tin user để gửi notification
+                const user = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { username: true }
+                });
+
+                // Gửi notification cho mỗi store owner
+                for (const order of createdOrders) {
+                    if (order.storeId) {
+                        const store = await prisma.store.findUnique({
+                            where: { id: order.storeId },
+                            select: { userId: true, storeName: true }
+                        });
+
+                        if (store?.userId) {
+                            // Tìm tất cả sockets của store owner
+                            const storeOwnerSockets = Array.from(io.sockets.sockets.values())
+                                .filter(s => s.data.userId === store.userId);
+
+                            storeOwnerSockets.forEach(socket => {
+                                socket.emit('order:new', {
+                                    orderId: order.id,
+                                    orderNumber: order.orderNumber,
+                                    storeId: order.storeId,
+                                    customerName: user?.username || 'Khách hàng',
+                                    total: order.total,
+                                    status: order.status,
+                                    createdAt: order.createdAt
+                                });
+                            });
+
+                            console.log(`📦 [Socket] New order notification sent to store owner ${store.userId} for order ${order.id}`);
+                        }
+                    }
+                }
+
+                // Gửi notification cho customer (đặt hàng thành công)
+                const customerSockets = Array.from(io.sockets.sockets.values())
+                    .filter(s => s.data.userId === userId);
+
+                customerSockets.forEach(socket => {
+                    socket.emit('order:created', {
+                        orders: createdOrders.map(order => ({
+                            orderId: order.id,
+                            orderNumber: order.orderNumber,
+                            storeName: (order.store as any)?.storeName || 'Cửa hàng',
+                            total: order.total,
+                            status: order.status,
+                            createdAt: order.createdAt
+                        }))
+                    });
+                });
+
+                console.log(`📦 [Socket] Order created notification sent to customer ${userId}`);
+            } catch (socketError) {
+                console.error('Error emitting socket notification:', socketError);
+                // Không throw error, chỉ log để không ảnh hưởng đến việc tạo order
+            }
 
             res.status(201).json({
                 success: true,
@@ -469,6 +533,45 @@ export const orderController = {
                 console.log('Successfully updated soldCount for all products in order');
             }
 
+            // Emit socket notification cho customer khi trạng thái đơn hàng thay đổi
+            try {
+                const { getSocketInstance } = await import('../index');
+                const io = getSocketInstance();
+
+                // Lấy thông tin store để gửi notification
+                const store = updatedOrder.store;
+
+                // Map status sang tiếng Việt
+                const statusMessages: { [key: string]: string } = {
+                    'pending': 'đang chờ xác nhận',
+                    'confirmed': 'đã được xác nhận và đang giao hàng',
+                    'shipped': 'đã được giao hàng',
+                    'cancelled': 'đã bị hủy'
+                };
+
+                // Gửi notification cho customer
+                const customerSockets = Array.from(io.sockets.sockets.values())
+                    .filter(s => s.data.userId === updatedOrder.userId);
+
+                customerSockets.forEach(socket => {
+                    socket.emit('order:status_changed', {
+                        orderId: updatedOrder.id,
+                        orderNumber: updatedOrder.orderNumber,
+                        storeName: (store as any)?.storeName || 'Cửa hàng',
+                        oldStatus: order.status,
+                        newStatus: status,
+                        statusMessage: statusMessages[status] || status,
+                        total: updatedOrder.total,
+                        updatedAt: updatedOrder.updatedAt
+                    });
+                });
+
+                console.log(`📦 [Socket] Order status change notification sent to customer ${updatedOrder.userId} for order ${updatedOrder.id}`);
+            } catch (socketError) {
+                console.error('Error emitting socket notification:', socketError);
+                // Không throw error, chỉ log để không ảnh hưởng đến việc update order
+            }
+
             res.json({
                 success: true,
                 message: 'Order status updated successfully',
@@ -534,6 +637,55 @@ export const orderController = {
                     payments: true
                 }
             });
+
+            // Emit socket notification cho seller khi đơn hàng bị hủy
+            try {
+                const { getSocketInstance } = await import('../index');
+                const io = getSocketInstance();
+
+                const store = updatedOrder.store;
+                if (store?.userId) {
+                    // Gửi notification cho store owner
+                    const storeOwnerSockets = Array.from(io.sockets.sockets.values())
+                        .filter(s => s.data.userId === store.userId);
+
+                    storeOwnerSockets.forEach(socket => {
+                        socket.emit('order:status_changed', {
+                            orderId: updatedOrder.id,
+                            orderNumber: updatedOrder.orderNumber,
+                            storeName: (store as any)?.storeName || 'Cửa hàng',
+                            oldStatus: 'pending',
+                            newStatus: 'cancelled',
+                            statusMessage: 'đã bị hủy bởi khách hàng',
+                            total: updatedOrder.total,
+                            updatedAt: updatedOrder.updatedAt
+                        });
+                    });
+
+                    console.log(`📦 [Socket] Order cancelled notification sent to store owner ${store.userId} for order ${updatedOrder.id}`);
+                }
+
+                // Gửi notification cho customer
+                const customerSockets = Array.from(io.sockets.sockets.values())
+                    .filter(s => s.data.userId === userId);
+
+                customerSockets.forEach(socket => {
+                    socket.emit('order:status_changed', {
+                        orderId: updatedOrder.id,
+                        orderNumber: updatedOrder.orderNumber,
+                        storeName: (store as any)?.storeName || 'Cửa hàng',
+                        oldStatus: 'pending',
+                        newStatus: 'cancelled',
+                        statusMessage: 'đã được hủy thành công',
+                        total: updatedOrder.total,
+                        updatedAt: updatedOrder.updatedAt
+                    });
+                });
+
+                console.log(`📦 [Socket] Order cancelled notification sent to customer ${userId} for order ${updatedOrder.id}`);
+            } catch (socketError) {
+                console.error('Error emitting socket notification:', socketError);
+            }
 
             res.json({
                 success: true,

@@ -2,11 +2,13 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { useSellerOrderNotifications } from '../../hooks/useSellerOrderNotifications';
 import { SocketEventEmitter } from '../../services/socketEventEmitter';
 import { sellerTopNavStyles } from './sellerTopNavStyles';
 
 export const SellerTopNavigation: React.FC = () => {
     const [unreadCount, setUnreadCount] = useState<number>(0);
+    const { unreadCount: orderNotificationCount } = useSellerOrderNotifications();
 
     useEffect(() => {
         // Listen for unread conversation notifications
@@ -46,12 +48,24 @@ export const SellerTopNavigation: React.FC = () => {
 
             {/* Right side - Icons */}
             <View style={sellerTopNavStyles.rightSection}>
-                <TouchableOpacity style={sellerTopNavStyles.iconButton}>
-                    <Image
-                        source={require('@/assets/images/seller-bell-icon.png')}
-                        style={sellerTopNavStyles.iconImage}
-                        contentFit="contain"
-                    />
+                <TouchableOpacity
+                    style={sellerTopNavStyles.iconButton}
+                    onPress={() => router.push('/notifications')}
+                >
+                    <View style={sellerTopNavStyles.messageIconContainer}>
+                        <Image
+                            source={require('@/assets/images/seller-bell-icon.png')}
+                            style={sellerTopNavStyles.iconImage}
+                            contentFit="contain"
+                        />
+                        {orderNotificationCount > 0 && (
+                            <View style={sellerTopNavStyles.badge}>
+                                <Text style={sellerTopNavStyles.badgeText}>
+                                    {orderNotificationCount > 99 ? '99+' : orderNotificationCount}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={sellerTopNavStyles.iconButton} onPress={() => router.push('/seller/messages')}>
                     <View style={sellerTopNavStyles.messageIconContainer}>

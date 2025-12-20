@@ -55,7 +55,7 @@ export default function DeleteConfirmationModal({
                             color: '#666',
                             lineHeight: 22
                         }}>
-                            Bạn có chắc chắn muốn xóa đoạn chat này? Hành động này không thể hoàn tác.
+                            Bạn có chắc chắn muốn xóa đoạn chat này? 
                         </Text>
                     </View>
                     

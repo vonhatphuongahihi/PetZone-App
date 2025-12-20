@@ -393,9 +393,6 @@ export default function ProfileSellerScreen() {
         <Modal visible={showLogoutModal} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setShowLogoutModal(false)}>
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
-                    <View style={styles.logoutIconBg}>
-                        <MaterialIcons name="logout" size={32} color="#E53E3E" />
-                    </View>
                     <Text style={styles.modalTitle}>Đăng xuất</Text>
                     <Text style={styles.modalText}>Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?</Text>
                     <View style={styles.modalActionRow}>
@@ -560,7 +557,7 @@ export default function ProfileSellerScreen() {
                             </>
                         ) : (
                             <TouchableOpacity style={styles.btnLogout} onPress={handleLogout}>
-                                <MaterialIcons name="logout" size={20} color="#E53E3E" style={{ marginRight: 8 }} />
+                                <MaterialIcons name="logout" size={20} color="#ffffff" style={{marginRight: 8}} />
                                 <Text style={styles.btnLogoutText}>Đăng xuất</Text>
                             </TouchableOpacity>
                         )}
@@ -591,7 +588,7 @@ const styles = StyleSheet.create({
     // Header Styling
     headerBackground: {
         height: 160,
-        backgroundColor: '#FFB400',
+        backgroundColor: '#FFE082',
         width: '100%',
         position: 'absolute',
         top: 0,
@@ -606,6 +603,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F7FAFC',
         borderTopLeftRadius: 50,
         borderTopRightRadius: 50,
+        elevation: 4,
     },
     profileHeaderContainer: {
         alignItems: 'center',
@@ -815,19 +813,19 @@ const styles = StyleSheet.create({
     btnLogout: {
         flex: 1,
         flexDirection: 'row',
-        backgroundColor: '#FFF5F5',
+        backgroundColor: '#FFB400',
         borderRadius: 12,
         paddingVertical: 14,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
-        borderColor: '#FED7D7',
+        borderColor: '#FFB400',
         marginTop: 10,
     },
     btnLogoutText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#E53E3E',
+        color: '#ffffff',
     },
 
     // Modal Common Styles
@@ -954,7 +952,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingVertical: 12,
         borderRadius: 10,
-        backgroundColor: '#E53E3E',
+        backgroundColor: '#FFB400',
         alignItems: 'center',
     },
     modalBtnDangerText: {

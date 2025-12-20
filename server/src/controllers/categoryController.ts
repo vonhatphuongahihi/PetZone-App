@@ -15,7 +15,7 @@ const upload = multer({
 
 // CORS Middleware
 const corsOptions = {
-  origin: ['*', 'http://localhost:3001', 'http://10.20.3.212:3001'],
+  origin: ['*', 'http://localhost:3001', 'http://10.10.3.117:3001'],
   methods: ['GET', 'POST', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };

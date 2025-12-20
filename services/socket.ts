@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { SocketEventEmitter } from './socketEventEmitter';
 
 // === IP của backend server ===
-const SERVER_BASE_URL = 'http://10.20.3.212:3001';
+const SERVER_BASE_URL = 'http://10.10.3.117:3001';
 
 let socket: Socket | null = null;
 let listenersSetup = false;
@@ -76,6 +76,19 @@ export async function getSocket(): Promise<Socket> {
 
         socket.on('stop_typing', (data: any) => {
             SocketEventEmitter.emit('conversation:stop_typing', data);
+        });
+
+        // Listen for order notifications
+        socket.on('order:new', (data: any) => {
+            SocketEventEmitter.emit('order:new', data);
+        });
+
+        socket.on('order:created', (data: any) => {
+            SocketEventEmitter.emit('order:created', data);
+        });
+
+        socket.on('order:status_changed', (data: any) => {
+            SocketEventEmitter.emit('order:status_changed', data);
         });
 
         listenersSetup = true;

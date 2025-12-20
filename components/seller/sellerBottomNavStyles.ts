@@ -38,4 +38,7 @@ export const sellerBottomNavStyles = StyleSheet.create({
         color: '#FBBC05',
         fontWeight: '600',
     },
+    safeArea: {
+        backgroundColor: '#fff', 
+    }
 });

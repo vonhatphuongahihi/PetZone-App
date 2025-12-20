@@ -1,13 +1,16 @@
 import { DeviceEventEmitter, EmitterSubscription } from 'react-native';
 
-export type SocketEventType = 
+export type SocketEventType =
   | 'user_online'
   | 'user_offline'
   | 'message:new'
   | 'conversation:unread'
   | 'conversation:read'
   | 'conversation:typing'
-  | 'conversation:stop_typing';
+  | 'conversation:stop_typing'
+  | 'order:new'
+  | 'order:created'
+  | 'order:status_changed';
 
 export interface SocketEventData {
   user_online: { userId: string };
@@ -40,6 +43,35 @@ export interface SocketEventData {
   'conversation:stop_typing': {
     userId: string;
     conversationId: number;
+  };
+  'order:new': {
+    orderId: string;
+    orderNumber: string;
+    storeId: string;
+    customerName: string;
+    total: number;
+    status: string;
+    createdAt: string;
+  };
+  'order:created': {
+    orders: Array<{
+      orderId: string;
+      orderNumber: string;
+      storeName: string;
+      total: number;
+      status: string;
+      createdAt: string;
+    }>;
+  };
+  'order:status_changed': {
+    orderId: string;
+    orderNumber: string;
+    storeName: string;
+    oldStatus: string;
+    newStatus: string;
+    statusMessage: string;
+    total: number;
+    updatedAt: string;
   };
 }
 
