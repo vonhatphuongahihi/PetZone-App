@@ -16,7 +16,7 @@ import { ProductCard } from '../product-card/ProductCard';
 import { productListStyles } from './productListStyles';
 
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.10.3.117:3001/api';
+const API_BASE_URL = 'http://10.20.3.212:3001/api';
 
 // Helper: lấy string đầu tiên nếu param là string | string[]
 const getFirstString = (param: string | string[] | undefined) =>

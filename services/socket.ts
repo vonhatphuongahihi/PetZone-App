@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { SocketEventEmitter } from './socketEventEmitter';
 
 // === IP của backend server ===
-const SERVER_BASE_URL = 'http://10.10.3.117:3001';
+const SERVER_BASE_URL = 'http://10.20.3.212:3001';
 
 let socket: Socket | null = null;
 let listenersSetup = false;

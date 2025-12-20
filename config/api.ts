@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://10.10.3.117:3001/api';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://10.20.3.212:3001/api';
 
 export const config = {
   baseUrl: API_BASE_URL,
