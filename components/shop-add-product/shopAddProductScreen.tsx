@@ -19,7 +19,7 @@ import {
 import { styles } from "../../components/shop-add-product/addProductStyle";
 
 // === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.0.176.156:3001/api';
+const API_BASE_URL = 'http://10.20.3.212:3001/api';
 
 interface Category {
   id: number;

@@ -57,11 +57,12 @@ export default function ShopProductListScreen() {
           return;
         }
 
-        // Fetch sản phẩm theo store
         const res = await fetch(`${API_BASE_URL}/products/store/${storeId}`, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
         const json = await res.json();
+        console.log("API Response:", JSON.stringify(json, null, 2));
+        
         if (!json.success) {
           Alert.alert("Lỗi", "Không thể tải sản phẩm");
           setLoading(false);
@@ -69,10 +70,23 @@ export default function ShopProductListScreen() {
         }
 
         // Map fallback cho category
-        const fetchedProducts: Product[] = json.data.map((p: any) => ({
-          ...p,
-          category: p.category ? p.category : { id: p.categoryId, name: `Danh mục ${p.categoryId}` }
-        }));
+        const fetchedProducts: Product[] = json.data.map((p: any) => {
+          console.log("Raw product data:", p);
+          return {
+            id: p.id,
+            name: p.title || p.name || "Sản phẩm",
+            price: p.price || 0,
+            oldPrice: p.oldPrice,
+            discount: p.discount,
+            image: p.images?.[0]?.url || p.image || p.imageUrl,
+            sold: p.sold || 0,
+            category: p.category ? p.category : { id: p.categoryId, name: `Danh mục ${p.categoryId}` },
+            categoryId: p.categoryId,
+            rating: p.avgRating || p.rating || 0,
+            stock: p.remainingQuantity || p.stock || 0,
+            storeId: p.storeId
+          };
+        });
 
         // Filter theo categoryId nếu có
         const filteredProducts = categoryId
@@ -106,7 +120,10 @@ export default function ShopProductListScreen() {
     if (Platform.OS === "web" && window.history.length > 1) {
       window.history.back();
     } else {
-      router.push("/seller/shopCategories");
+      router.push({
+        pathname: "/seller/shopCategories",
+        params: { storeId }
+      });
     }
   };
 
@@ -115,9 +132,8 @@ export default function ShopProductListScreen() {
     const stock = item.stock ?? 0;
     const productName = item.name ?? "Sản phẩm";
     const oldPrice = item.oldPrice;
-    const discount = item.discount;
-    const sold = item.sold;
-    const rating = item.rating;
+    const sold = item.sold ?? 0;
+    const rating = item.rating ?? 0;
 
     return (
       <Pressable
@@ -139,8 +155,14 @@ export default function ShopProductListScreen() {
 
         <View style={styles.priceRow}>
           <Text style={styles.productPrice}>{Number(item.price).toLocaleString()}đ</Text>
-          {oldPrice && <Text style={styles.oldPrice}>{Number(oldPrice).toLocaleString()}đ</Text>}
-          {discount && <Text style={styles.discount}>{discount}</Text>}
+          {oldPrice && (
+            <>
+              <Text style={styles.oldPrice}>{Number(oldPrice).toLocaleString()}đ</Text>
+              <Text style={styles.discount}>
+                -{Math.round((1 - Number(item.price) / Number(oldPrice)) * 100)}%
+              </Text>
+            </>
+          )}
         </View>
 
         <View style={styles.metaRow}>
@@ -155,7 +177,11 @@ export default function ShopProductListScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={handleBack}>
+          <TouchableOpacity 
+            onPress={handleBack}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={{ padding: 4, zIndex: 999 }}
+          >
             <Ionicons name="chevron-back-outline" size={28} color="#FBBC05" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{categoryName ?? "Sản phẩm"}</Text>

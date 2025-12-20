@@ -122,9 +122,11 @@ const io = setupSocket(httpServer);
 // Export socket instance
 export const getSocketInstance = (): SocketInstance => io;
 
-// Khởi động server
-httpServer.listen(PORT, () => {
-    console.log(`🚀 PetZone API + Socket đang chạy trên cổng ${PORT}`);
+// Khởi động server - lắng nghe trên 0.0.0.0 để cho phép kết nối từ mobile
+const portNumber = typeof PORT === 'string' ? parseInt(PORT, 10) : PORT;
+httpServer.listen(portNumber, '0.0.0.0', () => {
+    console.log(`🚀 PetZone API + Socket đang chạy trên cổng ${portNumber}`);
+    console.log(`📱 Có thể truy cập từ mobile qua: http://10.20.3.212:${portNumber}`);
 });
 
 export default app;

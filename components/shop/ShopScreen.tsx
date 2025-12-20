@@ -286,6 +286,7 @@ export default function ShopScreen() {
               parentId: item.id,
               parentName: item.name,
               subCategories: JSON.stringify(subCategories),
+              storeId: store?.id,
             },
           })
         }

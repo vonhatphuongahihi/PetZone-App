@@ -14,7 +14,7 @@ interface Category {
 }
 
 export default function ShopChildCategoriesScreen() {
-  const { parentName, subCategories } = useLocalSearchParams();
+  const { parentName, subCategories, storeId } = useLocalSearchParams();
 
   // Parse subCategories từ params một cách an toàn
   const children: Category[] = useMemo(() => {
@@ -51,7 +51,11 @@ export default function ShopChildCategoriesScreen() {
             onPress={() =>
               router.push({
                 pathname: "/seller/shopProductList",
-                params: { categoryId: item.id, categoryName: item.name },
+                params: { 
+                  categoryId: item.id, 
+                  categoryName: item.name,
+                  storeId: storeId 
+                },
               })
             }
           >
