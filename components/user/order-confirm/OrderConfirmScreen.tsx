@@ -213,7 +213,7 @@ export default function OrderConfirmScreen() {
 
             {/* Message */}
             <Text style={styles.modalMessage}>
-              Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn hủy đơn hàng này?
             </Text>
 
             {/* Buttons */}

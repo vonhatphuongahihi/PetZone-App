@@ -5,6 +5,7 @@ import {
   Alert,
   FlatList,
   Image,
+  Modal,
   Platform,
   Pressable,
   Text,
@@ -35,6 +36,8 @@ export default function ShopScreen() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteProductId, setDeleteProductId] = useState<number | null>(null);
 
   // Listen for unread messages
   useEffect(() => {
@@ -236,20 +239,8 @@ export default function ShopScreen() {
   };
 
   const handleDeleteProduct = (productId: number) => {
-    if (Platform.OS === "web") {
-      const confirmed = window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này?");
-      if (confirmed) handleConfirmDelete(productId);
-    } else {
-      Alert.alert(
-        "Xóa sản phẩm",
-        "Bạn có chắc chắn muốn xóa?\nHành động này không thể hoàn tác.",
-        [
-          { text: "Hủy", style: "cancel" },
-          { text: "Xóa ngay", style: "destructive", onPress: () => handleConfirmDelete(productId) },
-        ],
-        { cancelable: true }
-      );
-    }
+    setDeleteProductId(productId);
+    setShowDeleteModal(true);
   };
 
   const confirmDelete = async (productId: number) => {
@@ -273,6 +264,36 @@ export default function ShopScreen() {
       setLoading(false);
     }
   };
+
+  const DeleteConfirmModal = () => (
+    <Modal visible={showDeleteModal} transparent animationType="fade" statusBarTranslucent>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 }}>
+        <View style={{ backgroundColor: '#FFF', borderRadius: 16, padding: 24, alignItems: 'center', width: '100%', maxWidth: 320, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 10 }}>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A202C', marginBottom: 12 }}>Xóa sản phẩm</Text>
+          <Text style={{ fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 24, lineHeight: 22 }}>Bạn có chắc chắn muốn xóa sản phẩm này?</Text>
+          <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+            <TouchableOpacity 
+              style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#EDF2F7', alignItems: 'center' }}
+              onPress={() => setShowDeleteModal(false)}
+            >
+              <Text style={{ fontWeight: '600', color: '#4A5568' }}>Hủy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#FFB400', alignItems: 'center' }}
+              onPress={() => {
+                if (deleteProductId) {
+                  confirmDelete(deleteProductId);
+                  setShowDeleteModal(false);
+                }
+              }}
+            >
+              <Text style={{ fontWeight: '600', color: '#FFF' }}>Xóa ngay</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 
   // Render danh mục
   const renderCategoryItem = ({ item }: { item: ApiCategory }) => {
@@ -305,6 +326,7 @@ export default function ShopScreen() {
 
   return (
     <View style={styles.container}>
+      <DeleteConfirmModal />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
