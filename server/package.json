@@ -18,9 +18,10 @@
   "author": "",
   "license": "ISC",
   "engines": {
-    "node": ">=18"
+    "node": ">=18 <21"
   },
   "dependencies": {
+    "@types/node": "^24.5.2",
     "@expo/vector-icons": "^15.0.2",
     "@prisma/client": "^5.8.0",
     "@react-native-async-storage/async-storage": "^2.2.0",
@@ -52,7 +53,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
-    "@types/node": "^24.5.2",
     "nodemon": "^3.1.10",
     "prisma": "^5.8.0",
     "ts-node": "^10.9.2",
