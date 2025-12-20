@@ -576,24 +576,26 @@ export default function ProductScreen() {
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
                     <Text style={productStyles.headerTitle}>Chi tiết sản phẩm</Text>
-                    <TouchableOpacity onPress={() => router.push('/cart')} style={productStyles.cartButton}>
-                        <MaterialIcons name="shopping-cart" size={28} color="#FBBC05" />
-                        {cartItemCount > 0 && (
-                            <Animated.View
-                                style={[
-                                    productStyles.cartBadge,
-                                    {
-                                        transform: [{ scale: cartCountScale }],
-                                        opacity: cartCountOpacity,
-                                    },
-                                ]}
-                            >
-                                <Text style={productStyles.cartBadgeText}>
-                                    {cartItemCount > 99 ? '99+' : cartItemCount}
-                                </Text>
-                            </Animated.View>
-                        )}
-                    </TouchableOpacity>
+                    {!isStoreOwner && (
+                        <TouchableOpacity onPress={() => router.push('/cart')} style={productStyles.cartButton}>
+                            <MaterialIcons name="shopping-cart" size={28} color="#FBBC05" />
+                            {cartItemCount > 0 && (
+                                <Animated.View
+                                    style={[
+                                        productStyles.cartBadge,
+                                        {
+                                            transform: [{ scale: cartCountScale }],
+                                            opacity: cartCountOpacity,
+                                        },
+                                    ]}
+                                >
+                                    <Text style={productStyles.cartBadgeText}>
+                                        {cartItemCount > 99 ? '99+' : cartItemCount}
+                                    </Text>
+                                </Animated.View>
+                            )}
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 <ScrollView style={productStyles.scrollView}>
@@ -677,145 +679,154 @@ export default function ProductScreen() {
                             )}
                         </View>
 
-                        <View style={productStyles.storeContainer}>
-                            <View style={productStyles.storeHeader}>
-                                <Image
-                                    source={product.store?.avatarUrl || (product.store as any)?.user?.avatarUrl
-                                        ? { uri: product.store?.avatarUrl || (product.store as any)?.user?.avatarUrl }
-                                        : require("../../../assets/images/shop.jpg")}
-                                    style={productStyles.storeAvatar}
-                                />
-                                <Text style={productStyles.storeName}>{product.store?.storeName || product.storeId}</Text>
-                                {userRole !== 'SELLER' && (
-                                    <TouchableOpacity
-                                        style={productStyles.followButton}
-                                        accessible={true}
-                                        accessibilityLabel="Xem shop"
-                                        accessibilityRole="button"
-                                        onPress={() => {
-                                            // Sử dụng store.id nếu có, nếu không thì dùng storeId từ product
-                                            const storeIdToNavigate = product.store?.id || product.storeId;
-                                            if (storeIdToNavigate) {
-                                                router.push({
-                                                    pathname: "/shop",
-                                                    params: { storeId: storeIdToNavigate }
-                                                });
-                                            } else {
-                                                Alert.alert("Lỗi", "Không thể tìm thấy thông tin cửa hàng");
-                                            }
-                                        }}
-                                    >
-                                        <Text style={productStyles.followButtonText}>Xem shop</Text>
-                                    </TouchableOpacity>
+                        {/* Ẩn thông tin shop nếu là store owner */}
+                        {!isStoreOwner && (
+                            <View style={productStyles.storeContainer}>
+                                <View style={productStyles.storeHeader}>
+                                    <Image
+                                        source={product.store?.avatarUrl || (product.store as any)?.user?.avatarUrl
+                                            ? { uri: product.store?.avatarUrl || (product.store as any)?.user?.avatarUrl }
+                                            : require("../../../assets/images/shop.jpg")}
+                                        style={productStyles.storeAvatar}
+                                    />
+                                    <Text style={productStyles.storeName}>{product.store?.storeName || product.storeId}</Text>
+                                    {userRole !== 'SELLER' && (
+                                        <TouchableOpacity
+                                            style={productStyles.followButton}
+                                            accessible={true}
+                                            accessibilityLabel="Xem shop"
+                                            accessibilityRole="button"
+                                            onPress={() => {
+                                                // Sử dụng store.id nếu có, nếu không thì dùng storeId từ product
+                                                const storeIdToNavigate = product.store?.id || product.storeId;
+                                                if (storeIdToNavigate) {
+                                                    router.push({
+                                                        pathname: "/shop",
+                                                        params: { storeId: storeIdToNavigate }
+                                                    });
+                                                } else {
+                                                    Alert.alert("Lỗi", "Không thể tìm thấy thông tin cửa hàng");
+                                                }
+                                            }}
+                                        >
+                                            <Text style={productStyles.followButtonText}>Xem shop</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+
+                                <View style={productStyles.storeInfo}>
+                                    <View style={productStyles.storeStats}>
+                                        <Text style={productStyles.storeStatText}>{product.store?.totalReviews || 0}</Text>
+                                        <Text style={productStyles.storeStatTextLabel}>Đánh giá</Text>
+                                    </View>
+                                    <View style={productStyles.storeStats}>
+                                        <Text style={productStyles.storeStatText}>
+                                            {product.store?.totalProducts || 0}
+                                        </Text>
+                                        <Text style={productStyles.storeStatTextLabel}>Sản phẩm</Text>
+                                    </View>
+                                    <View style={productStyles.storeStats}>
+                                        <Text style={productStyles.storeStatText}>
+                                            {product.store?.followersCount || 0}
+                                        </Text>
+                                        <Text style={productStyles.storeStatTextLabel}>Theo dõi</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Quantity Selector - Ẩn nếu là store owner */}
+                        {!isStoreOwner && (
+                            <>
+                                <View style={productStyles.quantityContainer}>
+                                    <Text style={productStyles.quantityLabel}>Số lượng</Text>
+                                    <View style={productStyles.quantitySelector}>
+                                        <TouchableOpacity
+                                            style={productStyles.quantityButton}
+                                            onPress={() => handleQuantityChange(-1)}
+                                            accessible={true}
+                                            accessibilityLabel="Giảm số lượng"
+                                            accessibilityRole="button"
+                                        >
+                                            <Text style={productStyles.quantityButtonText}>-</Text>
+                                        </TouchableOpacity>
+                                        <TextInput
+                                            style={productStyles.quantityInput}
+                                            value={quantity.toString()}
+                                            onChangeText={(text) => {
+                                                if (text === '') {
+                                                    setQuantity(0);
+                                                    return;
+                                                }
+
+                                                const num = parseInt(text);
+                                                if (!isNaN(num) && num >= 1 && num <= (product.quantity || 1)) {
+                                                    setQuantity(num);
+                                                }
+                                            }}
+                                            onBlur={() => {
+                                                if (quantity === 0) {
+                                                    setQuantity(1);
+                                                }
+                                            }}
+                                            keyboardType="numeric"
+                                            selectTextOnFocus={true}
+                                            accessible={true}
+                                            accessibilityLabel="Số lượng sản phẩm"
+                                            accessibilityHint={`Nhập số lượng từ 1 đến ${product.quantity || 1}`}
+                                        />
+                                        <TouchableOpacity
+                                            style={productStyles.quantityButton}
+                                            onPress={() => handleQuantityChange(1)}
+                                            accessible={true}
+                                            accessibilityLabel="Tăng số lượng"
+                                            accessibilityRole="button"
+                                        >
+                                            <Text style={productStyles.quantityButtonText}>+</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+
+                                <Text style={productStyles.totalPrice}>
+                                    Tạm tính: {((quantity || 1) * (Number(product.price) || 0)).toLocaleString('vi-VN')}đ
+                                </Text>
+                            </>
+                        )}
+                    </View>
+
+                    {/* Action Buttons - Ẩn nếu là store owner */}
+                    {!isStoreOwner && (
+                        <View style={productStyles.actionContainer}>
+                            <TouchableOpacity
+                                style={[productStyles.addToCartButton, addingToCart && { opacity: 0.6 }]}
+                                onPress={handleAddToCart}
+                                disabled={addingToCart}
+                                accessible={true}
+                                accessibilityLabel="Thêm vào giỏ hàng"
+                                accessibilityRole="button"
+                                accessibilityHint={`Thêm ${quantity || 1} sản phẩm vào giỏ hàng`}
+                            >
+                                {addingToCart ? (
+                                    <ActivityIndicator size="small" color="#FBBC05" />
+                                ) : (
+                                    <Ionicons name="cart-outline" size={24} color="#FBBC05" />
                                 )}
-                            </View>
-
-                            <View style={productStyles.storeInfo}>
-                                <View style={productStyles.storeStats}>
-                                    <Text style={productStyles.storeStatText}>{product.store?.totalReviews || 0}</Text>
-                                    <Text style={productStyles.storeStatTextLabel}>Đánh giá</Text>
-                                </View>
-                                <View style={productStyles.storeStats}>
-                                    <Text style={productStyles.storeStatText}>
-                                        {product.store?.totalProducts || 0}
-                                    </Text>
-                                    <Text style={productStyles.storeStatTextLabel}>Sản phẩm</Text>
-                                </View>
-                                <View style={productStyles.storeStats}>
-                                    <Text style={productStyles.storeStatText}>
-                                        {product.store?.followersCount || 0}
-                                    </Text>
-                                    <Text style={productStyles.storeStatTextLabel}>Theo dõi</Text>
-                                </View>
-                            </View>
+                                <Text style={productStyles.addToCartText}>
+                                    {addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={productStyles.buyNowButton}
+                                onPress={handleBuyNow}
+                                accessible={true}
+                                accessibilityLabel="Mua ngay"
+                                accessibilityRole="button"
+                                accessibilityHint={`Mua ngay ${quantity || 1} sản phẩm`}
+                            >
+                                <Text style={productStyles.buyNowText}>Mua ngay</Text>
+                            </TouchableOpacity>
                         </View>
-
-                        {/* Quantity Selector */}
-                        <View style={productStyles.quantityContainer}>
-                            <Text style={productStyles.quantityLabel}>Số lượng</Text>
-                            <View style={productStyles.quantitySelector}>
-                                <TouchableOpacity
-                                    style={productStyles.quantityButton}
-                                    onPress={() => handleQuantityChange(-1)}
-                                    accessible={true}
-                                    accessibilityLabel="Giảm số lượng"
-                                    accessibilityRole="button"
-                                >
-                                    <Text style={productStyles.quantityButtonText}>-</Text>
-                                </TouchableOpacity>
-                                <TextInput
-                                    style={productStyles.quantityInput}
-                                    value={quantity.toString()}
-                                    onChangeText={(text) => {
-                                        if (text === '') {
-                                            setQuantity(0);
-                                            return;
-                                        }
-
-                                        const num = parseInt(text);
-                                        if (!isNaN(num) && num >= 1 && num <= (product.quantity || 1)) {
-                                            setQuantity(num);
-                                        }
-                                    }}
-                                    onBlur={() => {
-                                        if (quantity === 0) {
-                                            setQuantity(1);
-                                        }
-                                    }}
-                                    keyboardType="numeric"
-                                    selectTextOnFocus={true}
-                                    accessible={true}
-                                    accessibilityLabel="Số lượng sản phẩm"
-                                    accessibilityHint={`Nhập số lượng từ 1 đến ${product.quantity || 1}`}
-                                />
-                                <TouchableOpacity
-                                    style={productStyles.quantityButton}
-                                    onPress={() => handleQuantityChange(1)}
-                                    accessible={true}
-                                    accessibilityLabel="Tăng số lượng"
-                                    accessibilityRole="button"
-                                >
-                                    <Text style={productStyles.quantityButtonText}>+</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-
-                        <Text style={productStyles.totalPrice}>
-                            Tạm tính: {((quantity || 1) * (Number(product.price) || 0)).toLocaleString('vi-VN')}đ
-                        </Text>
-                    </View>
-
-                    {/* Action Buttons */}
-                    <View style={productStyles.actionContainer}>
-                        <TouchableOpacity
-                            style={[productStyles.addToCartButton, addingToCart && { opacity: 0.6 }]}
-                            onPress={handleAddToCart}
-                            disabled={addingToCart}
-                            accessible={true}
-                            accessibilityLabel="Thêm vào giỏ hàng"
-                            accessibilityRole="button"
-                            accessibilityHint={`Thêm ${quantity || 1} sản phẩm vào giỏ hàng`}
-                        >
-                            {addingToCart ? (
-                                <ActivityIndicator size="small" color="#FBBC05" />
-                            ) : (
-                                <Ionicons name="cart-outline" size={24} color="#FBBC05" />
-                            )}
-                            <Text style={productStyles.addToCartText}>
-                                {addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={productStyles.buyNowButton}
-                            onPress={handleBuyNow}
-                            accessible={true}
-                            accessibilityLabel="Mua ngay"
-                            accessibilityRole="button"
-                            accessibilityHint={`Mua ngay ${quantity || 1} sản phẩm`}
-                        >
-                            <Text style={productStyles.buyNowText}>Mua ngay</Text>
-                        </TouchableOpacity>
-                    </View>
+                    )}
 
                     {/* Tabs */}
                     <View style={productStyles.tabContainer}>
@@ -972,20 +983,23 @@ export default function ProductScreen() {
                         )}
                     </View>
 
-                    <View style={productStyles.section}>
-                        <Text style={productStyles.sectionTitle}>Xem các sản phẩm gợi ý khác</Text>
-                        <FlatList
-                            data={otherProducts}
-                            renderItem={renderOtherProductItem}
-                            keyExtractor={(item) => item.id.toString()}
-                            horizontal
-                            scrollEnabled={true}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={productStyles.productsList}
-                            accessible={true}
-                            accessibilityLabel="Danh sách sản phẩm gợi ý"
-                        />
-                    </View>
+                    {/* Ẩn phần sản phẩm gợi ý nếu là store owner */}
+                    {!isStoreOwner && (
+                        <View style={productStyles.section}>
+                            <Text style={productStyles.sectionTitle}>Xem các sản phẩm gợi ý khác</Text>
+                            <FlatList
+                                data={otherProducts}
+                                renderItem={renderOtherProductItem}
+                                keyExtractor={(item) => item.id.toString()}
+                                horizontal
+                                scrollEnabled={true}
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={productStyles.productsList}
+                                accessible={true}
+                                accessibilityLabel="Danh sách sản phẩm gợi ý"
+                            />
+                        </View>
+                    )}
 
                 </ScrollView>
             </SafeAreaView>

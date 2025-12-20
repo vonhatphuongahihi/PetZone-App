@@ -2,13 +2,13 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Review, reviewService } from '../../services/reviewService';
 import { reviewStyle } from './reviewStyle';
@@ -51,11 +51,14 @@ export const ReviewItem: React.FC<Props> = ({ item, isStoreOwner, onReplySuccess
       const token = await AsyncStorage.getItem('jwt_token');
       if (!token) throw new Error('Phiên đăng nhập hết hạn');
 
-      await reviewService.replyReview(item.id, replyText.trim(), token);
+      const response = await reviewService.replyReview(item.id, replyText.trim(), token);
+
+      if (response.success && response.data) {
+        onReplySuccess();
+      }
 
       Alert.alert('Thành công', 'Đã gửi phản hồi đến khách hàng');
       setReplyText('');
-      onReplySuccess(); // reload lại danh sách để thấy reply mới
     } catch (err: any) {
       Alert.alert('Lỗi', err.message || 'Không thể gửi phản hồi');
     } finally {
