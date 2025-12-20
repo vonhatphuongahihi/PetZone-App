@@ -52,6 +52,7 @@ export default function UpdateProductScreen() {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [isCheckingToken, setIsCheckingToken] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     checkTokenAndFetchCategories();
@@ -147,6 +148,8 @@ export default function UpdateProductScreen() {
       return;
     }
 
+    setIsUpdating(true);
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("categoryId", categoryId.toString());
@@ -183,6 +186,7 @@ export default function UpdateProductScreen() {
         setSuccessModalVisible(true);
       } else {
         Alert.alert("Lỗi", data.message || "Cập nhật thất bại");
+        setIsUpdating(false);
       }
     } catch (err: any) {
       if (err.name === "AbortError") {
@@ -191,6 +195,7 @@ export default function UpdateProductScreen() {
         console.error(err);
         Alert.alert("Lỗi", "Không kết nối được server");
       }
+      setIsUpdating(false);
     }
   };
 
@@ -322,8 +327,14 @@ export default function UpdateProductScreen() {
           ))}
         </ScrollView>
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Cập nhật sản phẩm</Text>
+        <TouchableOpacity 
+          style={[styles.submitButton, isUpdating && { opacity: 0.6, backgroundColor: '#ccc' }]} 
+          onPress={handleSubmit}
+          disabled={isUpdating}
+        >
+          <Text style={styles.submitButtonText}>
+            {isUpdating ? "Đang cập nhật..." : "Cập nhật sản phẩm"}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -339,6 +350,7 @@ export default function UpdateProductScreen() {
               style={styles.successModalButton}
               onPress={() => {
                 setSuccessModalVisible(false);
+                setIsUpdating(false);
                 router.replace({
                   pathname: '/seller/shop',
                   params: { refresh: 'true', tab: 'products' }

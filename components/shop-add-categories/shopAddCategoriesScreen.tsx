@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  FlatList,
   Image,
   Modal,
   Platform,
@@ -29,6 +30,9 @@ export default function AddCategoryScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [parentCategories, setParentCategories] = useState<any[]>([]);
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
   // Request permission for image library
   useEffect(() => {
@@ -38,7 +42,28 @@ export default function AddCategoryScreen() {
         Alert.alert("Lỗi", "Cần cấp quyền truy cập thư viện ảnh để chọn ảnh.");
       }
     })();
+    
+    fetchParentCategories();
   }, []);
+
+  // Fetch parent categories
+  const fetchParentCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const token = await tokenService.getToken();
+      if (!token) return;
+      
+      const response = await categoryService.getAllCategories(token);
+      if (response?.success && Array.isArray(response.data)) {
+        const parents = response.data.filter((cat: any) => !cat.parentId);
+        setParentCategories(parents);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
 
   // Pick image from gallery
   const pickImage = async () => {
@@ -97,7 +122,6 @@ export default function AddCategoryScreen() {
 
       if (response?.success) {
         setSuccessModalVisible(true);
-        router.setParams({ refresh: "true" }); // signal ShopScreen to refresh
       } else {
         Alert.alert("Lỗi","Không thể tạo danh mục.");
       }
@@ -123,12 +147,15 @@ export default function AddCategoryScreen() {
       {/* Form */}
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <Text style={styles.label}>Loại sản phẩm chính</Text>
-        <TextInput
+        <TouchableOpacity
           style={styles.input}
-          placeholder="Nhập loại sản phẩm chính"
-          value={mainCategory}
-          onChangeText={setMainCategory}
-        />
+          onPress={() => setCategoryModalVisible(true)}
+        >
+          <Text style={{ color: mainCategory ? "#000" : "#999" }}>
+            {mainCategory || "Chọn loại sản phẩm chính"}
+          </Text>
+          <Ionicons name="chevron-down-outline" size={20} color="#666" style={{ position: 'absolute', right: 12 }} />
+        </TouchableOpacity>
 
         <Text style={styles.label}>Danh mục cụ thể</Text>
         <TextInput
@@ -164,6 +191,40 @@ export default function AddCategoryScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Category Selection Modal */}
+      <Modal visible={categoryModalVisible} transparent animationType="fade">
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+          activeOpacity={1}
+          onPress={() => setCategoryModalVisible(false)}
+        >
+          <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, width: '80%', maxHeight: '60%' }}>
+            <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12 }}>Chọn loại sản phẩm chính</Text>
+            {loadingCategories ? (
+              <Text style={{ textAlign: 'center', padding: 20, color: '#999' }}>Đang tải...</Text>
+            ) : parentCategories.length === 0 ? (
+              <Text style={{ textAlign: 'center', padding: 20, color: '#999' }}>Không có danh mục nào</Text>
+            ) : (
+              <FlatList
+                data={parentCategories}
+                keyExtractor={(item: any) => item.id.toString()}
+                renderItem={({ item }: { item: any }) => (
+                  <TouchableOpacity
+                    style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}
+                    onPress={() => {
+                      setMainCategory(item.name);
+                      setCategoryModalVisible(false);
+                    }}
+                  >
+                    <Text style={{ fontSize: 16 }}>{item.name}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Success modal */}
       <Modal visible={successModalVisible} transparent animationType="fade">
         <View style={successModalStyles.modalOverlay}>
@@ -176,7 +237,10 @@ export default function AddCategoryScreen() {
               style={successModalStyles.button}
               onPress={() => {
                 setSuccessModalVisible(false);
-                router.back();
+                router.replace({
+                  pathname: '/seller/shop',
+                  params: { refresh: 'true', tab: 'categories' }
+                });
               }}
             >
               <Text style={successModalStyles.buttonText}>OK</Text>

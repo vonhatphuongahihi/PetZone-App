@@ -1,26 +1,29 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useMemo } from "react";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
 import { FlatList, Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { categoryService } from "../../services/categoryService";
+import { tokenService } from "../../services/tokenService";
 import { styles as childStyles } from "./shopCategoriesStyle";
 
 // Type Category nếu bạn có interface từ API
 interface Category {
-  id: string;
+  id: string | number;
   name: string;
-  parentId?: string;
+  parentId?: string | number;
   image?: string | any; // any để hỗ trợ require() image local
+  children?: Category[];
 }
 
 export default function ShopChildCategoriesScreen() {
-  const { parentName, subCategories, storeId } = useLocalSearchParams();
+  const { parentName, subCategories, storeId, parentId, refresh } = useLocalSearchParams();
+  const [children, setChildren] = useState<Category[]>([]);
 
-  // Parse subCategories từ params một cách an toàn
-  const children: Category[] = useMemo(() => {
+  // Parse subCategories từ params ban đầu
+  const initialChildren: Category[] = useMemo(() => {
     if (!subCategories) return [];
     try {
-      // Nếu là array string do router gửi, lấy phần tử đầu
       const raw = Array.isArray(subCategories) ? subCategories[0] : subCategories;
       return JSON.parse(raw) as Category[];
     } catch (err) {
@@ -28,6 +31,47 @@ export default function ShopChildCategoriesScreen() {
       return [];
     }
   }, [subCategories]);
+
+  // Fetch fresh data from API
+  const fetchCategories = useCallback(async () => {
+    try {
+      const token = await tokenService.getToken();
+      if (!token) return;
+
+      const response = await categoryService.getAllCategories(token);
+      if (response?.success && Array.isArray(response.data)) {
+        // Find parent category and get its children
+        const parent = response.data.find((cat: any) => cat.id.toString() === parentId);
+        if (parent?.children) {
+          setChildren(parent.children);
+        } else {
+          // Fallback: filter by parentId
+          const filteredChildren = response.data.filter(
+            (cat: any) => cat.parentId?.toString() === parentId
+          );
+          setChildren(filteredChildren);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      // Fallback to initial data if API fails
+      setChildren(initialChildren);
+    }
+  }, [parentId, initialChildren]);
+
+  // Initial load
+  useMemo(() => {
+    setChildren(initialChildren);
+  }, [initialChildren]);
+
+  // Refresh on focus if needed
+  useFocusEffect(
+    useCallback(() => {
+      if (refresh === "true" && parentId) {
+        fetchCategories();
+      }
+    }, [refresh, parentId, fetchCategories])
+  );
 
   return (
     <SafeAreaView style={childStyles.container}>
@@ -42,7 +86,7 @@ export default function ShopChildCategoriesScreen() {
       {/* Danh mục con */}
       <FlatList
         data={children}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         contentContainerStyle={{ padding: 8 }}
         renderItem={({ item }) => (

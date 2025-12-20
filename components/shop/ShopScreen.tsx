@@ -143,6 +143,7 @@ export default function ShopScreen() {
     useCallback(() => {
       if (refresh === "true") fetchData();
       if (tab === "products") setActiveTab("Sản phẩm");
+      if (tab === "categories") setActiveTab("Danh mục");
     }, [refresh, tab, fetchData])
   );
 
