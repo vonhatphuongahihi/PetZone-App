@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { addressService, UserAddress } from "../../../services/addressService";
 import { tokenService } from "../../../services/tokenService";
 import styles from "./addAddressStyle";
@@ -225,202 +226,204 @@ export default function AddAddressScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <MaterialIcons name="arrow-back-ios" size={24} color="#FCCB05" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Địa chỉ người dùng</Text>
-      </View>
+    <SafeAreaView style={{ flex: 1 }} edges={["bottom"]}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <MaterialIcons name="arrow-back-ios" size={24} color="#FCCB05" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Địa chỉ người dùng</Text>
+        </View>
 
-      {/* Lưu ý */}
-      <Text style={styles.noteText}>
-        Địa chỉ (dùng thông tin trước sát nhập)
-      </Text>
+        {/* Lưu ý */}
+        <Text style={styles.noteText}>
+          Địa chỉ (dùng thông tin trước sát nhập)
+        </Text>
 
-      {/* Nội dung */}
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={{ padding: 15 }}>
-          <Text style={styles.label}>Họ và Tên</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Nhập họ và tên"
-          />
+        {/* Nội dung */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={{ padding: 15 }}>
+            <Text style={styles.label}>Họ và Tên</Text>
+            <TextInput
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
+              placeholder="Nhập họ và tên"
+            />
 
-          <Text style={styles.label}>Số điện thoại</Text>
-          <TextInput
-            style={styles.input}
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            placeholder="Nhập số điện thoại"
-          />
+            <Text style={styles.label}>Số điện thoại</Text>
+            <TextInput
+              style={styles.input}
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              placeholder="Nhập số điện thoại"
+            />
 
-          <Text style={styles.label}>Tỉnh/Thành phố, Quận/Huyện, Phường/Xã</Text>
-          <TextInput
-            style={[styles.input, { height: 50 }]}
-            value={province}
-            onChangeText={setProvince}
-            multiline
-            placeholder="Nhập địa chỉ"
-          />
+            <Text style={styles.label}>Tỉnh/Thành phố, Quận/Huyện, Phường/Xã</Text>
+            <TextInput
+              style={[styles.input, { height: 50 }]}
+              value={province}
+              onChangeText={setProvince}
+              multiline
+              placeholder="Nhập địa chỉ"
+            />
 
-          <Text style={styles.label}>Tên đường, Tòa nhà, Số nhà</Text>
-          <TextInput
-            style={styles.input}
-            value={street}
-            onChangeText={setStreet}
-            placeholder="Nhập tên đường, số nhà"
-          />
+            <Text style={styles.label}>Tên đường, Tòa nhà, Số nhà</Text>
+            <TextInput
+              style={styles.input}
+              value={street}
+              onChangeText={setStreet}
+              placeholder="Nhập tên đường, số nhà"
+            />
 
-          {/* Loại địa chỉ */}
-          <Text style={styles.label}>Loại địa chỉ</Text>
-          <View style={{ zIndex: 10, marginBottom: 60 }}>
+            {/* Loại địa chỉ */}
+            <Text style={styles.label}>Loại địa chỉ</Text>
+            <View style={{ zIndex: 10, marginBottom: 60 }}>
+              <TouchableOpacity
+                style={styles.select}
+                onPress={() => setShowDropdown(!showDropdown)}
+              >
+                <Text>{type}</Text>
+                <MaterialIcons
+                  name={showDropdown ? "arrow-drop-up" : "arrow-drop-down"}
+                  size={24}
+                  color="#555"
+                />
+              </TouchableOpacity>
+
+              {showDropdown && (
+                <View style={[styles.dropdown, {
+                  position: 'absolute',
+                  top: 45,
+                  left: 0,
+                  right: 0,
+                  zIndex: 1000,
+                  elevation: 10
+                }]}>
+                  {addressTypes.map((item) => (
+                    <TouchableOpacity
+                      key={item}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setType(item);
+                        setShowDropdown(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownText}>{item}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={[styles.footer, { marginTop: 20 }]}>
             <TouchableOpacity
-              style={styles.select}
-              onPress={() => setShowDropdown(!showDropdown)}
+              style={styles.cancelBtn}
+              onPress={() => setShowCancel(true)}
             >
-              <Text>{type}</Text>
-              <MaterialIcons
-                name={showDropdown ? "arrow-drop-up" : "arrow-drop-down"}
-                size={24}
-                color="#555"
-              />
+              <Text style={styles.cancelText}>Hủy</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.saveBtn, loading && { opacity: 0.7 }]}
+              onPress={handleSaveAddress}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <Text style={styles.saveText}>Hoàn thành</Text>
+              )}
+            </TouchableOpacity>
+          </View>
 
-            {showDropdown && (
-              <View style={[styles.dropdown, {
-                position: 'absolute',
-                top: 45,
-                left: 0,
-                right: 0,
-                zIndex: 1000,
-                elevation: 10
-              }]}>
-                {addressTypes.map((item) => (
-                  <TouchableOpacity
-                    key={item}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setType(item);
-                      setShowDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownText}>{item}</Text>
-                  </TouchableOpacity>
-                ))}
+          {/* Addresses List */}
+          <View style={styles.addressListContainer}>
+            <Text style={styles.addressListTitle}>Địa chỉ đã lưu</Text>
+            {loadingAddresses ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#FFB400" />
+                <Text style={styles.loadingText}>Đang tải địa chỉ...</Text>
+              </View>
+            ) : addresses.length > 0 ? (
+              <FlatList
+                data={addresses}
+                renderItem={renderAddressItem}
+                keyExtractor={(item: UserAddress) => item.id}
+                style={[styles.addressList, { maxHeight: 400 }]}
+                showsVerticalScrollIndicator={false}
+                scrollEnabled={false}
+                //nestedScrollEnabled={true}
+                removeClippedSubviews={false}
+              />
+            ) : (
+              <View style={styles.emptyContainer}>
+                <MaterialIcons name="location-off" size={48} color="#ccc" />
+                <Text style={styles.emptyText}>Chưa có địa chỉ nào được lưu</Text>
               </View>
             )}
           </View>
-        </View>
+        </ScrollView>
 
-        {/* Action Buttons */}
-        <View style={[styles.footer, { marginTop: 20 }]}>
-          <TouchableOpacity
-            style={styles.cancelBtn}
-            onPress={() => setShowCancel(true)}
-          >
-            <Text style={styles.cancelText}>Hủy</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.saveBtn, loading && { opacity: 0.7 }]}
-            onPress={handleSaveAddress}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#FFF" />
-            ) : (
-              <Text style={styles.saveText}>Hoàn thành</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        {/* POPUP HỦY */}
+        <Modal transparent visible={showCancel} animationType="fade">
+          <View style={styles.overlay}>
+            <View style={styles.popup}>
+              <View style={[styles.popupHeader, { backgroundColor: "#AF0000" }]}>
+                <MaterialIcons name="error" size={40} color="#fff" />
+                <Text style={styles.popupHeaderText}>
+                  Bạn có chắc chắn muốn hủy thêm địa chỉ?
+                </Text>
+              </View>
+              <View style={styles.popupBody}>
+                <TouchableOpacity
+                  style={styles.popupBtnWarning}
+                  onPress={() => {
+                    setShowCancel(false);
+                    router.back();
+                  }}
+                >
+                  <Text style={styles.popupBtnText}>Hủy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.popupBtnSecondary}
+                  onPress={() => setShowCancel(false)}
+                >
+                  <Text style={styles.popupBtnSecondaryText}>Tiếp tục</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
-        {/* Addresses List */}
-        <View style={styles.addressListContainer}>
-          <Text style={styles.addressListTitle}>Địa chỉ đã lưu</Text>
-          {loadingAddresses ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#FFB400" />
-              <Text style={styles.loadingText}>Đang tải địa chỉ...</Text>
-            </View>
-          ) : addresses.length > 0 ? (
-            <FlatList
-              data={addresses}
-              renderItem={renderAddressItem}
-              keyExtractor={(item: UserAddress) => item.id}
-              style={[styles.addressList, { maxHeight: 400 }]}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={true}
-              nestedScrollEnabled={true}
-              removeClippedSubviews={false}
-            />
-          ) : (
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="location-off" size={48} color="#ccc" />
-              <Text style={styles.emptyText}>Chưa có địa chỉ nào được lưu</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-
-      {/* POPUP HỦY */}
-      <Modal transparent visible={showCancel} animationType="fade">
-        <View style={styles.overlay}>
-          <View style={styles.popup}>
-            <View style={[styles.popupHeader, { backgroundColor: "#AF0000" }]}>
-              <MaterialIcons name="error" size={40} color="#fff" />
-              <Text style={styles.popupHeaderText}>
-                Bạn có chắc chắn muốn hủy thêm địa chỉ?
-              </Text>
-            </View>
-            <View style={styles.popupBody}>
+        {/* POPUP THÀNH CÔNG */}
+        <Modal transparent visible={showSuccess} animationType="fade">
+          <View style={styles.overlay}>
+            <View style={styles.popup}>
+              <View style={[styles.popupHeader, { backgroundColor: "#FBBC05" }]}>
+                <MaterialIcons name="check-circle" size={40} color="#fff" />
+                <Text style={styles.popupHeaderText}>
+                  Thêm địa chỉ thành công!
+                </Text>
+              </View>
               <TouchableOpacity
-                style={styles.popupBtnWarning}
-                onPress={() => {
-                  setShowCancel(false);
-                  router.back();
-                }}
+                style={styles.popupBtnSuccess}
+                onPress={() => setShowSuccess(false)}
               >
-                <Text style={styles.popupBtnText}>Hủy</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.popupBtnSecondary}
-                onPress={() => setShowCancel(false)}
-              >
-                <Text style={styles.popupBtnSecondaryText}>Tiếp tục</Text>
+                <Text style={styles.popupBtnText}>Đóng</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
-
-      {/* POPUP THÀNH CÔNG */}
-      <Modal transparent visible={showSuccess} animationType="fade">
-        <View style={styles.overlay}>
-          <View style={styles.popup}>
-            <View style={[styles.popupHeader, { backgroundColor: "#FBBC05" }]}>
-              <MaterialIcons name="check-circle" size={40} color="#fff" />
-              <Text style={styles.popupHeaderText}>
-                Thêm địa chỉ thành công!
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.popupBtnSuccess}
-              onPress={() => setShowSuccess(false)}
-            >
-              <Text style={styles.popupBtnText}>Đóng</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 }
