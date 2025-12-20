@@ -22,6 +22,7 @@ import { SellerBottomNavigation } from "../seller/SellerBottomNavigation";
 import styles from "./shopStyle";
 
 export default function ShopScreen() {
+  const { refresh, tab } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState<"Sản phẩm" | "Danh mục">("Danh mục");
   const [store, setStore] = useState<Store | null>(null);
   const [products, setProducts] = useState<ApiProduct[]>([]);
@@ -73,8 +74,6 @@ export default function ShopScreen() {
       setSearchLoading(false);
     }
   };
-
-  const { refresh } = useLocalSearchParams();
 
   const fetchData = useCallback(async () => {
     try {
@@ -143,7 +142,8 @@ export default function ShopScreen() {
   useFocusEffect(
     useCallback(() => {
       if (refresh === "true") fetchData();
-    }, [refresh, fetchData])
+      if (tab === "products") setActiveTab("Sản phẩm");
+    }, [refresh, tab, fetchData])
   );
 
   // Lọc danh mục cha

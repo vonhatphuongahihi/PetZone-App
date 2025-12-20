@@ -339,7 +339,10 @@ export default function UpdateProductScreen() {
               style={styles.successModalButton}
               onPress={() => {
                 setSuccessModalVisible(false);
-                router.back();
+                router.replace({
+                  pathname: '/seller/shop',
+                  params: { refresh: 'true', tab: 'products' }
+                });
               }}>
               <Text style={styles.successModalButtonText}>OK</Text>
             </TouchableOpacity>

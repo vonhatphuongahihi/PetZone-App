@@ -189,15 +189,23 @@ export default function ShopProductListScreen() {
         </View>
       </View>
 
-      <FlatList
-        data={products}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        numColumns={2}
-        columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 12 }}
-        contentContainerStyle={{ paddingTop: 10, paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-      />
+      {products.length === 0 ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 16, color: '#999', textAlign: 'center' }}>
+            Shop chưa có sản phẩm thuộc danh mục này
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 12 }}
+          contentContainerStyle={{ paddingTop: 10, paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
