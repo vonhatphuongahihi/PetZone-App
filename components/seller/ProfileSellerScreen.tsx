@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import type { ComponentProps } from 'react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { KeyboardTypeOptions } from 'react-native';
 import {
     ActivityIndicator,
@@ -25,6 +25,68 @@ import { SellerBottomNavigation } from './SellerBottomNavigation';
 import { SellerTopNavigation } from './SellerTopNavigation';
 
 const { width } = Dimensions.get('window');
+
+// InputField component được định nghĩa bên ngoài để tránh re-render
+interface InputFieldProps {
+    label: string;
+    value: string;
+    onChangeText: (text: string) => void;
+    icon: ComponentProps<typeof MaterialIcons>["name"];
+    editable?: boolean;
+    multiline?: boolean;
+    keyboardType?: KeyboardTypeOptions;
+    placeholder?: string;
+}
+
+const InputField = React.memo<InputFieldProps>(({
+    label,
+    value,
+    onChangeText,
+    icon,
+    editable = true,
+    multiline = false,
+    keyboardType = 'default',
+    placeholder = ''
+}) => (
+    <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>{label}</Text>
+        <View style={[
+            styles.inputWrapper,
+            !editable && styles.inputWrapperDisabled,
+            multiline && { alignItems: 'flex-start', paddingVertical: 12 }
+        ]}>
+            <MaterialIcons
+                name={icon}
+                size={22}
+                color={editable ? "#FFB400" : "#A0AEC0"}
+                style={[styles.inputIcon, multiline && { marginTop: 4 }]}
+            />
+            <TextInput
+                style={[styles.input, multiline && styles.inputMultiline]}
+                value={value}
+                onChangeText={onChangeText}
+                editable={editable}
+                multiline={multiline}
+                numberOfLines={multiline ? 4 : 1}
+                keyboardType={keyboardType}
+                placeholder={placeholder}
+                placeholderTextColor="#A0AEC0"
+            />
+        </View>
+    </View>
+), (prevProps, nextProps) => {
+    // Custom comparison để tránh re-render không cần thiết
+    return (
+        prevProps.value === nextProps.value &&
+        prevProps.editable === nextProps.editable &&
+        prevProps.label === nextProps.label &&
+        prevProps.icon === nextProps.icon &&
+        prevProps.multiline === nextProps.multiline &&
+        prevProps.keyboardType === nextProps.keyboardType &&
+        prevProps.placeholder === nextProps.placeholder &&
+        prevProps.onChangeText === nextProps.onChangeText
+    );
+});
 
 export default function ProfileSellerScreen() {
     const router = useRouter();
@@ -262,54 +324,28 @@ export default function ProfileSellerScreen() {
 
     const handleLogout = () => setShowLogoutModal(true);
 
-    // --- Components ---
-    interface InputFieldProps {
-        label: string;
-        value: string;
-        onChangeText: (text: string) => void;
-        icon: ComponentProps<typeof MaterialIcons>["name"];
-        editable?: boolean;
-        multiline?: boolean;
-        keyboardType?: KeyboardTypeOptions;
-        placeholder?: string;
-    }
-    const InputField = ({
-        label,
-        value,
-        onChangeText,
-        icon,
-        editable = true,
-        multiline = false,
-        keyboardType = 'default',
-        placeholder = ''
-    }: InputFieldProps) => (
-        <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>{label}</Text>
-            <View style={[
-                styles.inputWrapper,
-                !editable && styles.inputWrapperDisabled,
-                multiline && { alignItems: 'flex-start', paddingVertical: 12 }
-            ]}>
-                <MaterialIcons
-                    name={icon}
-                    size={22}
-                    color={editable ? "#FFB400" : "#A0AEC0"}
-                    style={[styles.inputIcon, multiline && { marginTop: 4 }]}
-                />
-                <TextInput
-                    style={[styles.input, multiline && styles.inputMultiline]}
-                    value={value}
-                    onChangeText={onChangeText}
-                    editable={editable}
-                    multiline={multiline}
-                    numberOfLines={multiline ? 4 : 1}
-                    keyboardType={keyboardType}
-                    placeholder={placeholder}
-                    placeholderTextColor="#A0AEC0"
-                />
-            </View>
-        </View>
-    );
+    // Memoized onChange handlers để tránh mất focus
+    const handleOwnerNameChange = useCallback((t: string) => {
+        setFormData(prev => ({ ...prev, ownerName: t }));
+    }, []);
+
+    const handleStoreNameChange = useCallback((t: string) => {
+        setFormData(prev => ({ ...prev, storeName: t }));
+    }, []);
+
+    const handlePhoneNumberChange = useCallback((t: string) => {
+        setFormData(prev => ({ ...prev, phoneNumber: t }));
+    }, []);
+
+    const handleAddressChange = useCallback((t: string) => {
+        setFormData(prev => ({ ...prev, address: t }));
+    }, []);
+
+    const handleDescriptionChange = useCallback((t: string) => {
+        setFormData(prev => ({ ...prev, description: t }));
+    }, []);
+
+    const handleEmailChange = useCallback(() => { }, []);
 
     const ImagePickerModal = () => (
         <Modal visible={showImagePickerModal} transparent animationType="none" statusBarTranslucent>
@@ -462,7 +498,7 @@ export default function ProfileSellerScreen() {
                     <InputField
                         label="Tên quản trị viên"
                         value={formData.ownerName}
-                        onChangeText={(t: string) => setFormData({ ...formData, ownerName: t })}
+                        onChangeText={handleOwnerNameChange}
                         icon="person"
                         editable={isEditing}
                     />
@@ -470,7 +506,7 @@ export default function ProfileSellerScreen() {
                     <InputField
                         label="Tên cửa hàng"
                         value={formData.storeName}
-                        onChangeText={(t: string) => setFormData({ ...formData, storeName: t })}
+                        onChangeText={handleStoreNameChange}
                         icon="store"
                         editable={isEditing}
                     />
@@ -478,7 +514,7 @@ export default function ProfileSellerScreen() {
                     <InputField
                         label="Số điện thoại"
                         value={formData.phoneNumber}
-                        onChangeText={(t: string) => setFormData({ ...formData, phoneNumber: t })}
+                        onChangeText={handlePhoneNumberChange}
                         icon="phone"
                         keyboardType="phone-pad"
                         editable={isEditing}
@@ -489,13 +525,13 @@ export default function ProfileSellerScreen() {
                         value={profile.store.email || profile.user.email}
                         icon="email"
                         editable={false}
-                        onChangeText={() => { }}
+                        onChangeText={handleEmailChange}
                     />
 
                     <InputField
                         label="Địa chỉ"
                         value={formData.address}
-                        onChangeText={(t: string) => setFormData({ ...formData, address: t })}
+                        onChangeText={handleAddressChange}
                         icon="location-on"
                         editable={isEditing}
                         multiline
@@ -504,7 +540,7 @@ export default function ProfileSellerScreen() {
                     <InputField
                         label="Giới thiệu cửa hàng"
                         value={formData.description}
-                        onChangeText={(t: string) => setFormData({ ...formData, description: t })}
+                        onChangeText={handleDescriptionChange}
                         icon="description"
                         editable={isEditing}
                         multiline
