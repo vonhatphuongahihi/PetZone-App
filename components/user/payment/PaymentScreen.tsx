@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { addressService, UserAddress } from "../../../services/addressService";
 import { CartItem } from "../../../services/cartService";
 import { orderService } from "../../../services/orderService";
@@ -205,7 +206,7 @@ export default function CheckoutScreen() {
     const totalPayment = totalAmount + shippingFee;
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()}>
@@ -442,6 +443,6 @@ export default function CheckoutScreen() {
                 </View>
             </Modal>
 
-        </View>
+        </SafeAreaView>
     );
 }

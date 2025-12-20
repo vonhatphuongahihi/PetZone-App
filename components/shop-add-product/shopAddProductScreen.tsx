@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../components/shop-add-product/addProductStyle";
 
 // === IP / BASE_URL của backend ===
@@ -282,7 +283,7 @@ export default function AddProductScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack}>
           <Ionicons name="chevron-back-outline" size={28} color="#FBBC05" />
@@ -456,7 +457,7 @@ export default function AddProductScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 

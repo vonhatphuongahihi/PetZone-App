@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { addressService } from "../../../services/addressService";
 import { styles } from "./editAddressStyle";
 
@@ -140,7 +141,7 @@ export default function EditAddressScreen() {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()}>
@@ -151,7 +152,7 @@ export default function EditAddressScreen() {
 
             {/* Lưu ý */}
             <Text style={styles.noteText}>
-                Địa chỉ (dùng thông tin trước sát nhập)
+                Địa chỉ (dùng thông tin trước sáp nhập)
             </Text>
 
             {/* Nội dung */}
@@ -300,6 +301,6 @@ export default function EditAddressScreen() {
                     </View>
                 </View>
             </Modal>
-        </View>
+        </SafeAreaView>
     );
 }

@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { categoryService } from "../../services/categoryService";
 import { tokenService } from "../../services/tokenService";
 import {
@@ -134,7 +135,7 @@ export default function AddCategoryScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={headerStyles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -154,7 +155,7 @@ export default function AddCategoryScreen() {
           <Text style={{ color: mainCategory ? "#000" : "#999" }}>
             {mainCategory || "Chọn loại sản phẩm chính"}
           </Text>
-          <Ionicons name="chevron-down-outline" size={20} color="#666" style={{ position: 'absolute', right: 12 }} />
+          <Ionicons name="chevron-down-outline" size={20} color="#666" style={{ position: 'absolute', top: 12, right: 12 }} />
         </TouchableOpacity>
 
         <Text style={styles.label}>Danh mục cụ thể</Text>
@@ -248,6 +249,6 @@ export default function AddCategoryScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
