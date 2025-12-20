@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 20,
     borderBottomWidth: 1,
     borderColor: "#eee",
-    paddingTop: 40,
+    paddingTop: 20,
   },
   headerTitle: {
     marginLeft: 8,

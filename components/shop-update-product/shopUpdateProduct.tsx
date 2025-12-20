@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 
+import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../components/shop-update-product/updateProductStyles";
 import { API_BASE_URL } from "../../config/api";
 
@@ -211,7 +212,7 @@ export default function UpdateProductScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -361,6 +362,6 @@ export default function UpdateProductScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }

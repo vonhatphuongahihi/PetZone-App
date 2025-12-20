@@ -237,68 +237,75 @@ export default function UserShopScreen() {
                 <ScrollView showsVerticalScrollIndicator={false}>
                     {/* Header */}
                     <View style={styles.header}>
-                        {/* Back button */}
-                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                            <Ionicons name="chevron-back" size={24} color="#FFF" />
-                        </TouchableOpacity>
                         {/* Decorative circles */}
                         <View style={styles.headerDecoration} />
                         <View style={styles.headerDecoration2} />
 
-                        <View style={styles.shopInfo}>
-                            <View style={styles.avatarContainer}>
-                                <Image
-                                    source={store.avatarUrl || (store as any).user?.avatarUrl
-                                        ? { uri: store.avatarUrl || (store as any).user?.avatarUrl }
-                                        : require("../../../assets/images/shop.jpg")}
-                                    style={styles.avatar}
-                                    resizeMode="cover"
-                                />
-                            </View>
-                            <View style={styles.shopTextContainer}>
-                                <View style={styles.titleRow}>
-                                    <Text style={styles.shopName}>{store.storeName}</Text>
-                                    <View style={styles.ratingBadge}>
-                                        <Ionicons name="star" size={12} color="#fff" />
-                                        <Text style={styles.ratingText}>
-                                            {store.rating ? Number(store.rating).toFixed(1) : "4.8"}
-                                        </Text>
-                                    </View>
-                                </View>
-                                <View style={styles.statsRow}>
-                                    <View style={styles.statItem}>
-                                        <Ionicons name="people" size={12} color="#fff" style={styles.statIcon} />
-                                        <Text style={styles.statText}>
-                                            {store.followersCount || 0} theo dõi
-                                        </Text>
-                                    </View>
-                                    <View style={styles.statItem}>
-                                        <MaterialCommunityIcons name="shopping" size={12} color="#fff" style={styles.statIcon} />
-                                        <Text style={styles.statText}>
-                                            {store.totalOrders || 0} đơn hàng
-                                        </Text>
-                                    </View>
-                                </View>
-                            </View>
-                        </View>
+                        {/* Main header content with back button on left and info on right */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                            {/* Back button - Left side */}
+                            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                                <Ionicons name="chevron-back" size={24} color="#FFF" />
+                            </TouchableOpacity>
 
-                        <View style={styles.buttonRow}>
-                            <TouchableOpacity
-                                style={[styles.followButton, following && styles.followingButton]}
-                                onPress={handleToggleFollow}
-                            >
-                                <Ionicons name={following ? "checkmark-circle" : "add-circle-outline"} size={16} color={following ? "#666" : "#FBBC05"} />
-                                <Text style={[styles.followButtonText, following && styles.followingButtonText]}>
-                                    {following ? "Đang theo dõi" : "Theo dõi"}
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.chatButton}
-                                onPress={handleChatPress}
-                            >
-                                <Ionicons name="chatbubble-outline" size={16} color="#fff" />
-                                <Text style={styles.chatButtonText}>Chat</Text>
-                            </TouchableOpacity>
+                            {/* Shop info and buttons - Right side */}
+                            <View style={{ flex: 1 }}>
+                                <View style={styles.shopInfo}>
+                                    <View style={styles.avatarContainer}>
+                                        <Image
+                                            source={store.avatarUrl || (store as any).user?.avatarUrl
+                                                ? { uri: store.avatarUrl || (store as any).user?.avatarUrl }
+                                                : require("../../../assets/images/shop.jpg")}
+                                            style={styles.avatar}
+                                            resizeMode="cover"
+                                        />
+                                    </View>
+                                    <View style={styles.shopTextContainer}>
+                                        <View style={styles.titleRow}>
+                                            <Text style={styles.shopName}>{store.storeName}</Text>
+                                            <View style={styles.ratingBadge}>
+                                                <Ionicons name="star" size={12} color="#fff" />
+                                                <Text style={styles.ratingText}>
+                                                    {store.rating ? Number(store.rating).toFixed(1) : "4.8"}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.statsRow}>
+                                            <View style={styles.statItem}>
+                                                <Ionicons name="people" size={12} color="#fff" style={styles.statIcon} />
+                                                <Text style={styles.statText}>
+                                                    {store.followersCount || 0} theo dõi
+                                                </Text>
+                                            </View>
+                                            <View style={styles.statItem}>
+                                                <MaterialCommunityIcons name="shopping" size={12} color="#fff" style={styles.statIcon} />
+                                                <Text style={styles.statText}>
+                                                    {store.totalOrders || 0} đơn hàng
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View style={styles.buttonRow}>
+                                    <TouchableOpacity
+                                        style={[styles.followButton, following && styles.followingButton]}
+                                        onPress={handleToggleFollow}
+                                    >
+                                        <Ionicons name={following ? "checkmark-circle" : "add-circle-outline"} size={16} color={following ? "#666" : "#FBBC05"} />
+                                        <Text style={[styles.followButtonText, following && styles.followingButtonText]}>
+                                            {following ? "Đang theo dõi" : "Theo dõi"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.chatButton}
+                                        onPress={handleChatPress}
+                                    >
+                                        <Ionicons name="chatbubble-outline" size={16} color="#0ED3AF" />
+                                        <Text style={styles.chatButtonText}>Chat</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
                         </View>
                     </View>
 
@@ -333,7 +340,7 @@ export default function UserShopScreen() {
                         </View>
                     )}
                 </ScrollView>
-            </SafeAreaView >
+            </SafeAreaView>
         </>
     );
 }
