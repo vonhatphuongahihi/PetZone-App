@@ -2,7 +2,9 @@ import { StyleSheet } from 'react-native';
 
 export const productCardStyles = StyleSheet.create({
     card: {
-        backgroundColor: "#FFF8E7",
+        backgroundColor: "#FFFAE8",
+        borderWidth: 1,
+        borderColor: "#ddd",
         borderRadius: 12,
         marginBottom: 12,
         overflow: "hidden",
@@ -12,8 +14,6 @@ export const productCardStyles = StyleSheet.create({
         shadowOpacity: 0.08,
         shadowRadius: 8,
         elevation: 10,
-        //borderColor: "#FFF44F",
-        //borderWidth: 1,
     },
     horizontalCard: {
         width: "100%",
@@ -34,49 +34,49 @@ export const productCardStyles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 4,
     },
-    discountText: { 
-        color: "#FFF", 
-        fontSize: 11, 
+    discountText: {
+        color: "#FFF",
+        fontSize: 11,
         fontWeight: "700",
         letterSpacing: 0.3,
     },
-    image: { 
-        width: "100%", 
+    image: {
+        width: "100%",
         height: 170,
         backgroundColor: "#F5F5F5",
     },
 
-    info: { 
-        padding: 12, 
+    info: {
+        padding: 12,
         flex: 1,
         justifyContent: 'space-between',
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#FFFAE8",
     },
     mainContent: {
         flex: 1,
     },
-    shopRow: { 
-        flexDirection: "row", 
-        alignItems: "center", 
+    shopRow: {
+        flexDirection: "row",
+        alignItems: "center",
         marginBottom: 8,
         paddingBottom: 8,
         borderBottomWidth: 1,
         borderBottomColor: "#F0F0F0",
     },
-    shopAvatar: { 
-        width: 28, 
-        height: 28, 
+    shopAvatar: {
+        width: 28,
+        height: 28,
         borderRadius: 14,
         borderWidth: 1.5,
         borderColor: "#E8E8E8",
     },
-    shopName: { 
-        fontSize: 12, 
+    shopName: {
+        fontSize: 12,
         fontWeight: "600",
         color: "#1A1A1A",
     },
-    sold: { 
-        fontSize: 10, 
+    sold: {
+        fontSize: 10,
         color: "#8E8E93",
         marginTop: 2,
     },
@@ -113,16 +113,16 @@ export const productCardStyles = StyleSheet.create({
         fontWeight: "600",
     },
 
-    productName: { 
-        fontSize: 14, 
-        fontWeight: "500", 
+    productName: {
+        fontSize: 14,
+        fontWeight: "500",
         marginBottom: 6,
         lineHeight: 20,
         color: "#1A1A1A",
         minHeight: 40,
     },
-    tagline: { 
-        fontSize: 10, 
+    tagline: {
+        fontSize: 10,
         color: "#FF6B35",
         fontWeight: "500",
         marginBottom: 8,
@@ -133,17 +133,17 @@ export const productCardStyles = StyleSheet.create({
         alignSelf: "flex-start",
     },
 
-    priceRow: { 
-        flexDirection: "row", 
+    priceRow: {
+        flexDirection: "row",
         alignItems: "center",
         marginTop: 8,
         paddingTop: 8,
         borderTopWidth: 1,
         borderTopColor: "#F0F0F0",
     },
-    price: { 
-        fontSize: 18, 
-        fontWeight: "700", 
+    price: {
+        fontSize: 18,
+        fontWeight: "700",
         color: "#FF3B30",
         marginRight: 8,
     },

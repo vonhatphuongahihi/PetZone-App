@@ -16,14 +16,14 @@ export default function CategoriesScreen() {
             try {
                 setLoading(true);
                 const token = await tokenService.getToken();
-                
+
                 if (!token) {
                     Alert.alert('Lỗi', 'Vui lòng đăng nhập để xem danh mục');
                     return;
                 }
 
                 const response = await categoryService.getAllCategories(token);
-                
+
                 if (response.success) {
                     setCategories(response.data);
                 } else {
@@ -72,15 +72,15 @@ export default function CategoriesScreen() {
                         <View style={categoriesStyles.categorySection}>
                             <View style={categoriesStyles.categoryHeader}>
                                 {parent.image ? (
-                                    <Image 
-                                        source={{ uri: parent.image }} 
+                                    <Image
+                                        source={{ uri: parent.image }}
                                         style={categoriesStyles.categoryIcon}
                                         defaultSource={require("../../../assets/images/cat.png")}
                                     />
                                 ) : (
-                                    <Image 
-                                        source={require("../../../assets/images/cat.png")} 
-                                        style={categoriesStyles.categoryIcon} 
+                                    <Image
+                                        source={require("../../../assets/images/cat.png")}
+                                        style={categoriesStyles.categoryIcon}
                                     />
                                 )}
                                 <Text style={categoriesStyles.categoryTitle}>{parent.name}</Text>
@@ -95,15 +95,15 @@ export default function CategoriesScreen() {
                                         }}
                                     >
                                         {child.image ? (
-                                            <Image 
-                                                source={{ uri: child.image }} 
+                                            <Image
+                                                source={{ uri: child.image }}
                                                 style={categoriesStyles.childImage}
                                                 defaultSource={require("../../../assets/images/cat.png")}
                                             />
                                         ) : (
-                                            <Image 
-                                                source={require("../../../assets/images/cat.png")} 
-                                                style={categoriesStyles.childImage} 
+                                            <Image
+                                                source={require("../../../assets/images/cat.png")}
+                                                style={categoriesStyles.childImage}
                                             />
                                         )}
                                         <Text style={categoriesStyles.childText}>{child.name}</Text>

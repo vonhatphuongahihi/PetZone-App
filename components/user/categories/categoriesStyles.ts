@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export const categoriesStyles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F8F8F8",
+        backgroundColor: "#FFFFFF",
     },
     header: {
         flexDirection: "row",
@@ -31,6 +31,7 @@ export const categoriesStyles = StyleSheet.create({
     },
     categoryContainer: {
         paddingTop: 6,
+        backgroundColor: "#FFFFFF",
     },
     categorySection: {
         marginBottom: 16,
@@ -41,16 +42,7 @@ export const categoriesStyles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: 16,
-        //backgroundColor: "#FFF9E6",
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 12,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2,
+        marginBottom: 16
     },
     categoryIcon: {
         width: 36,
@@ -71,7 +63,7 @@ export const categoriesStyles = StyleSheet.create({
     },
     childCard: {
         width: "47%",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#FFFAE8",
         borderRadius: 12,
         paddingVertical: 16,
         paddingHorizontal: 12,
