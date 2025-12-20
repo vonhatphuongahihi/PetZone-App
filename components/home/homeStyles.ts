@@ -178,10 +178,8 @@ export const homeStyles = StyleSheet.create({
         paddingBottom: 8,
     },
     storeItem: {
-        backgroundColor: "#ffffff",
+        backgroundColor: "#FFFAE8",
         borderRadius: 12,
-        //borderWidth: 1,
-        //borderColor: "#FFF44F",
         padding: 12,
         marginRight: 12,
         width: 160,

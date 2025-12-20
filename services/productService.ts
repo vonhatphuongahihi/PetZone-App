@@ -33,7 +33,7 @@ export interface Store {
 }
 
 export interface Product {
-    [x: string]: number;
+    [x: string]: any;
     remainingQuantity: ReactNode;
     sold: ReactNode;
     id: number;
@@ -59,7 +59,7 @@ export interface Product {
 }
 
 export interface StoreDetail {
-    [x: string]: string | undefined;
+    [x: string]: any | undefined;
     id: string;
     userId: string;
     storeName: string;
