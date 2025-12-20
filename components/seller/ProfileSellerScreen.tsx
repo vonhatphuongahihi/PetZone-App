@@ -10,6 +10,7 @@ import {
     Dimensions,
     Image,
     Modal,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -38,7 +39,7 @@ export default function ProfileSellerScreen() {
     const [showImagePickerModal, setShowImagePickerModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
-    
+
     // Animations
     const modalOpacity = useRef(new Animated.Value(0)).current;
     const modalScale = useRef(new Animated.Value(0.3)).current;
@@ -206,7 +207,7 @@ export default function ProfileSellerScreen() {
                 router.replace('/login');
                 return;
             }
-            const platform = 'mobile';
+            const platform = Platform.OS === 'web' ? 'web' : 'mobile';
             const response = await userInfoService.updateUserAvatar(imageUri, token, platform);
 
             if (response.success) {
@@ -272,12 +273,12 @@ export default function ProfileSellerScreen() {
         keyboardType?: KeyboardTypeOptions;
         placeholder?: string;
     }
-    const InputField = ({ 
-        label, 
-        value, 
-        onChangeText, 
-        icon, 
-        editable = true, 
+    const InputField = ({
+        label,
+        value,
+        onChangeText,
+        icon,
+        editable = true,
         multiline = false,
         keyboardType = 'default',
         placeholder = ''
@@ -285,15 +286,15 @@ export default function ProfileSellerScreen() {
         <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>{label}</Text>
             <View style={[
-                styles.inputWrapper, 
+                styles.inputWrapper,
                 !editable && styles.inputWrapperDisabled,
                 multiline && { alignItems: 'flex-start', paddingVertical: 12 }
             ]}>
-                <MaterialIcons 
-                    name={icon} 
-                    size={22} 
-                    color={editable ? "#FFB400" : "#A0AEC0"} 
-                    style={[styles.inputIcon, multiline && { marginTop: 4 }]} 
+                <MaterialIcons
+                    name={icon}
+                    size={22}
+                    color={editable ? "#FFB400" : "#A0AEC0"}
+                    style={[styles.inputIcon, multiline && { marginTop: 4 }]}
                 />
                 <TextInput
                     style={[styles.input, multiline && styles.inputMultiline]}
@@ -395,8 +396,8 @@ export default function ProfileSellerScreen() {
             <SuccessModal />
             <LogoutConfirmModal />
 
-            <ScrollView 
-                style={styles.scrollView} 
+            <ScrollView
+                style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
                 onScroll={Animated.event(
                     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -411,22 +412,22 @@ export default function ProfileSellerScreen() {
 
                 {/* Profile Header Card */}
                 <View style={styles.profileHeaderContainer}>
-                        <TouchableOpacity onPress={handleAvatarPress} disabled={uploadingAvatar} activeOpacity={0.9}>
-                            <View style={styles.avatarWrapper}>
-                                <Image
-                                    source={profile.user.avatarUrl ? { uri: profile.user.avatarUrl } : require('@/assets/images/icon.png')}
-                                    style={styles.avatarImage}
-                                />
-                                {uploadingAvatar && (
-                                    <View style={styles.uploadingOverlay}>
-                                        <ActivityIndicator color="#FFF" />
-                                    </View>
-                                )}
-                                <View style={styles.editAvatarBadge}>
-                                    <MaterialIcons name="camera-alt" size={14} color="#FFF" />
+                    <TouchableOpacity onPress={handleAvatarPress} disabled={uploadingAvatar} activeOpacity={0.9}>
+                        <View style={styles.avatarWrapper}>
+                            <Image
+                                source={profile.user.avatarUrl ? { uri: profile.user.avatarUrl } : require('@/assets/images/icon.png')}
+                                style={styles.avatarImage}
+                            />
+                            {uploadingAvatar && (
+                                <View style={styles.uploadingOverlay}>
+                                    <ActivityIndicator color="#FFF" />
                                 </View>
+                            )}
+                            <View style={styles.editAvatarBadge}>
+                                <MaterialIcons name="camera-alt" size={14} color="#FFF" />
                             </View>
-                        </TouchableOpacity>
+                        </View>
+                    </TouchableOpacity>
 
                     <Text style={styles.shopName}>{profile.store.storeName}</Text>
 
@@ -461,7 +462,7 @@ export default function ProfileSellerScreen() {
                     <InputField
                         label="Tên quản trị viên"
                         value={formData.ownerName}
-                        onChangeText={(t: string) => setFormData({...formData, ownerName: t})}
+                        onChangeText={(t: string) => setFormData({ ...formData, ownerName: t })}
                         icon="person"
                         editable={isEditing}
                     />
@@ -469,7 +470,7 @@ export default function ProfileSellerScreen() {
                     <InputField
                         label="Tên cửa hàng"
                         value={formData.storeName}
-                        onChangeText={(t: string) => setFormData({...formData, storeName: t})}
+                        onChangeText={(t: string) => setFormData({ ...formData, storeName: t })}
                         icon="store"
                         editable={isEditing}
                     />
@@ -477,7 +478,7 @@ export default function ProfileSellerScreen() {
                     <InputField
                         label="Số điện thoại"
                         value={formData.phoneNumber}
-                        onChangeText={(t: string) => setFormData({...formData, phoneNumber: t})}
+                        onChangeText={(t: string) => setFormData({ ...formData, phoneNumber: t })}
                         icon="phone"
                         keyboardType="phone-pad"
                         editable={isEditing}
@@ -488,13 +489,13 @@ export default function ProfileSellerScreen() {
                         value={profile.store.email || profile.user.email}
                         icon="email"
                         editable={false}
-                        onChangeText={() => {}}
+                        onChangeText={() => { }}
                     />
 
                     <InputField
                         label="Địa chỉ"
                         value={formData.address}
-                        onChangeText={(t: string) => setFormData({...formData, address: t})}
+                        onChangeText={(t: string) => setFormData({ ...formData, address: t })}
                         icon="location-on"
                         editable={isEditing}
                         multiline
@@ -503,7 +504,7 @@ export default function ProfileSellerScreen() {
                     <InputField
                         label="Giới thiệu cửa hàng"
                         value={formData.description}
-                        onChangeText={(t: string) => setFormData({...formData, description: t})}
+                        onChangeText={(t: string) => setFormData({ ...formData, description: t })}
                         icon="description"
                         editable={isEditing}
                         multiline
@@ -523,13 +524,13 @@ export default function ProfileSellerScreen() {
                             </>
                         ) : (
                             <TouchableOpacity style={styles.btnLogout} onPress={handleLogout}>
-                                <MaterialIcons name="logout" size={20} color="#E53E3E" style={{marginRight: 8}} />
+                                <MaterialIcons name="logout" size={20} color="#E53E3E" style={{ marginRight: 8 }} />
                                 <Text style={styles.btnLogoutText}>Đăng xuất</Text>
                             </TouchableOpacity>
                         )}
                     </View>
                 </View>
-                <View style={{height: 40}} />
+                <View style={{ height: 40 }} />
             </ScrollView>
             <SellerBottomNavigation />
         </View>
@@ -550,7 +551,7 @@ const styles = StyleSheet.create({
     scrollView: {
         flex: 1,
     },
-    
+
     // Header Styling
     headerBackground: {
         height: 160,
@@ -828,7 +829,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         lineHeight: 22,
     },
-    
+
     // Image Picker Modal Specific
     modalGrid: {
         flexDirection: 'row',

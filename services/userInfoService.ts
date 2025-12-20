@@ -86,15 +86,28 @@ export const userInfoService = {
         const formData = new FormData();
 
         try {
-            // Both web and mobile - convert URI to blob
-            const response = await fetch(imageUri);
-            if (!response.ok) {
-                throw new Error('Failed to fetch image');
+            // Xử lý khác nhau cho web và mobile
+            if (platform === 'web') {
+                // Web: convert URI to blob
+                const response = await fetch(imageUri);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch image');
+                }
+                const blob = await response.blob();
+                const filename = imageUri.split('/').pop() || 'avatar.jpg';
+                const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+                formData.append('avatar', file);
+            } else {
+                // React Native: sử dụng object với uri, name, type (không dùng blob)
+                const filename = imageUri.split('/').pop() || 'avatar.jpg';
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : 'image/jpeg';
+                formData.append('avatar', {
+                    uri: imageUri,
+                    name: filename,
+                    type: type,
+                } as any);
             }
-            const blob = await response.blob();
-            const filename = imageUri.split('/').pop() || 'avatar.jpg';
-            const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
-            formData.append('avatar', file);
         } catch (error) {
             console.error('Error processing image:', error);
             throw new Error('Không thể xử lý tệp ảnh');
@@ -109,7 +122,7 @@ export const userInfoService = {
         });
 
         if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json();
+            const errorData = await uploadResponse.json().catch(() => ({ message: 'Cập nhật ảnh đại diện thất bại' }));
             throw new Error(errorData.message || 'Cập nhật ảnh đại diện thất bại');
         }
 
