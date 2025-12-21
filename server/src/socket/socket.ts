@@ -14,7 +14,11 @@ export interface ExtendedServer extends Server {
 export function setupSocket(httpServer: HttpServer): ExtendedServer {
     const io = new Server(httpServer, {
         cors: {
-            origin: process.env.FRONTEND_URL || '*',
+            origin: [
+                "https://petzone-server.onrender.com",
+                "http://localhost:8081",
+                "*"
+            ],
             credentials: true
         }
     });
