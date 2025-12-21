@@ -1,5 +1,4 @@
-// === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.10.3.117:3001/api';
+import { API_BASE_URL } from '../config/api';
 
 export interface CartItem {
     id: string;

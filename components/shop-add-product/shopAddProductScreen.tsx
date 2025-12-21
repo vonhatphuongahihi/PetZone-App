@@ -18,9 +18,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../components/shop-add-product/addProductStyle";
-
-// === IP / BASE_URL của backend ===
-const API_BASE_URL = 'http://10.10.3.117:3001/api';
+import { API_BASE_URL } from '../../config/api';
 
 interface Category {
   id: number;

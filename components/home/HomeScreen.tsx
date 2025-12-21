@@ -15,6 +15,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { API_BASE_URL } from '../../config/api';
 import { useOrderNotificationModal } from "../../hooks/useOrderNotificationModal";
 import { useOrderNotifications } from "../../hooks/useOrderNotifications";
 import { cartService } from "../../services/cartService";
@@ -91,7 +92,6 @@ export default function HomeScreen() {
     const fetchCategories = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.11.7.94:3001/api';
             const res = await fetch(`${API_BASE_URL}/categories`, { headers });
 
             if (res.status === 401) {
@@ -114,7 +114,6 @@ export default function HomeScreen() {
     const fetchProducts = async (token: string) => {
         try {
             const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-            const API_BASE_URL = 'http://10.11.7.94:3001/api';
             const [todayRes, newRes, hotRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/products/today?limit=10`, { headers }),
                 fetch(`${API_BASE_URL}/products/new`, { headers }),
