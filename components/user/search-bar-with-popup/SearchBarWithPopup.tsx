@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Image,
+    ScrollView,
     Text,
     TextInput,
     TouchableOpacity,
@@ -143,43 +144,50 @@ export default function SearchBarWithPopup() {
                                         {loading ? (
                                             <ActivityIndicator size="small" color="#FBBC05" style={{ padding: 20 }} />
                                         ) : results.length > 0 ? (
-                                            results.map((item) => (
-                                                <TouchableOpacity
-                                                    key={item.id.toString()}
-                                                    style={SearchBarWithPopupStyles.productRow}
-                                                    onPress={() => {
-                                                        setVisible(false);
-                                                        inputRef.current?.blur();
-                                                        router.push({
-                                                            pathname: "/product",
-                                                            params: { productId: item.id.toString() }
-                                                        } as any);
-                                                    }}
-                                                >
-                                                    <Image
-                                                        source={{ uri: item.images[0]?.url || "https://via.placeholder.com/60" }}
-                                                        style={SearchBarWithPopupStyles.productImage}
-                                                    />
-                                                    <View style={{ flex: 1 }}>
-                                                        <Text style={SearchBarWithPopupStyles.productName} numberOfLines={2}>
-                                                            {item.name}
-                                                        </Text>
-                                                        <View style={SearchBarWithPopupStyles.priceRow}>
-                                                            <Text style={SearchBarWithPopupStyles.productPrice}>
-                                                                {item.price.toLocaleString("vi-VN")}đ
+                                            <ScrollView style={{ maxHeight: 300 }}>  {/* <-- Thêm ScrollView với maxHeight */}
+                                                {results.map((item) => (
+                                                    <TouchableOpacity
+                                                        key={item.id.toString()}
+                                                        style={SearchBarWithPopupStyles.productRow}
+                                                        onPress={() => {
+                                                            setVisible(false);
+                                                            inputRef.current?.blur();
+                                                            router.push({
+                                                                pathname: "/product",
+                                                                params: { productId: item.id.toString() }
+                                                            } as any);
+                                                        }}
+                                                    >
+                                                        <Image
+                                                            source={{ uri: item.images[0]?.url || "https://via.placeholder.com/60" }}
+                                                            style={SearchBarWithPopupStyles.productImage}
+                                                        />
+                                                        <View style={{ flex: 1 }}>
+                                                            <Text
+                                                                style={SearchBarWithPopupStyles.productName}
+                                                                numberOfLines={2}
+                                                                ellipsizeMode="tail"
+                                                            >
+                                                                {item.title} {/* sửa name → title */}
                                                             </Text>
-                                                            {item.oldPrice && (
-                                                                <Text style={SearchBarWithPopupStyles.oldPrice}>
-                                                                    {item.oldPrice.toLocaleString("vi-VN")}đ
+
+                                                            <View style={SearchBarWithPopupStyles.priceRow}>
+                                                                <Text style={SearchBarWithPopupStyles.productPrice}>
+                                                                    {item.price.toLocaleString("vi-VN")}đ
                                                                 </Text>
-                                                            )}
+                                                                {item.oldPrice && (
+                                                                    <Text style={SearchBarWithPopupStyles.oldPrice}>
+                                                                        {item.oldPrice.toLocaleString("vi-VN")}đ
+                                                                    </Text>
+                                                                )}
+                                                            </View>
+                                                            <Text style={{ fontSize: 12, color: "#666" }}>
+                                                                {item.store.storeName}
+                                                            </Text>
                                                         </View>
-                                                        <Text style={{ fontSize: 12, color: "#666" }}>
-                                                            {item.store.storeName}
-                                                        </Text>
-                                                    </View>
-                                                </TouchableOpacity>
-                                            ))
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </ScrollView>
                                         ) : (
                                             <Text style={{ padding: 20, textAlign: "center", color: "#999" }}>
                                                 Không tìm thấy sản phẩm
