@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { API_BASE_URL } from "../../config/api";
 import { styles } from "./shopProductListStyle";
 
@@ -120,10 +121,7 @@ export default function ShopProductListScreen() {
     if (Platform.OS === "web" && window.history.length > 1) {
       window.history.back();
     } else {
-      router.push({
-        pathname: "/seller/shopCategories",
-        params: { storeId }
-      });
+      router.back();
     }
   };
 
@@ -174,13 +172,13 @@ export default function ShopProductListScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity 
             onPress={handleBack}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={{ padding: 4, zIndex: 999 }}
+            style={{ zIndex: 999 }}
           >
             <Ionicons name="chevron-back-outline" size={28} color="#FBBC05" />
           </TouchableOpacity>
@@ -206,6 +204,6 @@ export default function ShopProductListScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
