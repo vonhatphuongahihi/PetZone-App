@@ -528,7 +528,17 @@ export const searchProducts = async (req: Request, res: Response) => {
       skip: offset,
       take: limit,
       include: {
-        store: { select: { id: true, storeName: true, avatarUrl: true } },
+        category: {
+          select: { name: true }
+        },
+        store: {
+          select: {
+            storeName: true,
+            user: {
+              select: { avatarUrl: true }
+            },
+          },
+        },
         images: { select: { url: true } },
       },
     });
