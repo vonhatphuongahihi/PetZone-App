@@ -16,18 +16,26 @@ import { API_BASE_URL } from "../../../config/api";
 import { SearchBarWithPopupStyles } from './searchBarWithPopupStyles';
 
 interface Props {
+    searchQuery?: string;  // optional
     recentSearches?: string[];   // optional
     hotProducts?: any[];
 }
 
-export default function SearchBarWithPopup() {
+export default function SearchBarWithPopup({ searchQuery = "" }: Props) {
     const router = useRouter();
     const [visible, setVisible] = useState(false);
-    const [query, setQuery] = useState("");
+    const [query, setQuery] = useState(searchQuery);
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchHistory, setSearchHistory] = useState<string[]>([]);
     const inputRef = useRef<TextInput>(null);
+
+    // Cập nhật query khi searchQuery prop thay đổi
+    useEffect(() => {
+        if (searchQuery) {
+            setQuery(searchQuery);
+        }
+    }, [searchQuery]);
 
     // Tìm kiếm khi nhập
     useEffect(() => {
@@ -49,7 +57,7 @@ export default function SearchBarWithPopup() {
 
                 const params = new URLSearchParams({
                     q: query.trim(),
-                    limit: "10",
+                    limit: "3",
                 });
 
                 const res = await fetch(`${API_BASE_URL}/products/search?${params}`, {

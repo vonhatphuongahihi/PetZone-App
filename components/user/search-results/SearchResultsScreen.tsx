@@ -40,6 +40,7 @@ export default function SearchResultsScreen() {
                 });
                 const data = await res.json();
                 setProducts(data.success ? data.data : []);
+                console.log("Search results data:", data);
             } catch (error) {
                 console.error("Error fetching search results:", error);
                 setProducts([]);
@@ -67,10 +68,7 @@ export default function SearchResultsScreen() {
     }, []);
 
     const handleProductPress = (productId: number) => {
-        router.push({
-            pathname: "/product",
-            params: { id: productId.toString() },
-        });
+        router.push(`/product?productId=${productId}`);
     };
     const renderProduct = ({ item }: { item: any }) => {
         const productForCard = {
@@ -82,16 +80,16 @@ export default function SearchResultsScreen() {
                 ? { uri: item.images[0].url }
                 : require("../../../assets/images/cat.png"),
             shop: item.store?.storeName || "Pet Shop",
-            shopImage: item.store?.user?.avatarUrl
+            shopImage: item.store?.user?.avatarUrl 
                 ? { uri: item.store.user.avatarUrl }
                 : require("../../../assets/images/shop.jpg"),
             sold: item.soldCount || 0, 
-            rating: 5.0, 
+            rating: item.avgRating || 0, 
             discount: item.oldPrice
                 ? `-${Math.round(((Number(item.oldPrice) - Number(item.price)) / Number(item.oldPrice)) * 100)}%`
                 : "",
-            category: "Pet",
-            tag: "Hàng cực hot",
+            category: item.category?.name || 'Không có danh mục',
+            tag: item.tag || undefined,
         };
 
         return (
@@ -114,9 +112,16 @@ export default function SearchResultsScreen() {
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
                     <SearchBarWithPopup
-                    //recentSearches={["cỏ mèo", "cát vệ sinh trà xanh", "áo cho mèo", "dây dắt"]}
-                    //hotProducts={hotProducts}
+                        searchQuery={q as string}
+                        //recentSearches={["cỏ mèo", "cát vệ sinh trà xanh", "áo cho mèo", "dây dắt"]}
+                        //hotProducts={hotProducts}
                     />
+                </View>
+
+                <View style={{ paddingHorizontal: 20}}>
+                    <Text style={{ fontSize: 17, fontWeight: "600", marginBottom: 10}}>
+                        Kết quả tìm kiếm cho &quot;{q}&quot;
+                    </Text>
                 </View>
 
                 {/* Danh sách sản phẩm */}
