@@ -15,7 +15,6 @@ export const styles = StyleSheet.create({
         backgroundColor: "#fff",
     },
     backButton: {
-        padding: 8,
         marginRight: 12,
     },
     headerTitle: {
