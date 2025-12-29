@@ -408,6 +408,13 @@ export default function HomeScreen() {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                         <TouchableOpacity
                             style={homeStyles.cartButton}
+                            onPress={() => router.push('/chatbot')}
+                        >
+                            <MaterialCommunityIcons name="robot-happy-outline" color="#FBBC05" size={30} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={homeStyles.cartButton}
                             onPress={() => router.push('/notifications')}
                         >
                             <MaterialCommunityIcons name="bell" color="#FBBC05" size={28} />

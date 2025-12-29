@@ -88,6 +88,7 @@ export default function RootLayout() {
         <Stack.Screen name="product-list" options={{ headerShown: false }} />
         <Stack.Screen name="product" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ headerShown: false }} />
+        <Stack.Screen name="chatbot" options={{ headerShown: false }} />
         <Stack.Screen name="search-results" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

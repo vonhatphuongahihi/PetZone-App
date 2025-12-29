@@ -28,6 +28,7 @@ model User {
   storeFollows             StoreFollow[]
   stores                   Store[]
   addresses                UserAddress[]
+  chatbotMessages          ChatbotMessage[]
 
   @@map("users")
 }
@@ -287,4 +288,17 @@ model StoreFollow {
   @@index([userId])
   @@index([storeId])
   @@map("store_follows")
+}
+
+model ChatbotMessage {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  role      String   @db.VarChar(20) // 'user' or 'assistant'
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("chatbot_messages")
 }

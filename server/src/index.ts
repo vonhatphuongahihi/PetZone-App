@@ -11,6 +11,7 @@ import authRoutes from './routes/auth';
 import cartRoutes from './routes/cart';
 import categoryRoutes from './routes/category';
 import chatRoutes from './routes/chat';
+import chatbotRoutes from './routes/chatbot';
 import orderRoutes from './routes/order';
 import productRoutes from './routes/product';
 //import reviewRoutes from './routes/review';
@@ -94,6 +95,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/chat', chatRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/users', userRoutes);
 //app.use('/reviews', review);
 
