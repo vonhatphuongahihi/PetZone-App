@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
 import { notificationService } from '../services/notificationService';
 import { getSocket } from '../services/socket';
 import { SocketEventEmitter } from '../services/socketEventEmitter';
@@ -25,11 +24,12 @@ export function useOrderNotifications() {
                 try {
                     await notificationService.addNotification({
                         type: 'order',
-                        title: 'Đặt hàng thành công!',
-                        message: `Đơn hàng ${data.orders?.[0]?.orderNumber || ''} của bạn đã được đặt thành công. Tổng tiền: ${(data.orders?.[0]?.total || 0).toLocaleString('vi-VN')}đ`,
+                        title: 'Đơn hàng đang chờ xác nhận',
+                        message: `Đơn hàng ${data.orders?.[0]?.orderNumber || ''} của bạn đang chờ xác nhận từ cửa hàng. Tổng tiền: ${(data.orders?.[0]?.total || 0).toLocaleString('vi-VN')}đ`,
                         data: {
                             orderId: data.orders?.[0]?.orderId,
-                            orderNumber: data.orders?.[0]?.orderNumber
+                            orderNumber: data.orders?.[0]?.orderNumber,
+                            status: 'pending'
                         }
                     });
                     await loadUnreadCount();
@@ -100,39 +100,6 @@ export function useOrderNotifications() {
             }
         );
 
-        // Listen for order:new (seller notification)
-        const orderNewSubscription = SocketEventEmitter.addListener(
-            'order:new',
-            async (data: any) => {
-                try {
-                    await notificationService.addNotification({
-                        type: 'order',
-                        title: 'Đơn hàng mới!',
-                        message: `Bạn có đơn hàng mới từ ${data.customerName}. Mã đơn: ${data.orderNumber}. Tổng tiền: ${(data.total || 0).toLocaleString('vi-VN')}đ`,
-                        data: {
-                            orderId: data.orderId,
-                            orderNumber: data.orderNumber,
-                            storeId: data.storeId
-                        }
-                    });
-                    await loadUnreadCount();
-
-                    // Show alert for new order
-                    Alert.alert(
-                        'Đơn hàng mới!',
-                        `Bạn có đơn hàng mới từ ${data.customerName}. Mã đơn: ${data.orderNumber}`,
-                        [{
-                            text: 'Xem ngay', onPress: () => {
-                                // Navigate to orders screen if needed
-                            }
-                        }, { text: 'Đóng' }]
-                    );
-                } catch (error) {
-                    console.error('Error adding new order notification:', error);
-                }
-            }
-        );
-
         // Refresh unread count periodically
         const interval = setInterval(async () => {
             const count = await notificationService.getUnreadCount();
@@ -142,7 +109,6 @@ export function useOrderNotifications() {
         return () => {
             orderCreatedSubscription.remove();
             orderStatusChangedSubscription.remove();
-            orderNewSubscription.remove();
             clearInterval(interval);
         };
     }, []);

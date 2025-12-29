@@ -6,10 +6,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { getSocket } from '@/services/socket';
+import { OrderNotificationModal } from '@/components/user/notifications/OrderNotificationModal';
 import { ToastNotification } from '@/components/user/notifications/ToastNotification';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useOrderNotificationModal } from '@/hooks/useOrderNotificationModal';
 import { useToastNotification } from '@/hooks/useToastNotification';
+import { getSocket } from '@/services/socket';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -18,6 +20,7 @@ export default function RootLayout() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const { visible: toastVisible, toastData, handleClose: handleCloseToast } = useToastNotification();
+  const { modalVisible, modalData, handleClose: handleCloseModal, handleViewOrder } = useOrderNotificationModal();
   const [fontsLoaded] = useFonts({
     PaytoneOne_400Regular: PaytoneOne_400Regular,
   });
@@ -60,6 +63,17 @@ export default function RootLayout() {
           title={toastData.title}
           message={toastData.message}
           onClose={handleCloseToast}
+        />
+      )}
+      {modalVisible && modalData && (
+        <OrderNotificationModal
+          visible={modalVisible}
+          title={modalData.title}
+          message={modalData.message}
+          orderNumber={modalData.orderNumber}
+          total={modalData.total}
+          onClose={handleCloseModal}
+          onViewOrder={handleViewOrder}
         />
       )}
       <Stack initialRouteName="splash">

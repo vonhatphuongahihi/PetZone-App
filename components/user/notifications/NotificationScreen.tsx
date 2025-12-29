@@ -105,6 +105,13 @@ export default function NotificationScreen() {
                             params: { filter: 'pending' }
                         });
                     }
+                    // Check if it's "Đơn hàng đang chờ xác nhận" (for user)
+                    else if (item.title === 'Đơn hàng đang chờ xác nhận' ||
+                        item.title.includes('đang chờ xác nhận') ||
+                        (item.data?.status === 'pending' && !item.title.includes('đơn hàng mới'))) {
+                        // Navigate to order confirm screen
+                        router.push('/order-confirm');
+                    }
                     // Check if it's a confirmed/delivery notification (for user)
                     else if (item.title.includes('đã được xác nhận') ||
                         item.title.includes('đang giao') ||
@@ -118,6 +125,11 @@ export default function NotificationScreen() {
                         // Navigate to purchase history screen
                         router.push('/purchase-history');
                     }
+                    // Check if it's "Đơn hàng đã bị hủy" (for user)
+                    else if (item.title === 'Đơn hàng đã bị hủy' || item.title.includes('đã bị hủy')) {
+                        // Navigate to purchase history screen
+                        router.push('/purchase-history');
+                    }
                     // Check if it's a delivered notification (for seller - customer received)
                     else if (item.title.includes('đã nhận hàng') ||
                         item.title.includes('Khách hàng đã nhận hàng')) {
@@ -127,9 +139,15 @@ export default function NotificationScreen() {
                             params: { filter: 'shipped' }
                         });
                     }
-                    // Default: navigate to seller orders
+                    // Default: navigate based on status
                     else {
-                        router.push('/seller/orders');
+                        // If it's a seller notification (has storeId), go to seller orders
+                        if (item.data?.storeId) {
+                            router.push('/seller/orders');
+                        } else {
+                            // Otherwise, it's a user notification, go to purchase history
+                            router.push('/purchase-history');
+                        }
                     }
                 } else if (item.type === 'message' && item.data?.conversationId) {
                     router.push(`/messages`);
