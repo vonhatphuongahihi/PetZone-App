@@ -4,6 +4,8 @@ import { Request, Response } from "express";
 import fs from "fs";
 import multer from "multer";
 import cloudinary from "../config/cloudinary";
+import { semanticSearchIds } from "../search/semanticSearch";
+
 
 const prisma = new PrismaClient();
 
@@ -502,12 +504,28 @@ export const searchProducts = async (req: Request, res: Response) => {
     const user = (req as any).user;
     const isSeller = user?.role === "SELLER";
 
-    const where: any = {
-      OR: [
+    let where: any = {};
+
+    const useAISearch = query.length > 15 || query.split(" ").length >= 3;
+
+    if (useAISearch) {
+      const aiIds = await semanticSearchIds(query);
+
+      if (aiIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          data: [],
+          pagination: { page, limit, total: 0 },
+        });
+      }
+
+      where.id = { in: aiIds };
+    } else {
+      where.OR = [
         { title: { contains: searchTerm, mode: "insensitive" } },
         { description: { contains: searchTerm, mode: "insensitive" } },
-      ],
-    };
+      ];
+    }
 
     if (isSeller) {
       const sellerStore = await prisma.store.findFirst({
