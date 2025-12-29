@@ -22,6 +22,13 @@ export const categoriesStyles = StyleSheet.create({
         color: "#1A1A1A",
         paddingTop: 16,
     },
+    headerTitleChild: {
+        fontSize: 18,
+        fontWeight: "700",
+        marginLeft: 16,
+        flex: 1,
+        color: "#1A1A1A",
+    },
     headerContainer: {
         flexDirection: "row",
         alignItems: "center",

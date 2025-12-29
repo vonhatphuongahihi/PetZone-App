@@ -84,7 +84,7 @@ export default function ChildCategoriesScreen() {
                     <TouchableOpacity onPress={() => router.back()}>
                         <FontAwesome5 name="chevron-left" size={20} color="#FBBC05" />
                     </TouchableOpacity>
-                    <Text style={categoriesStyles.headerTitle}>
+                    <Text style={categoriesStyles.headerTitleChild}>
                         {parentName || 'Danh mục con'}
                     </Text>
                     <View style={{ width: 20 }} />
