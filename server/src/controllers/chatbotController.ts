@@ -110,15 +110,35 @@ export const chatWithBot = async (req: Request, res: Response) => {
             });
         }
 
+        // Detect special queries
+        const messageLower = message.toLowerCase();
+        let orderBy: any = { soldCount: 'desc' }; // Default: bán chạy nhất
+        let isSpecialQuery = false;
+
+        if (messageLower.includes('bán chạy') || messageLower.includes('bán chạy nhất') || messageLower.includes('hot')) {
+            orderBy = { soldCount: 'desc' };
+            isSpecialQuery = true;
+            console.log('[Chatbot] Detected: Best selling products');
+        } else if (messageLower.includes('giá rẻ') || messageLower.includes('giá thấp') || messageLower.includes('rẻ nhất') || messageLower.includes('rẻ')) {
+            orderBy = { price: 'asc' };
+            isSpecialQuery = true;
+            console.log('[Chatbot] Detected: Cheapest products');
+        } else if (messageLower.includes('mới nhất') || messageLower.includes('mới') || messageLower.includes('mới về')) {
+            orderBy = { createdAt: 'desc' };
+            isSpecialQuery = true;
+            console.log('[Chatbot] Detected: Newest products');
+        }
+
         // Extract keywords từ message (loại bỏ các từ không cần thiết)
-        const stopWords = ['tôi', 'muốn', 'mua', 'cần', 'cho', 'của', 'bạn', 'có', 'là', 'và', 'với', 'từ', 'đến', 'về', 'để', 'được', 'sẽ', 'đã', 'một', 'các', 'những', 'nào', 'gì', 'không', 'rất', 'nhiều', 'ít', 'hơn', 'bằng'];
-        const words = message.toLowerCase()
+        const stopWords = ['tôi', 'muốn', 'mua', 'cần', 'cho', 'của', 'bạn', 'có', 'là', 'và', 'với', 'từ', 'đến', 'về', 'để', 'được', 'sẽ', 'đã', 'một', 'các', 'những', 'nào', 'gì', 'không', 'rất', 'nhiều', 'ít', 'hơn', 'bằng', 'sản', 'phẩm', 'bán', 'chạy', 'nhất', 'giá', 'rẻ', 'thấp', 'mới'];
+        const words = messageLower
             .replace(/[.,!?;:]/g, ' ')
             .split(/\s+/)
             .filter(word => word.length > 1 && !stopWords.includes(word));
 
-        console.log('[Chatbot] All words:', message.toLowerCase().split(/\s+/));
+        console.log('[Chatbot] All words:', messageLower.split(/\s+/));
         console.log('[Chatbot] Filtered keywords:', words);
+        console.log('[Chatbot] Is special query:', isSpecialQuery);
 
         // Tạo OR conditions cho tất cả keywords
         const orConditions: any[] = [];
@@ -134,16 +154,18 @@ export const chatWithBot = async (req: Request, res: Response) => {
             );
         });
 
-        // Nếu không có keywords, lấy tất cả sản phẩm
+        // Nếu là special query và không có keywords cụ thể, lấy tất cả sản phẩm
         const whereCondition: any = {
             quantity: { gt: 0 }
         };
 
-        if (orConditions.length > 0) {
+        // Chỉ thêm OR conditions nếu có keywords và không phải special query đơn thuần
+        if (orConditions.length > 0 && !(isSpecialQuery && words.length === 0)) {
             whereCondition.OR = orConditions;
         }
 
         console.log('[Chatbot] Search where condition:', JSON.stringify(whereCondition, null, 2));
+        console.log('[Chatbot] Order by:', JSON.stringify(orderBy, null, 2));
 
         const products = await prisma.product.findMany({
             where: whereCondition,
@@ -163,9 +185,7 @@ export const chatWithBot = async (req: Request, res: Response) => {
                 }
             },
             take: 10, // Lấy 10 sản phẩm phù hợp nhất
-            orderBy: {
-                soldCount: 'desc'
-            }
+            orderBy: orderBy
         });
 
         console.log('[Chatbot] Found products count:', products.length);
@@ -353,6 +373,43 @@ export const getChatbotHistory = async (req: Request, res: Response) => {
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to get chatbot history'
+        });
+    }
+};
+
+// Xóa lịch sử chat với chatbot
+export const deleteChatbotHistory = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user?.id;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+
+        console.log('[Chatbot] deleteChatbotHistory - User ID:', userId);
+
+        // Xóa tất cả messages của user
+        const result = await (prisma as any).chatbotMessage.deleteMany({
+            where: {
+                userId: userId
+            }
+        });
+
+        console.log('[Chatbot] Deleted', result.count, 'messages');
+
+        res.json({
+            success: true,
+            message: 'Đã xóa lịch sử chat thành công',
+            deletedCount: result.count
+        });
+    } catch (error: any) {
+        console.error('[Chatbot] Error in deleteChatbotHistory:', error);
+        console.error('[Chatbot] Error stack:', error.stack);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to delete chatbot history'
         });
     }
 };

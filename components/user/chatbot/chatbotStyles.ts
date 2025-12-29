@@ -168,6 +168,32 @@ export const chatbotStyles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#FBBC05',
     },
+    productActions: {
+        flexDirection: 'row',
+        marginTop: 8,
+        gap: 8,
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        flex: 1,
+    },
+    addToCartButton: {
+        backgroundColor: '#FBBC05',
+    },
+    buyNowButton: {
+        backgroundColor: '#FF6B6B',
+    },
+    actionButtonText: {
+        color: '#FFF',
+        fontSize: 12,
+        fontWeight: '600',
+        marginLeft: 4,
+    },
     loadingContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -222,5 +248,35 @@ export const chatbotStyles = StyleSheet.create({
     },
     sendButtonDisabled: {
         backgroundColor: '#CCC',
+    },
+    quickRepliesContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#FFF',
+        borderTopWidth: 1,
+        borderTopColor: '#E5E5E5',
+    },
+    quickRepliesTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#666',
+        marginBottom: 8,
+    },
+    quickRepliesList: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    quickReplyButton: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        borderWidth: 1,
+        borderColor: '#E5E5E5',
+    },
+    quickReplyText: {
+        fontSize: 13,
+        color: '#333',
     },
 });

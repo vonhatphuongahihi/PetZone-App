@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     FlatList,
     Image,
     KeyboardAvoidingView,
@@ -14,6 +15,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { cartService } from '../../../services/cartService';
 import { chatbotService, ChatMessage, Product } from '../../../services/chatbotService';
 import { tokenService } from '../../../services/tokenService';
 import { chatbotStyles } from './chatbotStyles';
@@ -22,12 +24,21 @@ import { chatbotStyles } from './chatbotStyles';
 const botAvatarImage = require('../../../assets/images/shop.jpg');
 const userAvatarImage = require('../../../assets/images/user.jpg');
 
+// Quick reply suggestions
+const QUICK_REPLIES = [
+    { text: 'Tôi cần thức ăn cho chó', query: 'thức ăn cho chó' },
+    { text: 'Sản phẩm bán chạy nhất', query: 'sản phẩm bán chạy' },
+    { text: 'Sản phẩm giá rẻ', query: 'sản phẩm giá rẻ' },
+    { text: 'Sản phẩm mới nhất', query: 'sản phẩm mới' },
+];
+
 export default function ChatbotScreen() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
     const [suggestedProducts, setSuggestedProducts] = useState<Product[]>([]);
+    const [addingToCart, setAddingToCart] = useState<string | null>(null);
     const flatListRef = useRef<FlatList>(null);
 
     useEffect(() => {
@@ -154,6 +165,54 @@ export default function ChatbotScreen() {
         router.push(`/product?productId=${product.id}`);
     };
 
+    const handleAddToCart = async (product: Product, event?: any) => {
+        if (event) {
+            event.stopPropagation(); // Ngăn trigger onPress của card
+        }
+
+        if (addingToCart === product.id) return;
+
+        try {
+            setAddingToCart(product.id);
+            const token = await tokenService.getToken();
+
+            if (!token) {
+                Alert.alert('Lỗi', 'Vui lòng đăng nhập để thêm vào giỏ hàng', [
+                    { text: 'Hủy', style: 'cancel' },
+                    { text: 'Đăng nhập', onPress: () => router.replace('/login') }
+                ]);
+                return;
+            }
+
+            await cartService.addToCart(token, Number(product.id), 1);
+            Alert.alert('Thành công', 'Đã thêm sản phẩm vào giỏ hàng!');
+        } catch (error: any) {
+            console.error('[Chatbot Screen] Error adding to cart:', error);
+            Alert.alert('Lỗi', error.message || 'Không thể thêm vào giỏ hàng');
+        } finally {
+            setAddingToCart(null);
+        }
+    };
+
+    const handleBuyNow = (product: Product, event?: any) => {
+        if (event) {
+            event.stopPropagation(); // Ngăn trigger onPress của card
+        }
+
+        router.push({
+            pathname: '/payment',
+            params: {
+                productId: product.id,
+                quantity: '1',
+                type: 'buy_now',
+            },
+        });
+    };
+
+    const handleQuickReply = (query: string) => {
+        setInputText(query);
+    };
+
     const handleDeleteHistory = async () => {
         try {
             const token = await tokenService.getToken();
@@ -222,6 +281,7 @@ export default function ChatbotScreen() {
             key={product.id}
             style={chatbotStyles.productCard}
             onPress={() => handleProductPress(product)}
+            activeOpacity={0.7}
         >
             {product.imageUrl && (
                 <Image
@@ -239,8 +299,35 @@ export default function ChatbotScreen() {
                 <Text style={chatbotStyles.productPrice}>
                     {product.price?.toLocaleString('vi-VN')}đ
                 </Text>
+
+                {/* Quick Actions */}
+                <View style={chatbotStyles.productActions}>
+                    <TouchableOpacity
+                        style={[chatbotStyles.actionButton, chatbotStyles.addToCartButton]}
+                        onPress={(e) => handleAddToCart(product, e)}
+                        disabled={addingToCart === product.id}
+                        activeOpacity={0.7}
+                    >
+                        {addingToCart === product.id ? (
+                            <ActivityIndicator size="small" color="#FFF" />
+                        ) : (
+                            <>
+                                <MaterialIcons name="add-shopping-cart" size={16} color="#FFF" />
+                                <Text style={chatbotStyles.actionButtonText}>Thêm</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[chatbotStyles.actionButton, chatbotStyles.buyNowButton]}
+                        onPress={(e) => handleBuyNow(product, e)}
+                        activeOpacity={0.7}
+                    >
+                        <MaterialIcons name="flash-on" size={16} color="#FFF" />
+                        <Text style={chatbotStyles.actionButtonText}>Mua ngay</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-            <MaterialIcons name="chevron-right" size={24} color="#999" />
         </TouchableOpacity>
     );
 
@@ -317,6 +404,25 @@ export default function ChatbotScreen() {
                     </View>
                 )}
             </KeyboardAvoidingView>
+
+            {/* Quick Reply Buttons */}
+            {messages.length <= 1 && !isLoading && (
+                <View style={chatbotStyles.quickRepliesContainer}>
+                    <Text style={chatbotStyles.quickRepliesTitle}>Câu hỏi nhanh:</Text>
+                    <View style={chatbotStyles.quickRepliesList}>
+                        {QUICK_REPLIES.map((reply, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={chatbotStyles.quickReplyButton}
+                                onPress={() => handleQuickReply(reply.query)}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={chatbotStyles.quickReplyText}>{reply.text}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+            )}
 
             {/* Input Area */}
             <View style={chatbotStyles.inputContainer}>
