@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export const chatbotStyles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#FFFFFF',
     },
     header: {
         flexDirection: 'row',
@@ -33,6 +33,9 @@ export const chatbotStyles = StyleSheet.create({
         borderWidth: 2,
         borderColor: '#FBBC05',
     },
+    headerTextContainer: {
+        flex: 1,
+    },
     headerTitle: {
         fontSize: 16,
         fontWeight: '600',
@@ -43,8 +46,13 @@ export const chatbotStyles = StyleSheet.create({
         color: '#4CAF50',
         marginTop: 2,
     },
+    deleteButton: {
+        padding: 8,
+        marginLeft: 8,
+    },
     messagesContainer: {
         flex: 1,
+        backgroundColor: '#FFFFFF',
     },
     messagesList: {
         padding: 16,
@@ -93,9 +101,6 @@ export const chatbotStyles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: '#FFF9E6',
-        justifyContent: 'center',
-        alignItems: 'center',
         marginRight: 8,
         borderWidth: 1,
         borderColor: '#FBBC05',
@@ -104,10 +109,9 @@ export const chatbotStyles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: '#FBBC05',
-        justifyContent: 'center',
-        alignItems: 'center',
         marginLeft: 8,
+        borderWidth: 1,
+        borderColor: '#E5E5E5',
     },
     productsSection: {
         paddingHorizontal: 16,
@@ -200,11 +204,13 @@ export const chatbotStyles = StyleSheet.create({
         maxHeight: 100,
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#FFFFFF',
         borderRadius: 24,
         fontSize: 15,
         color: '#333',
         marginRight: 8,
+        borderWidth: 1,
+        borderColor: '#E5E5E5',
     },
     sendButton: {
         width: 48,

@@ -63,4 +63,19 @@ export const chatbotService = {
         const data = await response.json();
         return data.data || [];
     },
+
+    // Xóa lịch sử chat
+    deleteHistory: async (token: string): Promise<void> => {
+        const response = await fetch(`${API_BASE_URL}/chatbot/history`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Không thể xóa lịch sử chat');
+        }
+    },
 };

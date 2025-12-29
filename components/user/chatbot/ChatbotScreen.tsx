@@ -18,6 +18,10 @@ import { chatbotService, ChatMessage, Product } from '../../../services/chatbotS
 import { tokenService } from '../../../services/tokenService';
 import { chatbotStyles } from './chatbotStyles';
 
+// Import avatar images
+const botAvatarImage = require('../../../assets/images/shop.jpg');
+const userAvatarImage = require('../../../assets/images/user.jpg');
+
 export default function ChatbotScreen() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputText, setInputText] = useState('');
@@ -150,6 +154,31 @@ export default function ChatbotScreen() {
         router.push(`/product?productId=${product.id}`);
     };
 
+    const handleDeleteHistory = async () => {
+        try {
+            const token = await tokenService.getToken();
+            if (!token) {
+                console.error('[Chatbot Screen] No token found');
+                return;
+            }
+
+            // Xóa lịch sử từ database
+            await chatbotService.deleteHistory(token);
+            console.log('[Chatbot Screen] History deleted successfully');
+
+            // Reset messages về message chào mừng
+            setMessages([{
+                role: 'assistant',
+                content: 'Xin chào! Tôi là trợ lý bán hàng của PetZone. Tôi có thể giúp bạn tìm sản phẩm phù hợp cho thú cưng của bạn. Bạn cần tìm gì hôm nay?',
+                timestamp: new Date().toISOString()
+            }]);
+            setSuggestedProducts([]);
+        } catch (error: any) {
+            console.error('[Chatbot Screen] Error deleting history:', error);
+            // Có thể hiển thị alert hoặc toast notification ở đây
+        }
+    };
+
     const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
         const isUser = item.role === 'user';
         const showAvatar = index === 0 || messages[index - 1]?.role !== item.role;
@@ -160,9 +189,11 @@ export default function ChatbotScreen() {
                 isUser ? chatbotStyles.userMessageContainer : chatbotStyles.botMessageContainer
             ]}>
                 {!isUser && showAvatar && (
-                    <View style={chatbotStyles.botAvatar}>
-                        <MaterialIcons name="smart-toy" size={24} color="#FBBC05" />
-                    </View>
+                    <Image
+                        source={botAvatarImage}
+                        style={chatbotStyles.botAvatar}
+                        resizeMode="cover"
+                    />
                 )}
                 <View style={[
                     chatbotStyles.messageBubble,
@@ -176,9 +207,11 @@ export default function ChatbotScreen() {
                     </Text>
                 </View>
                 {isUser && showAvatar && (
-                    <View style={chatbotStyles.userAvatar}>
-                        <MaterialIcons name="person" size={20} color="#FFF" />
-                    </View>
+                    <Image
+                        source={userAvatarImage}
+                        style={chatbotStyles.userAvatar}
+                        resizeMode="cover"
+                    />
                 )}
             </View>
         );
@@ -224,14 +257,24 @@ export default function ChatbotScreen() {
                     <MaterialIcons name="arrow-back-ios" size={24} color="#FBBC05" />
                 </TouchableOpacity>
                 <View style={chatbotStyles.headerInfo}>
-                    <View style={chatbotStyles.headerAvatar}>
-                        <MaterialIcons name="smart-toy" size={24} color="#FBBC05" />
-                    </View>
-                    <View>
+                    <Image
+                        source={botAvatarImage}
+                        style={chatbotStyles.headerAvatar}
+                        resizeMode="cover"
+                    />
+                    <View style={chatbotStyles.headerTextContainer}>
                         <Text style={chatbotStyles.headerTitle}>Trợ lý PetZone</Text>
                         <Text style={chatbotStyles.headerSubtitle}>Đang hoạt động</Text>
                     </View>
                 </View>
+                <TouchableOpacity
+                    onPress={handleDeleteHistory}
+                    style={chatbotStyles.deleteButton}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                    <MaterialIcons name="delete-outline" size={24} color="#FF4444" />
+                </TouchableOpacity>
             </View>
 
             {/* Messages List */}
