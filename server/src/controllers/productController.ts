@@ -400,14 +400,14 @@ export const getTodayProducts = async (req: Request, res: Response) => {
   }
 };
 
-// === GET NEW (7 NGÀY) ===
+// === GET NEW (14 NGÀY) ===
 export const getNewProducts = async (req: Request, res: Response) => {
   try {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
     const products = await prisma.product.findMany({
-      where: { createdAt: { gte: sevenDaysAgo } },
+      where: { createdAt: { gte: fourteenDaysAgo } },
       include: {
         images: true,
         category: true,
