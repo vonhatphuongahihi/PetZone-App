@@ -5,12 +5,12 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Order, orderService } from '../../../services/orderService';
 import { userInfoService } from '../../../services/userInfoService';
 import { styles } from './purchaseHistoryStyles';
