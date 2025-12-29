@@ -10,7 +10,6 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginTop: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
