@@ -8,6 +8,7 @@
     "postinstall": "prisma generate",
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
+    "build:index": "ts-node src/embedding/buildIndex.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
