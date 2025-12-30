@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface Notification {
     id: string;
-    type: 'order' | 'message' | 'system';
+    type: 'order' | 'message' | 'system' | 'review';
     title: string;
     message: string;
     data?: any;

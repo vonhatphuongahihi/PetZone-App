@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma } from '../index';
+import { getSocketInstance, prisma } from '../index';
 
 export const reviewController = {
     // Tạo review mới
@@ -164,6 +164,46 @@ export const reviewController = {
                         rating: storeAvgRating
                     }
                 });
+
+                // Emit socket event to notify seller about new review
+                try {
+                    const io = getSocketInstance();
+                    const product = await prisma.product.findUnique({
+                        where: { id: parseInt(productId) },
+                        select: {
+                            id: true,
+                            title: true,
+                            storeId: true,
+                            store: {
+                                select: {
+                                    userId: true
+                                }
+                            }
+                        }
+                    });
+
+                    if (product?.store?.userId) {
+                        // Find all sockets for the seller
+                        const sellerSockets = Array.from(io.sockets.sockets.values())
+                            .filter(s => s.data.userId === product.store.userId);
+
+                        sellerSockets.forEach(socket => {
+                            socket.emit('review:new', {
+                                reviewId: review.id,
+                                productId: product.id,
+                                productTitle: product.title,
+                                customerName: review.user?.username || 'Khách hàng',
+                                rating: review.rating,
+                                content: review.content || '',
+                                storeId: product.storeId
+                            });
+                        });
+                        console.log(`[Review] Emitted review:new event to seller ${product.store.userId} for product ${product.id}`);
+                    }
+                } catch (socketError) {
+                    console.error('[Review] Error emitting socket event:', socketError);
+                    // Don't fail the request if socket emit fails
+                }
             }
 
             res.json({

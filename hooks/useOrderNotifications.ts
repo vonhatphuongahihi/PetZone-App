@@ -33,6 +33,18 @@ export function useOrderNotifications() {
                         }
                     });
                     await loadUnreadCount();
+
+                    // Show toast notification
+                    const { DeviceEventEmitter } = await import('react-native');
+                    const orderNumber = data.orders?.[0]?.orderNumber || '';
+                    const shortOrderNumber = orderNumber.length > 12
+                        ? `${orderNumber.substring(0, 4)}...${orderNumber.slice(-4)}`
+                        : orderNumber;
+
+                    DeviceEventEmitter.emit('show_toast_notification', {
+                        title: 'Đơn hàng đang chờ xác nhận',
+                        message: `Đơn ${shortOrderNumber} đang chờ xác nhận`
+                    });
                 } catch (error) {
                     console.error('Error adding order created notification:', error);
                 }
@@ -71,29 +83,20 @@ export function useOrderNotifications() {
                     });
                     await loadUnreadCount();
 
-                    // Show toast notification for shipped orders (sliding from top)
-                    if (data.newStatus === 'shipped') {
-                        const { DeviceEventEmitter } = await import('react-native');
-                        // Shorten order number (e.g., "ORD-1234567890-1234" -> "ORD-...1234")
-                        const shortOrderNumber = data.orderNumber?.length > 12
-                            ? `${data.orderNumber.substring(0, 4)}...${data.orderNumber.slice(-4)}`
-                            : data.orderNumber;
-                        DeviceEventEmitter.emit('show_toast_notification', {
-                            title: 'Đơn hàng đã được giao!',
-                            message: `Đơn ${shortOrderNumber} đã được giao thành công`
-                        });
-                    }
-                    // Show modal for confirmed and cancelled orders
-                    else if (data.newStatus === 'confirmed' || data.newStatus === 'cancelled') {
-                        const { DeviceEventEmitter } = await import('react-native');
-                        DeviceEventEmitter.emit('show_order_notification', {
-                            title: title,
-                            message: `Đơn hàng ${data.orderNumber} từ ${data.storeName} ${data.statusMessage}`,
-                            orderNumber: data.orderNumber,
-                            total: data.total,
-                            isSeller: false
-                        });
-                    }
+                    // Show toast notification for all status changes
+                    const { DeviceEventEmitter } = await import('react-native');
+
+                    // Shorten order number for toast
+                    const shortOrderNumber = data.orderNumber?.length > 12
+                        ? `${data.orderNumber.substring(0, 4)}...${data.orderNumber.slice(-4)}`
+                        : data.orderNumber;
+
+                    console.log('[useOrderNotifications] Emitting toast notification:', title);
+                    // Show toast for all status changes
+                    DeviceEventEmitter.emit('show_toast_notification', {
+                        title: title,
+                        message: `Đơn ${shortOrderNumber} ${data.statusMessage}`
+                    });
                 } catch (error) {
                     console.error('Error adding order status changed notification:', error);
                 }

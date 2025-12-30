@@ -12,7 +12,8 @@ export type SocketEventType =
   | 'order:created'
   | 'order:status_changed'
   | 'order:delivered'
-  | 'order:cancelled';
+  | 'order:cancelled'
+  | 'review:new';
 
 export interface SocketEventData {
   user_online: { userId: string };
@@ -89,6 +90,15 @@ export interface SocketEventData {
     customerName: string;
     total: number;
     cancelledAt: string;
+  };
+  'review:new': {
+    reviewId: number;
+    productId: number;
+    productTitle: string;
+    customerName: string;
+    rating: number;
+    content: string;
+    storeId: string;
   };
 }
 

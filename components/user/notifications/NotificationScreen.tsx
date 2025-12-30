@@ -80,6 +80,8 @@ export default function NotificationScreen() {
                 return 'shopping-cart';
             case 'message':
                 return 'message';
+            case 'review':
+                return 'star';
             default:
                 return 'notifications';
         }
@@ -151,6 +153,15 @@ export default function NotificationScreen() {
                     }
                 } else if (item.type === 'message' && item.data?.conversationId) {
                     router.push(`/messages`);
+                } else if (item.type === 'review' && item.data?.productId) {
+                    // Navigate to product page with reviews tab for seller to reply
+                    router.push({
+                        pathname: '/product',
+                        params: {
+                            productId: item.data.productId.toString(),
+                            tab: 'reviews'
+                        }
+                    });
                 }
             }}
         >

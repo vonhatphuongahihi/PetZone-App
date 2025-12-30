@@ -13,36 +13,51 @@ interface ModalData {
 export function useOrderNotificationModal() {
     const [modalVisible, setModalVisible] = useState(false);
     const [modalData, setModalData] = useState<ModalData | null>(null);
-    const isModalVisibleRef = useRef(false);
-    const pendingNotificationRef = useRef<ModalData | null>(null);
+    const notificationQueueRef = useRef<ModalData[]>([]);
+    const isProcessingRef = useRef(false);
+    const modalVisibleRef = useRef(false);
 
+    // Keep ref in sync with state
     useEffect(() => {
-        isModalVisibleRef.current = modalVisible;
+        modalVisibleRef.current = modalVisible;
     }, [modalVisible]);
+
+    // Function to process next notification in queue
+    const processNextNotification = useRef(() => {
+        // If already processing or queue is empty, return
+        if (isProcessingRef.current || notificationQueueRef.current.length === 0) {
+            return;
+        }
+
+        // If modal is visible, wait for it to close
+        if (modalVisibleRef.current) {
+            return;
+        }
+
+        // Get next notification from queue
+        const nextNotification = notificationQueueRef.current.shift();
+        if (!nextNotification) {
+            return;
+        }
+
+        // Mark as processing
+        isProcessingRef.current = true;
+
+        // Show the notification
+        setModalData(nextNotification);
+        setModalVisible(true);
+    }).current;
 
     useEffect(() => {
         const subscription = DeviceEventEmitter.addListener(
             'show_order_notification',
             (data: ModalData) => {
-                // If modal is already visible, close it first then show new one
-                if (isModalVisibleRef.current) {
-                    // Store pending notification
-                    pendingNotificationRef.current = data;
-                    // Close current modal
-                    setModalVisible(false);
-                    setModalData(null);
-                    // Wait for animation to complete, then show new modal
-                    setTimeout(() => {
-                        if (pendingNotificationRef.current) {
-                            setModalData(pendingNotificationRef.current);
-                            setModalVisible(true);
-                            pendingNotificationRef.current = null;
-                        }
-                    }, 200); // Wait for close animation
-                } else {
-                    // No modal visible, show immediately
-                    setModalData(data);
-                    setModalVisible(true);
+                // Add notification to queue
+                notificationQueueRef.current.push(data);
+
+                // Try to process if modal is not visible
+                if (!modalVisibleRef.current) {
+                    processNextNotification();
                 }
             }
         );
@@ -50,7 +65,21 @@ export function useOrderNotificationModal() {
         return () => {
             subscription.remove();
         };
-    }, []);
+    }, [processNextNotification]);
+
+    // Process next notification when modal closes
+    useEffect(() => {
+        if (!modalVisible) {
+            // Reset processing flag when modal closes
+            isProcessingRef.current = false;
+
+            // Process next notification after a short delay (for animation)
+            // This ensures smooth transition between notifications
+            setTimeout(() => {
+                processNextNotification();
+            }, 300);
+        }
+    }, [modalVisible, processNextNotification]);
 
     const handleClose = () => {
         setModalVisible(false);

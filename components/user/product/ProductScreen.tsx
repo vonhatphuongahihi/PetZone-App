@@ -65,10 +65,17 @@ export default function ProductScreen() {
                 return;
             }
 
-            // Fetch current user avatar
-            const userResponse = await userInfoService.getUserInfo(token);
-            setAvatarUrl(userResponse.user.avatarUrl || null);
-            setUserRole(userResponse.user.role || null);
+            // Fetch current user avatar - handle error gracefully
+            try {
+                const userResponse = await userInfoService.getUserInfo(token);
+                setAvatarUrl(userResponse.user.avatarUrl || null);
+                setUserRole(userResponse.user.role || null);
+            } catch (userError: any) {
+                console.error('Error fetching user info:', userError);
+                // Don't block product loading if user info fails
+                setAvatarUrl(null);
+                setUserRole(null);
+            }
 
             const response = await productService.getProductById(
                 parseInt(productId as string),
@@ -164,15 +171,22 @@ export default function ProductScreen() {
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
-            const token = await tokenService.getToken();
-            if (!token) return;
-            const userResponse = await userInfoService.getUserInfo(token);
-            setCurrentUserId(userResponse.user.id);
-            if (product?.store?.userId === userResponse.user.id) {
-                setIsStoreOwner(true);
+            try {
+                const token = await tokenService.getToken();
+                if (!token) return;
+                const userResponse = await userInfoService.getUserInfo(token);
+                setCurrentUserId(userResponse.user.id);
+                if (product?.store?.userId === userResponse.user.id) {
+                    setIsStoreOwner(true);
+                }
+            } catch (error: any) {
+                console.error('Error fetching current user:', error);
+                // Don't block UI if user info fetch fails
             }
         };
-        fetchCurrentUser();
+        if (product) {
+            fetchCurrentUser();
+        }
     }, [product]);
 
     // UseEffect hooks
@@ -209,6 +223,12 @@ export default function ProductScreen() {
     // Fetch cart count
     const fetchCartCount = useCallback(async () => {
         try {
+            // Skip cart count if user is a seller (store owner)
+            if (isStoreOwner || userRole === 'SELLER') {
+                setCartItemCount(0);
+                return;
+            }
+
             const token = await tokenService.getToken();
             if (!token) {
                 setCartItemCount(0);
@@ -222,18 +242,25 @@ export default function ProductScreen() {
         } catch (error) {
             console.error('Error fetching cart count:', error);
             setCartItemCount(0);
+            // Don't show alert for cart errors, just silently fail
         }
-    }, []);
+    }, [isStoreOwner, userRole]);
 
-    // Fetch cart count on mount and when screen is focused
+    // Fetch cart count on mount and when screen is focused (only for non-sellers)
     useEffect(() => {
-        fetchCartCount();
-    }, [fetchCartCount]);
+        // Only fetch cart if we know user is not a seller
+        if (userRole !== 'SELLER' && !isStoreOwner) {
+            fetchCartCount();
+        }
+    }, [fetchCartCount, userRole, isStoreOwner]);
 
     useFocusEffect(
         useCallback(() => {
-            fetchCartCount();
-        }, [fetchCartCount])
+            // Only fetch cart if we know user is not a seller
+            if (userRole !== 'SELLER' && !isStoreOwner) {
+                fetchCartCount();
+            }
+        }, [fetchCartCount, userRole, isStoreOwner])
     );
 
     // Set initial rating nếu có từ params

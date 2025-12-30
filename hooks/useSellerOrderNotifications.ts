@@ -46,14 +46,16 @@ export function useSellerOrderNotifications() {
                     });
                     await loadUnreadCount();
 
-                    // Show beautiful modal for new order
+                    // Show toast notification for new order
                     const { DeviceEventEmitter } = await import('react-native');
-                    DeviceEventEmitter.emit('show_order_notification', {
+                    const shortOrderNumber = data.orderNumber?.length > 12
+                        ? `${data.orderNumber.substring(0, 4)}...${data.orderNumber.slice(-4)}`
+                        : data.orderNumber;
+
+                    console.log('[useSellerOrderNotifications] Emitting toast notification: Đơn hàng mới!');
+                    DeviceEventEmitter.emit('show_toast_notification', {
                         title: 'Đơn hàng mới!',
-                        message: `Bạn có đơn hàng mới từ ${data.customerName}`,
-                        orderNumber: data.orderNumber,
-                        total: data.total,
-                        isSeller: true
+                        message: `Đơn ${shortOrderNumber} từ ${data.customerName}`
                     });
                 } catch (error) {
                     console.error('Error adding new order notification:', error);
@@ -79,14 +81,16 @@ export function useSellerOrderNotifications() {
                     });
                     await loadUnreadCount();
 
-                    // Show beautiful modal for delivered order
+                    // Show toast notification for delivered order
                     const { DeviceEventEmitter } = await import('react-native');
-                    DeviceEventEmitter.emit('show_order_notification', {
+                    const shortOrderNumber = data.orderNumber?.length > 12
+                        ? `${data.orderNumber.substring(0, 4)}...${data.orderNumber.slice(-4)}`
+                        : data.orderNumber;
+
+                    console.log('[useSellerOrderNotifications] Emitting toast notification: Khách hàng đã nhận hàng!');
+                    DeviceEventEmitter.emit('show_toast_notification', {
                         title: 'Khách hàng đã nhận hàng!',
-                        message: `Đơn hàng ${data.orderNumber} từ ${data.customerName} đã được khách hàng xác nhận đã nhận`,
-                        orderNumber: data.orderNumber,
-                        total: data.total,
-                        isSeller: true
+                        message: `Đơn ${shortOrderNumber} từ ${data.customerName}`
                     });
                 } catch (error) {
                     console.error('Error adding order delivered notification:', error);
@@ -112,9 +116,53 @@ export function useSellerOrderNotifications() {
                             }
                         });
                         await loadUnreadCount();
+
+                        // Show toast notification
+                        const { DeviceEventEmitter } = await import('react-native');
+                        const shortOrderNumber = data.orderNumber?.length > 12
+                            ? `${data.orderNumber.substring(0, 4)}...${data.orderNumber.slice(-4)}`
+                            : data.orderNumber;
+
+                        DeviceEventEmitter.emit('show_toast_notification', {
+                            title: 'Đơn hàng bị hủy',
+                            message: `Đơn ${shortOrderNumber} đã bị khách hàng hủy`
+                        });
                     }
                 } catch (error) {
                     console.error('Error adding order status changed notification:', error);
+                }
+            }
+        );
+
+        // Listen for review:new (seller notification when customer reviews product)
+        const reviewNewSubscription = SocketEventEmitter.addListener(
+            'review:new',
+            async (data: any) => {
+                console.log('[useSellerOrderNotifications] Received review:new event:', data);
+                try {
+                    await notificationService.addNotification({
+                        type: 'review',
+                        title: 'Có đánh giá mới!',
+                        message: `${data.customerName} đã đánh giá sản phẩm "${data.productTitle}" với ${data.rating} sao`,
+                        data: {
+                            reviewId: data.reviewId,
+                            productId: data.productId,
+                            productTitle: data.productTitle,
+                            customerName: data.customerName,
+                            rating: data.rating
+                        }
+                    });
+                    await loadUnreadCount();
+
+                    // Show toast notification
+                    const { DeviceEventEmitter } = await import('react-native');
+
+                    DeviceEventEmitter.emit('show_toast_notification', {
+                        title: 'Có đánh giá mới!',
+                        message: `${data.customerName} đã đánh giá "${data.productTitle}"`
+                    });
+                } catch (error) {
+                    console.error('Error adding review notification:', error);
                 }
             }
         );
@@ -129,6 +177,7 @@ export function useSellerOrderNotifications() {
             orderNewSubscription.remove();
             orderDeliveredSubscription.remove();
             orderStatusChangedSubscription.remove();
+            reviewNewSubscription.remove();
             clearInterval(interval);
         };
     }, []);
