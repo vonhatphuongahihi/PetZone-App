@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { SocketEventEmitter } from './socketEventEmitter';
 
 // === IP của backend server ===
-const SERVER_BASE_URL = 'http://10.10.3.71:3001';
+const SERVER_BASE_URL = 'http://10.175.119.64:3001';
 
 let socket: Socket | null = null;
 let listenersSetup = false;
@@ -105,6 +105,12 @@ export async function getSocket(): Promise<Socket> {
 
     socket.on('order:cancelled', (data: any) => {
         SocketEventEmitter.emit('order:cancelled', data);
+    });
+
+    // Listen for review notifications
+    socket.on('review:new', (data: any) => {
+        console.log('[Socket Client] Received review:new event:', data);
+        SocketEventEmitter.emit('review:new', data);
     });
 
     listenersSetup = true;
